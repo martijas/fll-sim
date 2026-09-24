@@ -1,4 +1,4 @@
-import type { HubEvent, RobotModel, SceneBody, SeasonConfig, StartPose } from "@fll-sim/sim";
+import type { FieldModel, HubEvent, RobotModel, SceneBody, SeasonConfig, StartPose } from "@fll-sim/sim";
 import type { RunResult } from "@fll-sim/runtime-python";
 import { CTRL, type Frame, type FromWorker, type MatPayload, type ToWorker } from "../worker/protocol";
 import SimWorker from "../worker/sim.worker.ts?worker";
@@ -25,7 +25,7 @@ export class SimController {
 
   constructor(
     private cb: SimCallbacks,
-    private cfg: { season: SeasonConfig; mat: MatPayload | null; robot: RobotModel; start: StartPose },
+    private cfg: { season: SeasonConfig; mat: MatPayload | null; robot: RobotModel; start: StartPose; fieldModels: FieldModel[]; footprints: boolean },
   ) {
     Atomics.store(this.ctrl, CTRL.SPEED_X100, 100);
   }
@@ -54,7 +54,7 @@ export class SimController {
     w.onerror = (e) => this.cb.fatal(e.message);
     // Mat data is copied (not transferred) so reboots can reuse it.
     const mat = this.cfg.mat ? { ...this.cfg.mat, data: this.cfg.mat.data.slice(0) } : null;
-    this.send({ type: "init", season: this.cfg.season, mat, robot: this.cfg.robot, start: this.cfg.start, ctrl: this.ctrlBuf });
+    this.send({ type: "init", season: this.cfg.season, mat, robot: this.cfg.robot, start: this.cfg.start, ctrl: this.ctrlBuf, fieldModels: this.cfg.fieldModels, footprints: this.cfg.footprints });
   }
 
   setStart(start: StartPose) {
@@ -62,10 +62,10 @@ export class SimController {
     this.boot();
   }
 
-  run(source: string) {
+  run(source: string, timeLimitMs?: number) {
     this.setPaused(false);
     this.running = true;
-    this.send({ type: "run", source });
+    this.send({ type: "run", source, timeLimitMs });
   }
 
   stop() {

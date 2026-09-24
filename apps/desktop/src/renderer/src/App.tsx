@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { makeDriveBase, type RobotModel, type SeasonConfig, type StartPose, type VisualSpec } from "@fll-sim/sim";
+import { makeDriveBase, type FieldModel, type RobotModel, type SeasonConfig, type StartPose, type VisualSpec } from "@fll-sim/sim";
+import { ScorePanel } from "./components/ScorePanel";
+import { defaultAnswers, type Answers } from "../../../../../seasons/2026-27/scoring";
 import type { Library } from "@fll-sim/ldraw";
 import { assemble, parseModel, serializeModel, type ModelPart } from "@fll-sim/assembly";
 import { Builder } from "./components/Builder";
@@ -47,6 +49,25 @@ export function App() {
   const [buildParts, setBuildParts] = useState<ModelPart[]>([]);
   /** "drivebase" = port-configured default robot; "ldraw" = the model from the builder. */
   const [robotSource, setRobotSource] = useState<"drivebase" | "ldraw">(() => (localStorage.getItem("fllsim.robotSource") === "ldraw" ? "ldraw" : "drivebase"));
+  const [rightTab, setRightTab] = useState<"console" | "score">("console");
+  const [answers, setAnswers] = useState<Answers>(() => {
+    try {
+      return { ...defaultAnswers(), ...JSON.parse(localStorage.getItem("fllsim.score") ?? "{}") };
+    } catch {
+      return defaultAnswers();
+    }
+  });
+  const [footprints, setFootprints] = useState(true);
+  /** Real-part mission models built by the team: mission model id -> .ldr text. */
+  const [missionLdr, setMissionLdr] = useState<Record<string, string>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("fllsim.missionModels") ?? "{}");
+    } catch {
+      return {};
+    }
+  });
+  /** Sim time (ms) when the current match started, or null. */
+  const [matchStart, setMatchStart] = useState<number | null>(null);
   const field = useRef<FieldViewHandle>(null);
   const ctl = useRef<SimController | null>(null);
   const consoleEnd = useRef<HTMLDivElement>(null);
@@ -107,11 +128,51 @@ export function App() {
     }
     return makeDriveBase(toDriveBaseOptions(robot));
   }, [robotSource, ldraw, buildParts, robot]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("fllsim.score", JSON.stringify(answers));
+      localStorage.setItem("fllsim.missionModels", JSON.stringify(missionLdr));
+    } catch {
+      /* ignore */
+    }
+  }, [answers, missionLdr]);
+
+  // Real-part mission models on their wireframe footprints; the heaviest body resting on the
+  // mat is held by Dual Lock, everything else moves freely.
+  const fieldModels: FieldModel[] = useMemo(() => {
+    if (!season || !ldraw) return [];
+    const out: FieldModel[] = [];
+    for (const [id, text] of Object.entries(missionLdr)) {
+      const spec = season.missionModels.find((m) => m.id === id);
+      if (!spec) continue;
+      try {
+        const { robot: model } = assemble(ldraw.lib, parseModel(ldraw.lib, text).parts, { name: spec.name, autoPorts: false });
+        const lowest = (b: RobotModel["bodies"][number]) => Math.min(...b.shapes.map((sh) => sh.posMm.y - (sh.kind === "box" ? sh.sizeMm.y / 2 : sh.radiusMm)));
+        const grounded = model.bodies.filter((b) => lowest(b) < 3).sort((a, b) => b.massKg - a.massKg);
+        const f = spec.shape;
+        out.push({ id, model, pose: { xMm: f.cx, yMm: f.cy, headingDeg: f.kind === "rect" ? f.rot : 0 }, fixedBodies: grounded.slice(0, 1).map((b) => b.id) });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return out;
+  }, [season, ldraw, missionLdr]);
+
   const robotVisuals = useMemo(() => {
     const v: Record<string, VisualSpec[]> = {};
     for (const b of robotModel.bodies) if (b.visuals?.length) v[b.id] = b.visuals;
+    for (const fm of fieldModels) for (const b of fm.model.bodies) if (b.visuals?.length) v[`${fm.id}:${b.id}`] = b.visuals;
     return v;
-  }, [robotModel]);
+  }, [robotModel, fieldModels]);
+
+  const inspection = useMemo(() => {
+    const fp = robotModel.footprintMm;
+    const r = season?.launchAreas[0]?.radiusMm ?? 483;
+    const hMax = season?.robotLimits.heightMm ?? 305;
+    const diag = Math.hypot(fp.w, fp.l);
+    const pass = diag <= r && fp.h <= hMax;
+    return { pass, why: `${fp.w.toFixed(0)} × ${fp.l.toFixed(0)} mm (diagonal ${diag.toFixed(0)} of ${r} mm launch radius), ${fp.h.toFixed(0)} mm tall (limit ${hMax}) → ${pass ? "fits" : "does not fit"} (attachments not included)` };
+  }, [robotModel, season]);
   const visualsRef = useRef({ lib: null as Library | null, visuals: robotVisuals });
   visualsRef.current = { lib: ldraw?.lib ?? null, visuals: robotVisuals };
 
@@ -131,6 +192,13 @@ export function App() {
         done: (r) => {
           setRunning(false);
           setPaused(false);
+          setMatchStart((ms) => {
+            if (ms !== null) {
+              log(`⏱ Match over — fill in the Score tab to see your points.`, "info");
+              setRightTab("score");
+            }
+            return null;
+          });
           if (r.stopped) log(`■ Stopped at ${(r.simTimeMs / 1000).toFixed(2)} s`, "info");
           else if (r.ok) log(`✔ Program finished at ${(r.simTimeMs / 1000).toFixed(2)} s (sim time)`, "info");
           else {
@@ -143,28 +211,30 @@ export function App() {
           log(`Simulator error: ${m}`, "err");
         },
       },
-      { season, mat: mat?.payload ?? null, robot: robotModel, start },
+      { season, mat: mat?.payload ?? null, robot: robotModel, start, fieldModels, footprints },
     );
     ctl.current = c;
     c.boot();
     return () => c.dispose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [season, mat, robotModel]);
+  }, [season, mat, robotModel, fieldModels, footprints]);
 
   useEffect(() => {
     consoleEnd.current?.scrollIntoView({ block: "end" });
   }, [lines]);
 
-  const run = () => {
+  const run = (match = false) => {
     const c = ctl.current;
     if (!c) return;
     setError(null);
     field.current?.clearTrail();
-    if (frame && frame.timeMs > 300) c.setStart(start); // fresh robot for every run
+    if (frame && frame.timeMs > 300) c.setStart(start); // fresh robot (and field) for every run
     setLines([]);
-    log(`▶ Running ${fileName}`, "info");
+    const durationS = season?.match.durationS ?? 150;
+    log(match ? `▶ Match started: ${fileName} — ${Math.floor(durationS / 60)}:${String(durationS % 60).padStart(2, "0")} on the clock` : `▶ Running ${fileName}`, "info");
     setRunning(true);
-    c.run(source);
+    setMatchStart(match ? 250 : null); // the field settles for 250 ms before the program starts
+    c.run(source, match ? durationS * 1000 : undefined);
   };
   const stop = () => {
     ctl.current?.stop();
@@ -274,7 +344,7 @@ export function App() {
   // Keyboard shortcuts: F5 run, Shift+F5 stop, Ctrl+S save, Ctrl+O open.
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key === "F5" && !e.shiftKey) { e.preventDefault(); if (!running) run(); }
+      if (e.key === "F5" && !e.shiftKey) { e.preventDefault(); if (!running) run(false); }
       else if (e.key === "F5" && e.shiftKey) { e.preventDefault(); stop(); }
       else if (e.ctrlKey && e.key === "s") { e.preventDefault(); saveFile(e.shiftKey); }
       else if (e.ctrlKey && e.key === "o") { e.preventDefault(); openFile(); }
@@ -302,11 +372,22 @@ export function App() {
         </div>
         <div className="group run">
           {!running ? (
-            <button className="primary" onClick={run} title="Run (F5)">▶ Run</button>
+            <>
+              <button className="primary" onClick={() => run(false)} title="Run (F5)">▶ Run</button>
+              <button onClick={() => run(true)} title="Run as a 2:30 match: the program is stopped when time is up">⏱ Match</button>
+            </>
           ) : (
             <button className="danger" onClick={stop} title="Stop (Shift+F5)">■ Stop</button>
           )}
           <button onClick={togglePause} disabled={!running}>{paused ? "▶ Resume" : "❚❚ Pause"}</button>
+          {matchStart !== null && frame && (
+            <span className="match-timer" title="Match time remaining">
+              {(() => {
+                const left = Math.max(0, (season.match.durationS * 1000 - (frame.timeMs - matchStart)) / 1000);
+                return `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, "0")}`;
+              })()}
+            </span>
+          )}
           <button onClick={reset} disabled={running} title="Put the robot back at the start pose">↺ Reset</button>
           <label>
             Speed
@@ -334,6 +415,18 @@ export function App() {
           parts={buildParts}
           onChange={setBuildParts}
           log={log}
+          missionModels={season.missionModels.map((m) => ({ id: m.id, name: `M${m.missions.map((n) => String(n).padStart(2, "0")).join("/")} ${m.name}`, built: !!missionLdr[m.id] }))}
+          onUseAsMissionModel={(id, p) => {
+            if (!p.length) {
+              const { [id]: _removed, ...rest } = missionLdr;
+              setMissionLdr(rest);
+              log(`Mission model ${id} reset to its stand-in block`, "info");
+              return;
+            }
+            setMissionLdr({ ...missionLdr, [id]: serializeModel(p, `${id}.ldr`) });
+            log(`Mission model ${id} placed on the field from your build (${p.length} parts). Its heaviest part on the mat is held by Dual Lock.`, "info");
+            setTab("sim");
+          }}
           onUseAsRobot={(p) => {
             const r = assemble(ldraw.lib, p);
             for (const w of r.report.warnings) log(`⚠ ${w}`, "err");
@@ -351,6 +444,9 @@ export function App() {
               {(["orbit", "top", "follow"] as CameraMode[]).map((m) => (
                 <button key={m} onClick={() => field.current?.setCamera(m)}>{m === "orbit" ? "3D" : m === "top" ? "Top" : "Follow"}</button>
               ))}
+              <button onClick={() => setFootprints(!footprints)} disabled={running} title="Mission models without a real-part build are shown as blocks at their wireframe positions">
+                {footprints ? "Hide" : "Show"} mission blocks
+              </button>
             </div>
             <div className="status">
               {frame ? `t = ${(frame.timeMs / 1000).toFixed(2)} s · (${frame.pose.xMm.toFixed(0)}, ${frame.pose.yMm.toFixed(0)}) mm · ${frame.pose.headingDeg.toFixed(1)}°` : "starting…"}
@@ -371,10 +467,23 @@ export function App() {
             </div>
           )}
           <CodeEditor value={source} onChange={setSource} readOnly={!!blocks} errorLine={error?.line ?? null} errorText={error?.text ?? null} />
-          <div className="console">
-            {lines.map((l, i) => <div key={i} className={`line ${l.kind}`}>{l.text}</div>)}
-            <div ref={consoleEnd} />
+          <div className="right-tabs">
+            <button className={rightTab === "console" ? "on" : ""} onClick={() => setRightTab("console")}>Console</button>
+            <button className={rightTab === "score" ? "on" : ""} onClick={() => setRightTab("score")}>Score</button>
           </div>
+          {rightTab === "console" ? (
+            <div className="console">
+              {lines.map((l, i) => <div key={i} className={`line ${l.kind}`}>{l.text}</div>)}
+              <div ref={consoleEnd} />
+            </div>
+          ) : (
+            <ScorePanel
+              answers={{ ...answers, ei: answers.ei }}
+              onChange={setAnswers}
+              onReset={() => setAnswers({ ...defaultAnswers(), ei: inspection.pass })}
+              inspection={inspection}
+            />
+          )}
         </section>
       </main>
       {showRobot && <RobotPanel config={robot} onApply={applyRobot} onClose={() => setShowRobot(false)} />}

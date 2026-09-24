@@ -105,7 +105,7 @@ async function handle(m: ToWorker) {
     if (m.type === "init") {
       ctrl = new Int32Array(m.ctrl);
       const mat = m.mat ? { width: m.mat.width, height: m.mat.height, data: new Uint8ClampedArray(m.mat.data) } : null;
-      sim = await Simulation.create({ season: m.season, robot: m.robot, start: m.start, mat });
+      sim = await Simulation.create({ season: m.season, robot: m.robot, start: m.start, mat, fieldModels: m.fieldModels, footprints: m.footprints });
       api = new SpikeApi(sim);
       sim.stepMs(250); // let the robot settle on the mat
       post({ type: "scene", bodies: sim.scene, bodyIds: sim.bodies.map((b) => b.id) });
@@ -113,7 +113,7 @@ async function handle(m: ToWorker) {
     } else if (m.type === "run") {
       running = true;
       reanchor();
-      const result = await runPython({ api, files, source: m.source, wasmUrl, hooks: { stdout: (line) => post({ type: "stdout", line }), onTick, app: (kind, args) => post({ type: "app", kind, args }) } });
+      const result = await runPython({ api, files, source: m.source, wasmUrl, timeLimitMs: m.timeLimitMs ? sim.timeMs + m.timeLimitMs : undefined, hooks: { stdout: (line) => post({ type: "stdout", line }), onTick, app: (kind, args) => post({ type: "app", kind, args }) } });
       if (!result.stopped) settle(api, 10000, onTick);
       running = false;
       emitFrame(true);

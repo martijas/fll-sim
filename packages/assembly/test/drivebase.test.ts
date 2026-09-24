@@ -97,7 +97,7 @@ describe.skipIf(!lib)("real-parts SPIKE drive base", () => {
     expect(report.loose).toBe(0);
 
     // Physics: drive two wheel rotations straight.
-    const sim = await Simulation.create({ season: season as SeasonConfig, robot, start: { xMm: 1000, yMm: 400, headingDeg: 0 } });
+    const sim = await Simulation.create({ season: season as SeasonConfig, robot, start: { xMm: 1000, yMm: 400, headingDeg: 0 }, footprints: false });
     sim.stepMs(500);
     const p0 = sim.robotPose();
     const api = new SpikeApi(sim);

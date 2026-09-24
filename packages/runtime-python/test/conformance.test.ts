@@ -10,7 +10,7 @@ const files = loadPythonFiles();
 const wasmUrl = micropythonWasmPath();
 
 async function run(source: string, opts: { timeLimitMs?: number; trace?: (api: SpikeApi) => void } = {}) {
-  const sim = await Simulation.create({ season: season as SeasonConfig, robot: makeDriveBase({ attachmentPorts: ["E", "F"], distancePort: "D", colorPorts: [{ port: "C", xMm: 0, zMm: -88 }] }), start: { xMm: 1000, yMm: 300, headingDeg: 0 } });
+  const sim = await Simulation.create({ season: season as SeasonConfig, robot: makeDriveBase({ attachmentPorts: ["E", "F"], distancePort: "D", colorPorts: [{ port: "C", xMm: 0, zMm: -88 }] }), start: { xMm: 1000, yMm: 300, headingDeg: 0 }, footprints: false });
   sim.stepMs(200);
   const t0 = sim.timeMs;
   const api = new SpikeApi(sim);

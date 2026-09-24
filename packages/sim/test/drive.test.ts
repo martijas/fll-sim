@@ -3,7 +3,7 @@ import season from "../../../seasons/2026-27/season.json";
 import { Simulation, SpikeApi, makeDriveBase, type SeasonConfig, Status } from "../src";
 
 async function mk() {
-  const sim = await Simulation.create({ season: season as SeasonConfig, robot: makeDriveBase(), start: { xMm: 1000, yMm: 400, headingDeg: 0 } });
+  const sim = await Simulation.create({ season: season as SeasonConfig, robot: makeDriveBase(), start: { xMm: 1000, yMm: 400, headingDeg: 0 }, footprints: false });
   sim.stepMs(300); // settle on the mat
   return { sim, api: new SpikeApi(sim) };
 }

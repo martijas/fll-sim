@@ -22,6 +22,28 @@ interface Props {
 
 const mm = (v: number) => v / 1000;
 
+function labelSprite(text: string): THREE.Sprite {
+  const c = document.createElement("canvas");
+  const ctx = c.getContext("2d")!;
+  ctx.font = "600 28px system-ui, sans-serif";
+  const w = Math.ceil(ctx.measureText(text).width) + 20;
+  c.width = w;
+  c.height = 40;
+  ctx.font = "600 28px system-ui, sans-serif";
+  ctx.fillStyle = "rgba(20,22,28,0.78)";
+  ctx.beginPath();
+  ctx.roundRect(0, 0, w, 40, 8);
+  ctx.fill();
+  ctx.fillStyle = "#ffcf00";
+  ctx.fillText(text, 10, 29);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+  sp.scale.set((w / 40) * 0.028, 0.028, 1);
+  sp.renderOrder = 10;
+  return sp;
+}
+
 function shapeMesh(s: ShapeSpec): THREE.Mesh {
   const mat = new THREE.MeshStandardMaterial({ color: s.color, roughness: 0.55, metalness: s.material === "steel" ? 0.8 : 0.05 });
   let geo: THREE.BufferGeometry;
@@ -209,7 +231,22 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
             o.matrix.copy(mat4From3x4(v.m, 0.001));
             g.add(o);
           }
-        } else spec?.shapes.forEach((sh) => g.add(shapeMesh(sh)));
+        } else spec?.shapes.forEach((sh) => {
+          const mesh = shapeMesh(sh);
+          if (spec.translucent) {
+            const m = mesh.material as THREE.MeshStandardMaterial;
+            m.transparent = true;
+            m.opacity = 0.55;
+            mesh.castShadow = false;
+          }
+          g.add(mesh);
+        });
+        if (spec?.label) {
+          const top = Math.max(...spec.shapes.map((sh) => sh.posMm.y + (sh.kind === "box" ? sh.sizeMm.y / 2 : sh.kind === "cylinder" ? sh.lengthMm / 2 : sh.radiusMm)));
+          const sp = labelSprite(spec.label);
+          sp.position.set(0, mm(top) + 0.03, 0);
+          g.add(sp);
+        }
         s.dynamic.add(g);
         return g;
       });

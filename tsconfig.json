@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": { "noEmit": true, "types": ["node", "vite/client"] },
-  "include": ["packages/*/src", "packages/*/test", "apps/desktop/src", "tools/*/src", "vitest.config.ts"]
+  "include": ["packages/*/src", "packages/*/test", "apps/desktop/src", "tools/*/src", "seasons", "vitest.config.ts"]
 }

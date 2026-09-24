@@ -22,19 +22,34 @@ const groups = (member: number, filter: number) => (member << 16) | filter;
 
 export interface StartPose { xMm: number; yMm: number; headingDeg: number }
 
+/** A LEGO mission model placed on the field (built from real parts). */
+export interface FieldModel {
+  id: string;
+  model: RobotModel;
+  pose: StartPose;
+  /** Bodies held by Dual Lock (fixed to the mat); all others are free. */
+  fixedBodies: string[];
+}
+
 export interface SimOptions {
   season: SeasonConfig;
   robot: RobotModel;
   start: StartPose;
   mat?: MatImage | null;
   colorCalibration?: ColorCalibration;
+  /** Real-part mission models; any season mission model not listed here gets a stand-in block. */
+  fieldModels?: FieldModel[];
+  /** Show stand-in blocks for mission models without a real-part model (default true). */
+  footprints?: boolean;
 }
 
 /** Static scene description sent once to the renderer. */
 export interface SceneBody {
   id: string;
-  kind: "robot" | "field";
+  kind: "robot" | "field" | "model";
   shapes: ShapeSpec[]; // body-local, mm
+  label?: string;
+  translucent?: boolean;
 }
 
 interface MotorBinding {
@@ -62,7 +77,7 @@ export class Simulation {
   readonly hub: HubState;
   readonly motors = new Map<Port, MotorBinding>();
   readonly sensors = new Map<Port, SensorBinding>();
-  readonly bodies: { id: string; body: RAPIER.RigidBody; kind: "robot" | "field" }[] = [];
+  readonly bodies: { id: string; body: RAPIER.RigidBody; kind: "robot" | "field" | "model" }[] = [];
   readonly scene: SceneBody[] = [];
   private colliderColor = new Map<number, RGB>();
   private surfaceHandle = -1;
@@ -91,6 +106,9 @@ export class Simulation {
     world.integrationParameters.lengthUnit = 0.05;
     this.world = world;
     this.buildTable();
+    const placed = new Set((o.fieldModels ?? []).map((f) => f.id));
+    if (o.footprints !== false) this.buildFootprints(o.season.missionModels.filter((m) => !placed.has(m.id)));
+    for (const f of o.fieldModels ?? []) this.buildArticulated(f.model, f.pose, "model", f.id + ":", new Set(f.fixedBodies));
     const { hubBody, hubRot } = this.buildRobot(o.start);
     this.hubBody = hubBody;
     this.hubRot = hubRot;
@@ -140,6 +158,56 @@ export class Simulation {
     }
     this.scene.push({ id: "table-walls", kind: "field", shapes: wallShapes });
     this.bodies.push({ id: "table-walls", body, kind: "field" });
+  }
+
+  /** Stand-in blocks for mission models: fixed boxes/cylinders at their wireframe footprints. */
+  private buildFootprints(models: SeasonConfig["missionModels"]) {
+    for (const mm of models) {
+      const f = mm.shape;
+      const center = matToWorld({ x: f.cx, y: f.cy }, this.matPlacement, 0);
+      const rot = quatFromAxisAngle({ x: 0, y: 1, z: 0 }, degToRad(f.kind === "rect" ? f.rot : 0));
+      const body = this.world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(center.x, 0, center.z).setRotation(rot));
+      const h = mm.heightMm;
+      const shape: ShapeSpec = f.kind === "rect"
+        ? { kind: "box", sizeMm: { x: f.w, y: h, z: f.h }, posMm: { x: 0, y: h / 2, z: 0 }, color: mm.color, material: "plastic" }
+        : { kind: "cylinder", radiusMm: f.r, lengthMm: h, axis: "y", posMm: { x: 0, y: h / 2, z: 0 }, color: mm.color, material: "plastic" };
+      const c = this.world.createCollider(colliderDesc(shape).setFriction(0.4).setCollisionGroups(groups(G_MODEL, 0xffff)), body);
+      this.colliderColor.set(c.handle, parseHexColor(mm.color));
+      this.bodies.push({ id: `fp:${mm.id}`, body, kind: "field" });
+      this.scene.push({ id: `fp:${mm.id}`, kind: "field", shapes: [shape], label: `M${mm.missions.map((n) => String(n).padStart(2, "0")).join("/")} ${mm.name}`, translucent: true });
+    }
+  }
+
+  /** Mission model built from LEGO parts: fixed (Dual Lock) bodies + free parts and hinges. */
+  private buildArticulated(m: RobotModel, pose: StartPose, kind: "model", prefix: string, fixed: Set<string>) {
+    const origin = matToWorld({ x: pose.xMm, y: pose.yMm }, this.matPlacement, 0);
+    const rot = quatFromAxisAngle({ x: 0, y: 1, z: 0 }, degToRad(pose.headingDeg));
+    const byId = new Map<string, RAPIER.RigidBody>();
+    for (const b of m.bodies) {
+      const desc = (fixed.has(b.id) ? RAPIER.RigidBodyDesc.fixed() : RAPIER.RigidBodyDesc.dynamic()).setTranslation(origin.x, origin.y + 0.0003, origin.z).setRotation(rot);
+      const body = this.world.createRigidBody(desc);
+      byId.set(b.id, body);
+      const vols = b.shapes.map(shapeVolume);
+      const vt = vols.reduce((x, y) => x + y, 0) || 1;
+      b.shapes.forEach((s, i) => {
+        const cd = colliderDesc(s)
+          .setMass(s.massKg ?? (b.massKg * vols[i]) / vt)
+          .setFriction(FRICTION[s.material ?? "plastic"])
+          .setFrictionCombineRule(RAPIER.CoefficientCombineRule.Multiply)
+          .setRestitution(0.05)
+          .setCollisionGroups(groups(G_MODEL, 0xffff));
+        const c = this.world.createCollider(cd, body);
+        this.colliderColor.set(c.handle, parseHexColor(s.color));
+      });
+      this.bodies.push({ id: prefix + b.id, body, kind });
+      this.scene.push({ id: prefix + b.id, kind, shapes: b.shapes });
+    }
+    for (const j of m.freeJoints) {
+      const a = { x: mmToM(j.anchorMm.x), y: mmToM(j.anchorMm.y), z: mmToM(j.anchorMm.z) };
+      const joint = this.world.createImpulseJoint(RAPIER.JointData.revolute(a, a, j.axis), byId.get(j.a)!, byId.get(j.b)!, true) as RAPIER.RevoluteImpulseJoint;
+      joint.setContactsEnabled(false);
+      if (j.friction) joint.configureMotorVelocity(0, 0.002);
+    }
   }
 
   private buildRobot(start: StartPose) {

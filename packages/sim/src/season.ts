@@ -16,7 +16,23 @@ export interface SeasonConfig {
   launchAreas: { id: string; color: string; shape: "quarter-circle"; centerMm: { x: number; y: number }; radiusMm: number }[];
   robotLimits: { heightMm: number };
   match: { durationS: number; precisionTokens: number };
-  missionModels: unknown[];
+  missionModels: MissionModelSpec[];
+}
+
+export type Footprint =
+  | { kind: "rect"; cx: number; cy: number; w: number; h: number; rot: number }
+  | { kind: "circle"; cx: number; cy: number; r: number };
+
+/** A mission model's place on the mat (from the wireframe) and its stand-in block. */
+export interface MissionModelSpec {
+  id: string;
+  missions: number[];
+  name: string;
+  shape: Footprint;
+  heightMm: number;
+  color: string;
+  dock?: "farm" | "city" | "mine";
+  note?: string;
 }
 
 /** Where the mat's SW corner sits relative to the table interior SW corner (mm). */

@@ -15,6 +15,9 @@ interface Props {
   parts: ModelPart[];
   onChange(parts: ModelPart[]): void;
   onUseAsRobot(parts: ModelPart[]): void;
+  missionModels: { id: string; name: string; built: boolean }[];
+  /** Put the current build on the field as a mission model (empty parts = remove). */
+  onUseAsMissionModel(id: string, parts: ModelPart[]): void;
   log(text: string, kind?: "out" | "err" | "info"): void;
 }
 
@@ -34,7 +37,7 @@ function hexOf(lib: Library, code: number) {
   return "#" + lib.color(code).rgb.map((v) => v.toString(16).padStart(2, "0")).join("");
 }
 
-export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, log }: Props) {
+export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionModels, onUseAsMissionModel, log }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const [catId, setCatId] = useState(catalog[0]?.id ?? "");
   const [query, setQuery] = useState("");
@@ -363,6 +366,16 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, log }: Pr
           <button onClick={save} disabled={!parts.length}>Save .ldr…</button>
           <button onClick={check} disabled={!parts.length}>Check connections</button>
           <button className="primary" onClick={() => onUseAsRobot(parts)} disabled={!parts.length}>Use as robot ▶</button>
+          <select value="" disabled={!parts.length} onChange={(e) => {
+            const v = e.target.value;
+            if (!v) return;
+            if (v.startsWith("reset:")) onUseAsMissionModel(v.slice(6), []);
+            else onUseAsMissionModel(v, parts);
+          }} title="Place this build on the field as one of the mission models">
+            <option value="">Use as mission model…</option>
+            {missionModels.map((m) => <option key={m.id} value={m.id}>{m.name}{m.built ? " (replace)" : ""}</option>)}
+            {missionModels.filter((m) => m.built).map((m) => <option key={"r" + m.id} value={"reset:" + m.id}>Reset {m.name} to block</option>)}
+          </select>
           <span className="hint">{ghost ? "Click to place · Tab: next connection · R: rotate · F: flip · [ ]: slide · Esc: cancel" : "Pick a part on the left · click a part to select · Del: delete · M: move · Ctrl+Z: undo"}</span>
         </div>
         <div ref={host} className="build-view" />

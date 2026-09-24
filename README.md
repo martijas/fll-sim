@@ -17,7 +17,7 @@ Current season pack: **2026-27 BIOGLOW**.
 | M4 Sensors — colour (samples the mat), distance, IMU; telemetry panel | 🟡 force sensor + calibration UI pending |
 | M5 Word Blocks + `.llsp3` | 🟡 Word Blocks `.llsp3` compile + run (FIRST's BIOGLOW guided mission runs); visual blocks editor pending |
 | M6 LEGO builder (LDraw parts, snapping, connectivity) | 🟡 real-part builder, connection → physics (rigid groups, hinges, motor axles), real-parts SPIKE drive base; gears and part thumbnails pending |
-| M7 BIOGLOW mission models + scoring | ⏳ |
+| M7 BIOGLOW mission models + scoring | 🟡 official scoresheet + auto total (incl. Challenge Update 01), 2:30 match mode, auto equipment inspection, all 15 mission models placed from the wireframe as blocks; real-part models built in the Build tab replace them — models still to be built |
 | M8 Real-robot calibration, replay, polish | ⏳ |
 
 See `PLAN.md` for the full design.
@@ -68,6 +68,15 @@ Rebuild the bundled pack with `pnpm --filter @fll-sim/ldraw-pack run build-pack`
 library in `~/.cache/fll-sim/ldraw`, the shadow library in `~/.cache/fll-sim/shadow` and the
 Rebrickable CSV dumps in `~/.cache/fll-sim/rebrickable`).
 
+## Missions and scoring (BIOGLOW)
+
+Every mission model sits on its wireframe footprint as a labelled block (heights estimated), so
+robots collide with the field like on a real table. Build a mission model from the official
+building instructions in the **Build** tab and choose **Use as mission model…**: it replaces the
+block, its heaviest part on the mat is held by Dual Lock, and everything else (levers, hinges,
+loose pieces) moves under physics. **⏱ Match** runs your program for 2:30 and stops it; the
+**Score** tab is the official scoresheet with the total calculated as you answer.
+
 ## Season materials and the mat
 
 FIRST's season documents (rulebook, mission model instructions, mat wireframe) are copyrighted
@@ -77,6 +86,13 @@ and are **not** in this repository. Download them from the FIRST season material
 ```sh
 python3 tools/mat-import/import_mat.py resources/2026-27-bioglow/field/wireframe-grid.pdf \
   --page 2 --mat-mm 2000x1140 --out resources/2026-27-bioglow/derived/mat-wireframe.png
+```
+
+For the colour mat (recommended — the colour sensor reads the real artwork):
+
+```sh
+python3 tools/mat-import/compose_color_mat.py --rulebook resources/2026-27-bioglow/rules/robot-game-rulebook.pdf \
+  --wireframe resources/2026-27-bioglow/derived/mat-wireframe.png --out resources/2026-27-bioglow/derived/mat-color.png
 ```
 
 In the app, **Mat image…** loads a scan/photo of your printed mat (cropped exactly to the mat edges);
