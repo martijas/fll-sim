@@ -1,0 +1,418 @@
+import RAPIER from "@dimforge/rapier3d-compat";
+import {
+  type Quat, type Vec3, add, dot, matToWorld, mmToM, mToMm, quatFromAxisAngle, rotate, worldToMat, wrapDeg, radToDeg, degToRad,
+} from "@fll-sim/units";
+import { HubState } from "./hub";
+import { FRICTION, type Port, type RobotModel, type SensorType, type ShapeSpec } from "./model";
+import { MotorController } from "./motor";
+import { type MatImage, type SeasonConfig, matPlacement } from "./season";
+import { type ColorCalibration, DEFAULT_CALIBRATION, colorReading, parseHexColor, sampleMat, spotRadiusMm, type RGB } from "./sensors";
+
+let rapierReady: Promise<void> | null = null;
+export function initPhysics(): Promise<void> {
+  rapierReady ??= RAPIER.init();
+  return rapierReady;
+}
+
+export const DT = 0.001; // physics + firmware tick, s
+
+// Collision groups: membership in the high 16 bits, filter in the low 16 bits.
+const G_FIELD = 0x0001, G_ROBOT = 0x0002, G_MODEL = 0x0004, G_QUERY = 0x0008;
+const groups = (member: number, filter: number) => (member << 16) | filter;
+
+export interface StartPose { xMm: number; yMm: number; headingDeg: number }
+
+export interface SimOptions {
+  season: SeasonConfig;
+  robot: RobotModel;
+  start: StartPose;
+  mat?: MatImage | null;
+  colorCalibration?: ColorCalibration;
+}
+
+/** Static scene description sent once to the renderer. */
+export interface SceneBody {
+  id: string;
+  kind: "robot" | "field";
+  shapes: ShapeSpec[]; // body-local, mm
+}
+
+interface MotorBinding {
+  ctl: MotorController;
+  housing: RAPIER.RigidBody;
+  output: RAPIER.RigidBody;
+  axisLocal: Vec3; // in housing body frame
+  angleDeg: number;
+}
+
+interface SensorBinding {
+  type: SensorType;
+  body: RAPIER.RigidBody;
+  posM: Vec3; // body-local
+  dir: Vec3; // body-local
+}
+
+const toQ = (r: RAPIER.Rotation): Quat => ({ x: r.x, y: r.y, z: r.z, w: r.w });
+const toV = (r: RAPIER.Vector): Vec3 => ({ x: r.x, y: r.y, z: r.z });
+
+export class Simulation {
+  readonly world: RAPIER.World;
+  readonly season: SeasonConfig;
+  readonly robot: RobotModel;
+  readonly hub: HubState;
+  readonly motors = new Map<Port, MotorBinding>();
+  readonly sensors = new Map<Port, SensorBinding>();
+  readonly bodies: { id: string; body: RAPIER.RigidBody; kind: "robot" | "field" }[] = [];
+  readonly scene: SceneBody[] = [];
+  private colliderColor = new Map<number, RGB>();
+  private surfaceHandle = -1;
+  private mat: MatImage | null;
+  private matPxPerMm: number;
+  private cal: ColorCalibration;
+  private hubBody: RAPIER.RigidBody;
+  private hubRot: Quat;
+  private prevHubVel: Vec3 = { x: 0, y: 0, z: 0 };
+  private hubAccel: Vec3 = { x: 0, y: 9.81, z: 0 };
+  private yawOffsetDeg = 0;
+  private idCounter = 1_000_000;
+  /** Simulation time in ms (integer ticks). */
+  timeMs = 0;
+
+  private constructor(o: SimOptions) {
+    this.season = o.season;
+    this.robot = o.robot;
+    this.mat = o.mat ?? null;
+    this.matPxPerMm = o.season.mat.image?.pxPerMm ?? 2;
+    this.cal = o.colorCalibration ?? DEFAULT_CALIBRATION;
+    this.hub = new HubState(() => this.idCounter++);
+    const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
+    world.timestep = DT;
+    world.integrationParameters.numSolverIterations = 8;
+    world.integrationParameters.lengthUnit = 0.05;
+    this.world = world;
+    this.buildTable();
+    const { hubBody, hubRot } = this.buildRobot(o.start);
+    this.hubBody = hubBody;
+    this.hubRot = hubRot;
+  }
+
+  static async create(o: SimOptions): Promise<Simulation> {
+    await initPhysics();
+    return new Simulation(o);
+  }
+
+  get matPlacement() {
+    return matPlacement(this.season);
+  }
+
+  allocId() {
+    return this.idCounter++;
+  }
+
+  // ---- construction ------------------------------------------------------------
+  private buildTable() {
+    const t = this.season.table;
+    const W = mmToM(t.interiorMm.w), H = mmToM(t.interiorMm.h);
+    const wt = mmToM(t.wall.thicknessMm), wh = mmToM(t.wall.heightMm);
+    const body = this.world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
+    const mk = (hx: number, hy: number, hz: number, x: number, y: number, z: number, friction: number) => {
+      const c = this.world.createCollider(
+        RAPIER.ColliderDesc.cuboid(hx, hy, hz).setTranslation(x, y, z).setFriction(friction)
+          .setFrictionCombineRule(RAPIER.CoefficientCombineRule.Multiply)
+          .setCollisionGroups(groups(G_FIELD, 0xffff)),
+        body,
+      );
+      return c;
+    };
+    const surface = mk(W / 2 + wt, 0.01, H / 2 + wt, W / 2, -0.01, -H / 2, 1.0);
+    this.surfaceHandle = surface.handle;
+    const walls: [number, number, number, number, number, number][] = [
+      [W / 2 + wt, wh / 2, wt / 2, W / 2, wh / 2, wt / 2], // south
+      [W / 2 + wt, wh / 2, wt / 2, W / 2, wh / 2, -H - wt / 2], // north
+      [wt / 2, wh / 2, H / 2, -wt / 2, wh / 2, -H / 2], // west
+      [wt / 2, wh / 2, H / 2, W + wt / 2, wh / 2, -H / 2], // east
+    ];
+    const wallShapes: ShapeSpec[] = [];
+    for (const [hx, hy, hz, x, y, z] of walls) {
+      const c = mk(hx, hy, hz, x, y, z, 0.4);
+      this.colliderColor.set(c.handle, parseHexColor("#2a2a2a"));
+      wallShapes.push({ kind: "box", sizeMm: { x: mToMm(hx * 2), y: mToMm(hy * 2), z: mToMm(hz * 2) }, posMm: { x: mToMm(x), y: mToMm(y), z: mToMm(z) }, color: "#3a3a3a" });
+    }
+    this.scene.push({ id: "table-walls", kind: "field", shapes: wallShapes });
+    this.bodies.push({ id: "table-walls", body, kind: "field" });
+  }
+
+  private buildRobot(start: StartPose) {
+    const m = this.robot;
+    const origin = matToWorld({ x: start.xMm, y: start.yMm }, this.matPlacement, 0);
+    const rot = quatFromAxisAngle({ x: 0, y: 1, z: 0 }, degToRad(start.headingDeg));
+    const byId = new Map<string, RAPIER.RigidBody>();
+    for (const b of m.bodies) {
+      const desc = RAPIER.RigidBodyDesc.dynamic()
+        .setTranslation(origin.x, origin.y + 0.0005, origin.z)
+        .setRotation(rot)
+        .setCanSleep(false);
+      if (b.extraInertia) {
+        const a = b.extraInertia.axis;
+        desc.setAdditionalMassProperties(0, { x: 0, y: 0, z: 0 }, { x: Math.abs(a.x) * b.extraInertia.kgm2, y: Math.abs(a.y) * b.extraInertia.kgm2, z: Math.abs(a.z) * b.extraInertia.kgm2 }, { x: 0, y: 0, z: 0, w: 1 });
+      }
+      const body = this.world.createRigidBody(desc);
+      byId.set(b.id, body);
+      const vols = b.shapes.map(shapeVolume);
+      const vt = vols.reduce((s, x) => s + x, 0) || 1;
+      b.shapes.forEach((s, i) => {
+        const cd = colliderDesc(s)
+          .setMass((b.massKg * vols[i]) / vt)
+          .setFriction(FRICTION[s.material ?? "plastic"])
+          .setFrictionCombineRule(RAPIER.CoefficientCombineRule.Multiply)
+          .setRestitution(0.05)
+          .setCollisionGroups(groups(G_ROBOT, 0xffff & ~G_ROBOT));
+        const c = this.world.createCollider(cd, body);
+        this.colliderColor.set(c.handle, parseHexColor(s.color));
+      });
+      this.bodies.push({ id: b.id, body, kind: "robot" });
+      this.scene.push({ id: b.id, kind: "robot", shapes: b.shapes });
+    }
+    for (const j of m.motors) {
+      const housing = byId.get(j.housing)!, output = byId.get(j.output)!;
+      const a = { x: mmToM(j.anchorMm.x), y: mmToM(j.anchorMm.y), z: mmToM(j.anchorMm.z) };
+      const joint = this.world.createImpulseJoint(RAPIER.JointData.revolute(a, a, j.axisOut), housing, output, true);
+      joint.setContactsEnabled(false);
+      this.motors.set(j.port, { ctl: new MotorController(j.motor), housing, output, axisLocal: j.axisOut, angleDeg: 0 });
+    }
+    for (const j of m.freeJoints) {
+      const a = { x: mmToM(j.anchorMm.x), y: mmToM(j.anchorMm.y), z: mmToM(j.anchorMm.z) };
+      this.world.createImpulseJoint(RAPIER.JointData.revolute(a, a, j.axis), byId.get(j.a)!, byId.get(j.b)!, true).setContactsEnabled(false);
+    }
+    for (const s of m.sensors) {
+      this.sensors.set(s.port, {
+        type: s.type,
+        body: byId.get(s.body)!,
+        posM: { x: mmToM(s.posMm.x), y: mmToM(s.posMm.y), z: mmToM(s.posMm.z) },
+        dir: s.dir,
+      });
+    }
+    return { hubBody: byId.get(m.hub.body)!, hubRot: m.hub.rot };
+  }
+
+  // ---- stepping ----------------------------------------------------------------
+  /** Advance exactly one tick (1 ms). */
+  tick() {
+    const t = this.timeMs / 1000;
+    for (const m of this.motors.values()) {
+      const qh = toQ(m.housing.rotation());
+      const axisW = rotate(qh, m.axisLocal);
+      const wRel = dot(toV(m.output.angvel()), axisW) - dot(toV(m.housing.angvel()), axisW);
+      const speedDps = -radToDeg(wRel); // clockwise looking at the output face = negative about axisOut
+      m.angleDeg += speedDps * DT;
+      m.ctl.update(t, m.angleDeg, speedDps);
+      const tau = m.ctl.torque(speedDps);
+      const imp = tau * DT;
+      m.output.applyTorqueImpulse({ x: -axisW.x * imp, y: -axisW.y * imp, z: -axisW.z * imp }, true);
+      m.housing.applyTorqueImpulse({ x: axisW.x * imp, y: axisW.y * imp, z: axisW.z * imp }, true);
+    }
+    this.world.step();
+    this.timeMs += 1;
+    // IMU specific force (accelerometer): a - g, in world frame.
+    const v = toV(this.hubBody.linvel());
+    this.hubAccel = {
+      x: (v.x - this.prevHubVel.x) / DT,
+      y: (v.y - this.prevHubVel.y) / DT + 9.81,
+      z: (v.z - this.prevHubVel.z) / DT,
+    };
+    this.prevHubVel = v;
+    this.hub.update(this.timeMs);
+  }
+
+  stepMs(ms: number) {
+    for (let i = 0; i < ms; i++) this.tick();
+  }
+
+  // ---- transforms for rendering ----------------------------------------------------
+  /** Flat array [x,y,z,qx,qy,qz,qw] per entry of `bodies` (metres). */
+  transforms(out?: Float32Array): Float32Array {
+    const a = out ?? new Float32Array(this.bodies.length * 7);
+    this.bodies.forEach(({ body }, i) => {
+      const p = body.translation(), q = body.rotation();
+      a.set([p.x, p.y, p.z, q.x, q.y, q.z, q.w], i * 7);
+    });
+    return a;
+  }
+
+  /** Robot pose in the mat frame (mm, heading deg CCW from north). */
+  robotPose() {
+    const b = this.hubBody;
+    const p = worldToMat(toV(b.translation()), this.matPlacement);
+    const f = rotate(toQ(b.rotation()), { x: 0, y: 0, z: -1 });
+    return { xMm: p.x, yMm: p.y, headingDeg: radToDeg(Math.atan2(-f.x, -f.z)) };
+  }
+
+  // ---- devices -------------------------------------------------------------------
+  deviceType(port: Port): "motor" | SensorType | null {
+    if (this.motors.has(port)) return "motor";
+    return this.sensors.get(port)?.type ?? null;
+  }
+
+  motor(port: Port): MotorController | null {
+    return this.motors.get(port)?.ctl ?? null;
+  }
+
+  private sensorRay(s: SensorBinding) {
+    const q = toQ(s.body.rotation());
+    const origin = add(toV(s.body.translation()), rotate(q, s.posM));
+    const dir = rotate(q, s.dir);
+    return { origin, dir };
+  }
+
+  private castFromRobot(origin: Vec3, dir: Vec3, maxM: number) {
+    const ray = new RAPIER.Ray(origin, dir);
+    return this.world.castRay(ray, maxM, true, undefined, groups(G_QUERY, G_FIELD | G_MODEL));
+  }
+
+  colorSensor(port: Port) {
+    const s = this.sensors.get(port)!;
+    const { origin, dir } = this.sensorRay(s);
+    const hit = this.castFromRobot(origin, dir, 0.08);
+    if (!hit) return colorReading(null, Infinity, this.cal);
+    const hMm = mToMm(hit.timeOfImpact);
+    const p = add(origin, { x: dir.x * hit.timeOfImpact, y: dir.y * hit.timeOfImpact, z: dir.z * hit.timeOfImpact });
+    let c: RGB | null;
+    if (hit.collider.handle === this.surfaceHandle) {
+      const mp = worldToMat(p, this.matPlacement);
+      const ms = this.season.mat.sizeMm;
+      if (this.mat && mp.x >= 0 && mp.y >= 0 && mp.x <= ms.w && mp.y <= ms.h) c = sampleMat(this.mat, this.matPxPerMm, mp.x, mp.y, spotRadiusMm(hMm), ms.h);
+      else if (!this.mat && mp.x >= 0 && mp.y >= 0 && mp.x <= ms.w && mp.y <= ms.h) c = { r: 0.95, g: 0.95, b: 0.95 };
+      else c = parseHexColor("#caa472"); // bare plywood
+    } else {
+      c = this.colliderColor.get(hit.collider.handle) ?? { r: 0.5, g: 0.5, b: 0.5 };
+    }
+    return colorReading(c, hMm, this.cal);
+  }
+
+  /** Distance in mm, or -1 when nothing valid is in range (40..2000 mm). */
+  distanceSensor(port: Port): number {
+    const s = this.sensors.get(port)!;
+    const { origin, dir } = this.sensorRay(s);
+    // Narrow cone: centre ray plus 4 rays at ~6 degrees.
+    const up = Math.abs(dir.y) < 0.9 ? { x: 0, y: 1, z: 0 } : { x: 1, y: 0, z: 0 };
+    const side = normalize(cross3(dir, up));
+    const up2 = cross3(side, dir);
+    const k = Math.tan(degToRad(6));
+    let best = Infinity;
+    for (const [a, b] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const d = normalize(add(dir, add(scale3(side, a * k), scale3(up2, b * k))));
+      const hit = this.castFromRobot(origin, d, 2.0);
+      if (hit && hit.timeOfImpact < best) best = hit.timeOfImpact;
+    }
+    const mm = mToMm(best);
+    return Number.isFinite(mm) && mm >= 40 && mm <= 2000 ? Math.round(mm) : -1;
+  }
+
+  // ---- IMU -----------------------------------------------------------------------
+  private hubQuat(): Quat {
+    const q = toQ(this.hubBody.rotation());
+    // body rotation * mount rotation
+    const m = this.hubRot;
+    return {
+      w: q.w * m.w - q.x * m.x - q.y * m.y - q.z * m.z,
+      x: q.w * m.x + q.x * m.w + q.y * m.z - q.z * m.y,
+      y: q.w * m.y - q.x * m.z + q.y * m.w + q.z * m.x,
+      z: q.w * m.z + q.x * m.y - q.y * m.x + q.z * m.w,
+    };
+  }
+
+  /** Continuous heading of the hub (deg, CCW positive seen from above). */
+  private rawYaw(): number {
+    const f = rotate(this.hubQuat(), { x: 0, y: 0, z: -1 });
+    return radToDeg(Math.atan2(-f.x, -f.z));
+  }
+
+  /** (yaw, pitch, roll) in decidegrees. Yaw: CCW positive (verify against a real hub). */
+  tiltAngles(): [number, number, number] {
+    const q = this.hubQuat();
+    const f = rotate(q, { x: 0, y: 0, z: -1 });
+    const r = rotate(q, { x: 1, y: 0, z: 0 });
+    const yaw = wrapDeg(this.rawYaw() - this.yawOffsetDeg);
+    const pitch = radToDeg(Math.asin(Math.max(-1, Math.min(1, f.y))));
+    const roll = radToDeg(Math.asin(Math.max(-1, Math.min(1, -r.y))));
+    return [Math.round(yaw * 10), Math.round(pitch * 10), Math.round(roll * 10)];
+  }
+
+  resetYaw(angleDeci: number) {
+    this.yawOffsetDeg = this.rawYaw() - angleDeci / 10;
+  }
+
+  /** Angular velocity in hub frame, decidegrees/s (x, y, z). */
+  angularVelocity(): [number, number, number] {
+    const q = this.hubQuat();
+    const w = toV(this.hubBody.angvel());
+    const inv = { x: -q.x, y: -q.y, z: -q.z, w: q.w };
+    const l = rotate(inv, w);
+    // Hub axes: x right, y forward, z up (matrix face).
+    return [Math.round(radToDeg(l.x) * 10), Math.round(radToDeg(-l.z) * 10), Math.round(radToDeg(l.y) * 10)];
+  }
+
+  /** Acceleration in hub frame, milli-g (x, y, z). */
+  acceleration(): [number, number, number] {
+    const q = this.hubQuat();
+    const inv = { x: -q.x, y: -q.y, z: -q.z, w: q.w };
+    const l = rotate(inv, this.hubAccel);
+    const g = 9.81 / 1000;
+    return [Math.round(l.x / g), Math.round(-l.z / g), Math.round(l.y / g)];
+  }
+
+  quaternion(): [number, number, number, number] {
+    const q = this.hubQuat();
+    return [q.w, q.x, q.y, q.z];
+  }
+
+  /** Which hub face points up: TOP 0, FRONT 1, RIGHT 2, BOTTOM 3, BACK 4, LEFT 5. */
+  upFace(): number {
+    const q = this.hubQuat();
+    const inv = { x: -q.x, y: -q.y, z: -q.z, w: q.w };
+    const up = rotate(inv, { x: 0, y: 1, z: 0 });
+    const cands: [number, number][] = [[0, up.y], [3, -up.y], [1, -up.z], [4, up.z], [2, up.x], [5, -up.x]];
+    cands.sort((a, b) => b[1] - a[1]);
+    return cands[0][0];
+  }
+
+  stable(): boolean {
+    const w = toV(this.hubBody.angvel());
+    return Math.hypot(w.x, w.y, w.z) < 0.05 && this.upFace() === 0;
+  }
+}
+
+function colliderDesc(s: ShapeSpec): RAPIER.ColliderDesc {
+  const p = { x: mmToM(s.posMm.x), y: mmToM(s.posMm.y), z: mmToM(s.posMm.z) };
+  switch (s.kind) {
+    case "box": {
+      const d = RAPIER.ColliderDesc.cuboid(mmToM(s.sizeMm.x) / 2, mmToM(s.sizeMm.y) / 2, mmToM(s.sizeMm.z) / 2).setTranslation(p.x, p.y, p.z);
+      if (s.rot) d.setRotation(s.rot);
+      return d;
+    }
+    case "cylinder": {
+      const d = RAPIER.ColliderDesc.cylinder(mmToM(s.lengthMm) / 2, mmToM(s.radiusMm)).setTranslation(p.x, p.y, p.z);
+      // Rapier cylinders are along +y.
+      if (s.axis === "x") d.setRotation(quatFromAxisAngle({ x: 0, y: 0, z: 1 }, Math.PI / 2));
+      else if (s.axis === "z") d.setRotation(quatFromAxisAngle({ x: 1, y: 0, z: 0 }, Math.PI / 2));
+      return d;
+    }
+    case "sphere":
+      return RAPIER.ColliderDesc.ball(mmToM(s.radiusMm)).setTranslation(p.x, p.y, p.z);
+  }
+}
+
+function shapeVolume(s: ShapeSpec): number {
+  switch (s.kind) {
+    case "box": return s.sizeMm.x * s.sizeMm.y * s.sizeMm.z;
+    case "cylinder": return Math.PI * s.radiusMm * s.radiusMm * s.lengthMm;
+    case "sphere": return (4 / 3) * Math.PI * s.radiusMm ** 3;
+  }
+}
+
+const cross3 = (a: Vec3, b: Vec3): Vec3 => ({ x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x });
+const scale3 = (a: Vec3, s: number): Vec3 => ({ x: a.x * s, y: a.y * s, z: a.z * s });
+const normalize = (a: Vec3): Vec3 => {
+  const l = Math.hypot(a.x, a.y, a.z) || 1;
+  return { x: a.x / l, y: a.y / l, z: a.z / l };
+};

@@ -1,0 +1,12 @@
+{
+  "name": "@fll-sim/runtime-python",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts", "./node": "./src/node.ts", "./python/*": "./python/*" },
+  "dependencies": {
+    "@fll-sim/sim": "workspace:*",
+    "@micropython/micropython-webassembly-pyscript": "1.29.0-6"
+  }
+}

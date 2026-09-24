@@ -1,0 +1,12 @@
+node_modules/
+dist/
+out/
+release/
+*.tsbuildinfo
+.vite/
+coverage/
+# FIRST/LEGO copyrighted season materials — never commit
+resources/
+# LEGO Education API reference text (copyrighted) — keep locally
+docs.txt
+docs_wordblock.txt

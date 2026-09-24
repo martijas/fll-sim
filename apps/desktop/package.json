@@ -1,0 +1,38 @@
+{
+  "name": "@fll-sim/desktop",
+  "productName": "FLL Sim",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FIRST LEGO League robot and field simulator",
+  "author": "FLL Sim contributors",
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "dist:linux": "electron-vite build && electron-builder --linux deb AppImage"
+  },
+  "devDependencies": {
+    "@dimforge/rapier3d-compat": "0.20.0",
+    "@fll-sim/llsp3": "workspace:*",
+    "@fll-sim/runtime-python": "workspace:*",
+    "@fll-sim/sim": "workspace:*",
+    "@fll-sim/units": "workspace:*",
+    "@micropython/micropython-webassembly-pyscript": "1.29.0-6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/three": "0.186.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3",
+    "electron-vite": "5.0.0",
+    "monaco-editor": "0.57.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "three": "0.186.1",
+    "vite": "7.3.6"
+  },
+  "homepage": "https://github.com/",
+  "desktopName": "fll-sim.desktop"
+}

@@ -1,0 +1,29 @@
+{
+  "id": "2026-27",
+  "name": "BIOGLOW",
+  "program": "FIRST LEGO League Challenge",
+  "sources": {
+    "table": "fll-challenge-bioglow-table-building-instructions.pdf",
+    "wireframe": "fll-challenge-bioglow-wireframe-grid.pdf (page 2)",
+    "rules": "fll-challenge-bioglow-rgr.pdf"
+  },
+  "table": {
+    "_note": "Interior of border walls. Table guide: L=93in (2362mm) x W=45in (1143mm); walls 1.5in x 2.5in (38x64mm).",
+    "interiorMm": { "w": 2362, "h": 1143 },
+    "wall": { "thicknessMm": 38, "heightMm": 64 },
+    "surfaceMm": { "w": 2438, "h": 1219 }
+  },
+  "mat": {
+    "_note": "Measured from the wireframe PDF: ten 20 cm grid columns = 2000 mm; aspect 1.7537 -> 1140 mm. Table guide: flush against south wall, centred, ~9 mm gap at north wall, ~181 mm free at each side (rulebook says ~171 mm). VERIFY with a tape measure on the real mat.",
+    "sizeMm": { "w": 2000, "h": 1140 },
+    "placement": "south-centered",
+    "image": { "default": "resources/2026-27-bioglow/derived/mat-wireframe.png", "pxPerMm": 2 }
+  },
+  "launchAreas": [
+    { "id": "left", "color": "red", "shape": "quarter-circle", "centerMm": { "x": 0, "y": 0 }, "radiusMm": 483 },
+    { "id": "right", "color": "blue", "shape": "quarter-circle", "centerMm": { "x": 2000, "y": 0 }, "radiusMm": 483 }
+  ],
+  "robotLimits": { "heightMm": 305 },
+  "match": { "durationS": 150, "precisionTokens": 6 },
+  "missionModels": []
+}

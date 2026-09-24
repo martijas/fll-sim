@@ -1,0 +1,27 @@
+appId: org.fllsim.desktop
+productName: FLL Sim
+executableName: fll-sim
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**
+  - package.json
+extraResources:
+  - from: ../../seasons
+    to: seasons
+linux:
+  target: [deb, AppImage]
+  category: Education
+  icon: build/icon.png
+  maintainer: FLL Sim contributors <superboom915@gmail.com>
+  synopsis: FIRST LEGO League robot and field simulator
+  syncDesktopName: true
+  desktop:
+    entry:
+      Name: FLL Sim
+      Comment: Simulate SPIKE Prime robots on the FIRST LEGO League field
+deb:
+  artifactName: fll-sim_${version}_${arch}.${ext}
+  depends: [libgtk-3-0, libnss3, libxss1, "libasound2 | libasound2t64", libgbm1]
+artifactName: fll-sim-${version}-${arch}.${ext}
