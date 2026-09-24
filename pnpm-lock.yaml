@@ -187,6 +187,9 @@ importers:
       '@fll-sim/llsp3':
         specifier: workspace:*
         version: link:../../packages/llsp3
+      '@fll-sim/runtime-blocks':
+        specifier: workspace:*
+        version: link:../../packages/runtime-blocks
       '@fll-sim/runtime-python':
         specifier: workspace:*
         version: link:../../packages/runtime-python
@@ -242,6 +245,25 @@ importers:
         specifier: ^0.8.2
         version: 0.8.3
 
+  packages/runtime-blocks:
+    dependencies:
+      '@fll-sim/llsp3':
+        specifier: workspace:*
+        version: link:../llsp3
+    devDependencies:
+      '@fll-sim/runtime-python':
+        specifier: workspace:*
+        version: link:../runtime-python
+      '@fll-sim/sim':
+        specifier: workspace:*
+        version: link:../sim
+      '@types/pngjs':
+        specifier: ^6.0.5
+        version: 6.0.5
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
+
   packages/runtime-python:
     dependencies:
       '@fll-sim/sim':
@@ -267,6 +289,9 @@ importers:
       '@fll-sim/llsp3':
         specifier: workspace:*
         version: link:../../packages/llsp3
+      '@fll-sim/runtime-blocks':
+        specifier: workspace:*
+        version: link:../../packages/runtime-blocks
       '@fll-sim/runtime-python':
         specifier: workspace:*
         version: link:../../packages/runtime-python

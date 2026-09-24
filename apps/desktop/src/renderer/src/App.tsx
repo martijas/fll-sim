@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SeasonConfig, StartPose } from "@fll-sim/sim";
 import { readLlsp3, writePythonLlsp3, type Llsp3Project } from "@fll-sim/llsp3";
+import { compileBlocks, type CompileResult } from "@fll-sim/runtime-blocks";
 import { FieldView, type CameraMode, type FieldViewHandle } from "./three/FieldView";
 import { CodeEditor } from "./components/CodeEditor";
 import { HubPanel } from "./components/HubPanel";
 import { Telemetry } from "./components/Telemetry";
+import { RobotPanel } from "./components/RobotPanel";
+import { loadRobotConfig, saveRobotConfig, toDriveBaseOptions, type RobotConfig } from "./lib/robotConfig";
 import { SimController } from "./lib/simController";
 import { loadDefaultMat, loadMatImage, loadSeason, type LoadedMat } from "./lib/assets";
 import { playHubEvents } from "./lib/audio";
@@ -31,6 +34,10 @@ export function App() {
   const [speed, setSpeed] = useState(1);
   const [start, setStart] = useState<StartPose>({ xMm: 230, yMm: 180, headingDeg: 0 });
   const [error, setError] = useState<{ line?: number; text: string } | null>(null);
+  const [robot, setRobot] = useState<RobotConfig>(loadRobotConfig);
+  const [showRobot, setShowRobot] = useState(false);
+  /** Set when a Word Blocks project is open: the editor shows its compiled Python read-only. */
+  const [blocks, setBlocks] = useState<CompileResult | null>(null);
   const field = useRef<FieldViewHandle>(null);
   const ctl = useRef<SimController | null>(null);
   const consoleEnd = useRef<HTMLDivElement>(null);
@@ -81,13 +88,13 @@ export function App() {
           log(`Simulator error: ${m}`, "err");
         },
       },
-      { season, mat: mat?.payload ?? null, robot: {}, start },
+      { season, mat: mat?.payload ?? null, robot: toDriveBaseOptions(robot), start },
     );
     ctl.current = c;
     c.boot();
     return () => c.dispose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [season, mat]);
+  }, [season, mat, robot]);
 
   useEffect(() => {
     consoleEnd.current?.scrollIntoView({ block: "end" });
@@ -140,16 +147,26 @@ export function App() {
     if (!f) return;
     try {
       if (f.name.endsWith(".py")) {
+        setBlocks(null);
         setSource(new TextDecoder().decode(f.data));
         setProject(undefined);
         setFileName(f.name.replace(/\.py$/, ".llsp3"));
         setFilePath(undefined);
       } else {
         const p = readLlsp3(f.data);
-        if (p.kind !== "python") {
-          log(`"${f.name}" is a Word Blocks project. Word Blocks support arrives in milestone M5; opening Python projects only for now.`, "err");
+        if (p.kind === "word-blocks") {
+          const c = compileBlocks(p.project);
+          setBlocks(c);
+          setProject(p);
+          setSource(c.python);
+          setFileName(f.name);
+          setFilePath(f.path);
+          setError(null);
+          log(`Opened Word Blocks project ${f.name} (shown as the Python it runs as)`, "info");
+          for (const w of c.warnings) log(`⚠ ${w}`, "err");
           return;
         }
+        setBlocks(null);
         setProject(p);
         setSource(p.source);
         setFileName(f.name);
@@ -162,6 +179,10 @@ export function App() {
     }
   };
   const saveFile = async (as = false) => {
+    if (blocks) {
+      log("Word Blocks projects are read-only here — edit them in the SPIKE App, or use “Convert to Python”.", "err");
+      return;
+    }
     const name = fileName.replace(/\.llsp3$/, "");
     const data = writePythonLlsp3(source, name, project);
     const r = await window.fllsim.saveFile(fileName, data, [{ name: "SPIKE project", extensions: ["llsp3"] }], as ? undefined : filePath);
@@ -172,6 +193,21 @@ export function App() {
       log(`Saved ${r.path}`, "info");
     }
   };
+  const applyRobot = (c: RobotConfig) => {
+    saveRobotConfig(c);
+    setRobot(c);
+    setShowRobot(false);
+    field.current?.clearTrail();
+    log(`Robot: ${c.name} — drive ${c.leftPort}+${c.rightPort}, colour ${c.colorPorts.join(",") || "none"}, distance ${c.distancePort || "none"}, motors ${c.attachmentPorts.join(",") || "none"}`, "info");
+  };
+  const convertToPython = () => {
+    setBlocks(null);
+    setProject(undefined);
+    setFileName(fileName.replace(/\.llsp3$/, "") + " (Python).llsp3");
+    setFilePath(undefined);
+    log("Converted to an editable Python project. Save to keep it; the original blocks file is unchanged.", "info");
+  };
+
   const importMat = async () => {
     const f = await window.fllsim.openFile([{ name: "Mat image (to scale)", extensions: ["png", "jpg", "jpeg", "webp"] }]);
     if (!f) return;
@@ -224,6 +260,7 @@ export function App() {
           <label>X <input type="number" value={start.xMm} step={5} disabled={running} onChange={(e) => applyStart({ ...start, xMm: Number(e.target.value) })} /></label>
           <label>Y <input type="number" value={start.yMm} step={5} disabled={running} onChange={(e) => applyStart({ ...start, yMm: Number(e.target.value) })} /></label>
           <label>Heading <input type="number" value={start.headingDeg} step={5} disabled={running} onChange={(e) => applyStart({ ...start, headingDeg: Number(e.target.value) })} /></label>
+          <button onClick={() => setShowRobot(true)} disabled={running} title="Motor and sensor ports, wheels">Robot…</button>
           <button onClick={importMat} title="Load a scan/photo of your mat, cropped to its edges">Mat image…</button>
         </div>
       </header>
@@ -247,13 +284,21 @@ export function App() {
           </div>
         </section>
         <section className="right">
-          <CodeEditor value={source} onChange={setSource} errorLine={error?.line ?? null} errorText={error?.text ?? null} />
+          {blocks && (
+            <div className="banner">
+              <span>🧩 Word Blocks project — showing the Python it runs as (read-only).</span>
+              {blocks.warnings.map((w) => <span key={w} className="warn">⚠ {w}</span>)}
+              <button onClick={convertToPython}>Convert to Python</button>
+            </div>
+          )}
+          <CodeEditor value={source} onChange={setSource} readOnly={!!blocks} errorLine={error?.line ?? null} errorText={error?.text ?? null} />
           <div className="console">
             {lines.map((l, i) => <div key={i} className={`line ${l.kind}`}>{l.text}</div>)}
             <div ref={consoleEnd} />
           </div>
         </section>
       </main>
+      {showRobot && <RobotPanel config={robot} onApply={applyRobot} onClose={() => setShowRobot(false)} />}
     </div>
   );
 }

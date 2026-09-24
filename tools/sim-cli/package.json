@@ -3,13 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": { "fll-sim-cli": "src/cli.ts" },
-  "scripts": { "start": "tsx src/cli.ts" },
+  "bin": {
+    "fll-sim-cli": "src/cli.ts"
+  },
+  "scripts": {
+    "start": "tsx src/cli.ts"
+  },
   "dependencies": {
     "@fll-sim/llsp3": "workspace:*",
     "@fll-sim/runtime-python": "workspace:*",
     "@fll-sim/sim": "workspace:*",
-    "pngjs": "^7.0.0"
+    "pngjs": "^7.0.0",
+    "@fll-sim/runtime-blocks": "workspace:*"
   },
-  "devDependencies": { "tsx": "^4.20.0", "@types/pngjs": "^6.0.5" }
+  "devDependencies": {
+    "tsx": "^4.20.0",
+    "@types/pngjs": "^6.0.5"
+  }
 }

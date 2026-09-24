@@ -15,7 +15,7 @@ Current season pack: **2026-27 BIOGLOW**.
 | M2 Drive base — Rapier physics, SPIKE motor model (profiles, PID, stop modes, stall) | ✅ |
 | M3 Python — real MicroPython (WASM) in lockstep with sim time, SPIKE 3 API | ✅ |
 | M4 Sensors — colour (samples the mat), distance, IMU; telemetry panel | 🟡 force sensor + calibration UI pending |
-| M5 Word Blocks + `.llsp3` | 🟡 `.llsp3` Python open/save done; blocks pending |
+| M5 Word Blocks + `.llsp3` | 🟡 Word Blocks `.llsp3` compile + run (FIRST's BIOGLOW guided mission runs); visual blocks editor pending |
 | M6 LEGO builder (LDraw parts, snapping, connectivity) | ⏳ |
 | M7 BIOGLOW mission models + scoring | ⏳ |
 | M8 Real-robot calibration, replay, polish | ⏳ |
@@ -39,7 +39,17 @@ Headless runs (CI, batch testing of programs):
 
 ```sh
 pnpm sim run my_program.llsp3 --start 230,180,0 --trace trace.json
+# FIRST's BIOGLOW guided mission (Word Blocks), robot wired like the SPIKE lesson:
+pnpm sim run resources/2026-27-bioglow/code/guided-mission-bioglow-11.llsp3 \
+  --start 300,350,-90 --drive C,D --color B --distance none --motors E
 ```
+
+## Word Blocks
+
+Word Blocks `.llsp3` projects from the SPIKE App open directly: they are compiled to Python
+(shown read-only in the editor, "View as Python") and run on the same simulated hub, so timing
+and physics are identical to Python programs. Edit blocks in the SPIKE App and re-open, or use
+**Convert to Python** to continue in Python.
 
 ## Season materials and the mat
 
@@ -60,7 +70,8 @@ the most realistic line-following.
 
 Default drive base: drive motors **A** (left) and **B** (right, both medium motors, 56 mm wheels,
 120 mm track), colour sensors **C** and **D** pointing down at the front, distance sensor **E**
-facing forward. Start pose is set with X / Y (mm on the mat, origin at the south-west corner)
+facing forward, attachment motor **F**. Use **Robot…** to rewire ports to match your robot
+(presets include the SPIKE guided-mission robot: drive C+D, colour B, arm E). Start pose is set with X / Y (mm on the mat, origin at the south-west corner)
 and heading (degrees, 0 = facing north/away from the south wall).
 
 ## Known differences from a real hub (to be calibrated — see plan M8)

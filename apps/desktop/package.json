@@ -16,6 +16,7 @@
   "devDependencies": {
     "@dimforge/rapier3d-compat": "0.20.0",
     "@fll-sim/llsp3": "workspace:*",
+    "@fll-sim/runtime-blocks": "workspace:*",
     "@fll-sim/runtime-python": "workspace:*",
     "@fll-sim/sim": "workspace:*",
     "@fll-sim/units": "workspace:*",

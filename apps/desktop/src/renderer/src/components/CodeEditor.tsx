@@ -55,9 +55,10 @@ interface Props {
   onChange(v: string): void;
   errorLine?: number | null;
   errorText?: string | null;
+  readOnly?: boolean;
 }
 
-export function CodeEditor({ value, onChange, errorLine, errorText }: Props) {
+export function CodeEditor({ value, onChange, errorLine, errorText, readOnly }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const ed = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const decos = useRef<monaco.editor.IEditorDecorationsCollection | null>(null);
@@ -89,6 +90,10 @@ export function CodeEditor({ value, onChange, errorLine, errorText }: Props) {
     const e = ed.current;
     if (e && e.getValue() !== value) e.setValue(value);
   }, [value]);
+
+  useEffect(() => {
+    ed.current?.updateOptions({ readOnly: !!readOnly });
+  }, [readOnly]);
 
   useEffect(() => {
     const e = ed.current;

@@ -76,7 +76,20 @@ function smokeTest(win: BrowserWindow, prefix: string) {
   const shot = async (name: string) => writeFile(`${prefix}-${name}.png`, (await win.webContents.capturePage()).toPNG());
   win.webContents.on("console-message", (e) => console.log(`[renderer] ${e.message}`));
   win.webContents.once("did-finish-load", async () => {
+    if (process.env.FLLSIM_SMOKE_ROBOT) {
+      await win.webContents.executeJavaScript(`localStorage.setItem("fllsim.robot", ${JSON.stringify(process.env.FLLSIM_SMOKE_ROBOT)}); location.reload()`);
+      await wait(1500);
+    }
     await wait(5000);
+    if (process.env.FLLSIM_SMOKE_OPEN) {
+      await win.webContents.executeJavaScript(`[...document.querySelectorAll("button")].find(b => b.textContent === "Open")?.click()`);
+      await wait(1500);
+    }
+    if (process.env.FLLSIM_SMOKE_START) {
+      const [x, y, h] = process.env.FLLSIM_SMOKE_START.split(",");
+      await win.webContents.executeJavaScript(`(() => { const set = (i, v) => { const el = document.querySelectorAll(".toolbar input[type=number]")[i]; const s = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set; s.call(el, v); el.dispatchEvent(new Event("input", { bubbles: true })); }; set(0, "${x}"); set(1, "${y}"); set(2, "${h}"); })()`);
+      await wait(1500);
+    }
     console.log("[smoke] " + (await win.webContents.executeJavaScript(`location.href + " isolated=" + self.crossOriginIsolated`)));
     await shot("1-loaded");
     await win.webContents.executeJavaScript(`document.querySelector("button.primary")?.click()`);
@@ -119,6 +132,10 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("file:open", async (_e, filters: Electron.FileFilter[]) => {
+    if (process.env.FLLSIM_SMOKE_OPEN) {
+      const path = process.env.FLLSIM_SMOKE_OPEN;
+      return { path, name: basename(path), data: new Uint8Array(await readFile(path)) };
+    }
     const r = await dialog.showOpenDialog({ properties: ["openFile"], filters });
     if (r.canceled || !r.filePaths[0]) return null;
     const path = r.filePaths[0];
