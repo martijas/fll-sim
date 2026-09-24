@@ -6,7 +6,7 @@ release/
 .vite/
 coverage/
 # FIRST/LEGO copyrighted season materials — never commit
-resources/
+/resources/
 # LEGO Education API reference text (copyrighted) — keep locally
 docs.txt
 docs_wordblock.txt

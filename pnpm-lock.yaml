@@ -184,6 +184,12 @@ importers:
       '@dimforge/rapier3d-compat':
         specifier: 0.20.0
         version: 0.20.0
+      '@fll-sim/assembly':
+        specifier: workspace:*
+        version: link:../../packages/assembly
+      '@fll-sim/ldraw':
+        specifier: workspace:*
+        version: link:../../packages/ldraw
       '@fll-sim/llsp3':
         specifier: workspace:*
         version: link:../../packages/llsp3
@@ -239,6 +245,20 @@ importers:
         specifier: 7.3.6
         version: 7.3.6(@types/node@22.20.4)(jiti@2.7.0)(tsx@4.23.15)
 
+  packages/assembly:
+    dependencies:
+      '@fll-sim/ldraw':
+        specifier: workspace:*
+        version: link:../ldraw
+      '@fll-sim/sim':
+        specifier: workspace:*
+        version: link:../sim
+      '@fll-sim/units':
+        specifier: workspace:*
+        version: link:../units
+
+  packages/ldraw: {}
+
   packages/llsp3:
     dependencies:
       fflate:
@@ -283,6 +303,16 @@ importers:
         version: link:../units
 
   packages/units: {}
+
+  tools/ldraw-pack:
+    dependencies:
+      '@fll-sim/ldraw':
+        specifier: workspace:*
+        version: link:../../packages/ldraw
+    devDependencies:
+      tsx:
+        specifier: ^4.20.0
+        version: 4.23.15
 
   tools/sim-cli:
     dependencies:

@@ -72,3 +72,33 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 .modal-buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .banner { background: #2b2410; border-bottom: 1px solid #5a4a14; color: #ffe08a; padding: 6px 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .banner .warn { color: #ffb36b; }
+
+.tabs { display: flex; gap: 2px; background: var(--panel2); border-radius: 8px; padding: 2px; }
+.tabs button { border: none; background: transparent; padding: 4px 14px; }
+.tabs button.on { background: var(--accent); color: #1a1500; font-weight: 600; }
+
+.builder { flex: 1; display: grid; grid-template-columns: 290px minmax(0, 1fr) 230px; min-height: 0; }
+.catalog { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-right: 1px solid var(--border); min-height: 0; background: var(--panel); }
+.catalog .search { width: 100%; }
+.part-list { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 2px; }
+.part-item { display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto; text-align: left; padding: 4px 6px; gap: 0 6px; background: transparent; border: 1px solid transparent; }
+.part-item:hover { background: var(--panel2); }
+.part-item.active { border-color: var(--accent); }
+.part-item .swatches { grid-row: span 2; display: flex; flex-wrap: wrap; gap: 2px; align-content: center; }
+.part-item .swatches i { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #0006; }
+.part-item .pname { font-size: 12px; }
+.part-item .pnum { font-size: 11px; color: var(--muted); }
+.build-view-wrap { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.build-toolbar { display: flex; gap: 6px; align-items: center; padding: 6px 8px; background: var(--panel); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.build-toolbar .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
+.build-view { flex: 1; min-height: 0; }
+.build-report { position: absolute; left: 10px; bottom: 10px; background: rgba(21, 23, 28, 0.9); padding: 6px 10px; border-radius: 6px; max-width: 70%; }
+.build-report .warn { color: #ffb36b; }
+.inspector { padding: 10px; border-left: 1px solid var(--border); background: var(--panel); overflow: auto; }
+.inspector h3 { font-size: 13px; margin: 12px 0 6px; color: var(--muted); font-weight: 600; }
+.colors { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
+.colors .color { width: 100%; aspect-ratio: 1; padding: 0; border-radius: 4px; border: 1px solid #0008; }
+.colors .color.on { outline: 2px solid var(--accent); }
+.sel-name { font-weight: 600; }
+.sel-buttons { display: flex; gap: 6px; margin-top: 8px; }
+.inspector label { display: flex; justify-content: space-between; margin-top: 8px; color: var(--text); }

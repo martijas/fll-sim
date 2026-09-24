@@ -16,7 +16,7 @@ Current season pack: **2026-27 BIOGLOW**.
 | M3 Python — real MicroPython (WASM) in lockstep with sim time, SPIKE 3 API | ✅ |
 | M4 Sensors — colour (samples the mat), distance, IMU; telemetry panel | 🟡 force sensor + calibration UI pending |
 | M5 Word Blocks + `.llsp3` | 🟡 Word Blocks `.llsp3` compile + run (FIRST's BIOGLOW guided mission runs); visual blocks editor pending |
-| M6 LEGO builder (LDraw parts, snapping, connectivity) | ⏳ |
+| M6 LEGO builder (LDraw parts, snapping, connectivity) | 🟡 real-part builder, connection → physics (rigid groups, hinges, motor axles), real-parts SPIKE drive base; gears and part thumbnails pending |
 | M7 BIOGLOW mission models + scoring | ⏳ |
 | M8 Real-robot calibration, replay, polish | ⏳ |
 
@@ -50,6 +50,23 @@ Word Blocks `.llsp3` projects from the SPIKE App open directly: they are compile
 (shown read-only in the editor, "View as Python") and run on the same simulated hub, so timing
 and physics are identical to Python programs. Edit blocks in the SPIKE App and re-open, or use
 **Convert to Python** to continue in Python.
+
+## Building robots with real LEGO parts
+
+The **Build** tab places real parts from the LDraw library — the SPIKE Prime Core and Expansion
+sets and the BIOGLOW Challenge Set are in the catalog. Parts snap together at their real
+connection points (studs, pin holes, axles). **Check connections** shows how the model will
+behave physically: parts held by studs, axles in axle holes, or two or more pins become one rigid
+group; a single pin or an axle in a round hole becomes a hinge; SPIKE motors drive their output
+hub. **Use as robot** puts the build on the field. Models save as standard `.ldr` files (open
+them in LDCad, LeoCAD or Studio); motor/sensor ports are stored as `0 !FLLSIM PORT X` lines.
+
+Part geometry: [LDraw Parts Library](https://library.ldraw.org) (CC BY 4.0). Connection data:
+[LDCad Shadow Library](https://github.com/RolandMelkert/LDCadShadowLibrary) (CC BY-SA 4.0).
+Inventories: [Rebrickable](https://rebrickable.com). See `apps/desktop/resources/ldraw/ATTRIBUTION.txt`.
+Rebuild the bundled pack with `pnpm --filter @fll-sim/ldraw-pack run build-pack` (needs the LDraw
+library in `~/.cache/fll-sim/ldraw`, the shadow library in `~/.cache/fll-sim/shadow` and the
+Rebrickable CSV dumps in `~/.cache/fll-sim/rebrickable`).
 
 ## Season materials and the mat
 

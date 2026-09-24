@@ -1,0 +1,9 @@
+{
+  "name": "@fll-sim/ldraw-pack",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "build-pack": "tsx src/pack.ts" },
+  "dependencies": { "@fll-sim/ldraw": "workspace:*" },
+  "devDependencies": { "tsx": "^4.20.0" }
+}

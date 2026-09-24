@@ -1,0 +1,5439 @@
+[
+ {
+  "id": "45678-1",
+  "name": "SPIKE Prime Core Set",
+  "parts": [
+   {
+    "file": "66906.dat",
+    "name": "=Technic Pin Towball with Friction",
+    "colors": {
+     "0": 6
+    },
+    "rb": [
+     "66906"
+    ]
+   },
+   {
+    "file": "3941.dat",
+    "name": "Brick  2 x  2 Round without Reinforcement",
+    "colors": {
+     "15": 6
+    },
+    "rb": [
+     "3941"
+    ]
+   },
+   {
+    "file": "39789.dat",
+    "name": "Brick  2 x  4 with  3 Axleholes Vertical",
+    "colors": {
+     "1": 3,
+     "2": 3,
+     "4": 3,
+     "14": 3,
+     "26": 3
+    },
+    "rb": [
+     "39789"
+    ]
+   },
+   {
+    "file": "44375b.dat",
+    "name": "Dish  6 x  6 Inverted with Solid Studs",
+    "colors": {
+     "47": 2
+    },
+    "rb": [
+     "44375b"
+    ]
+   },
+   {
+    "file": "45601c01.dat",
+    "name": "Electric Powered Up 6 Port Hub with Yellow Bottom",
+    "colors": {
+     "14": 1
+    },
+    "rb": [
+     "45601"
+    ]
+   },
+   {
+    "file": "37308.dat",
+    "name": "Electric Powered Up Colour Sensor",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "37308"
+    ]
+   },
+   {
+    "file": "37316.dat",
+    "name": "Electric Powered Up Distance Sensor",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "37316"
+    ]
+   },
+   {
+    "file": "37312.dat",
+    "name": "Electric Powered Up Force Sensor",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "37312"
+    ]
+   },
+   {
+    "file": "54675.dat",
+    "name": "Electric Powered Up Large Angular Motor with Medium Azure Back",
+    "colors": {
+     "322": 1
+    },
+    "rb": [
+     "54675"
+    ]
+   },
+   {
+    "file": "54696p01.dat",
+    "name": "Electric Powered Up Medium Angular Motor with Medium Azure Back and Hub Pattern",
+    "colors": {
+     "322": 2
+    },
+    "rb": [
+     "54696"
+    ]
+   },
+   {
+    "file": "57539.dat",
+    "name": "Hose Flexible 19L",
+    "colors": {
+     "315": 2
+    },
+    "rb": [
+     "57539"
+    ]
+   },
+   {
+    "file": "18674.dat",
+    "name": "Plate  2 x  2 Round with  1 Centre Stud",
+    "colors": {
+     "15": 2
+    },
+    "rb": [
+     "18674"
+    ]
+   },
+   {
+    "file": "4032a.dat",
+    "name": "Plate  2 x  2 Round with Axlehole",
+    "colors": {
+     "322": 6
+    },
+    "rb": [
+     "4032a"
+    ]
+   },
+   {
+    "file": "4282.dat",
+    "name": "Plate  2 x 16",
+    "colors": {
+     "26": 2
+    },
+    "rb": [
+     "4282"
+    ]
+   },
+   {
+    "file": "85546.dat",
+    "name": "Rubber Belt Round 33 /  1.6",
+    "colors": {
+     "14": 4
+    },
+    "rb": [
+     "85546"
+    ]
+   },
+   {
+    "file": "85984.dat",
+    "name": "Slope Brick 31  1 x  2 x  0.667",
+    "colors": {
+     "14": 4
+    },
+    "rb": [
+     "85984"
+    ]
+   },
+   {
+    "file": "24309.dat",
+    "name": "Slope Brick Curved  3 x  2",
+    "colors": {
+     "14": 4
+    },
+    "rb": [
+     "24309"
+    ]
+   },
+   {
+    "file": "44126.dat",
+    "name": "Slope Brick Curved  6 x  2",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "44126"
+    ]
+   },
+   {
+    "file": "41750.dat",
+    "name": "Slope Brick Round  3 x  8 x  2 Left",
+    "colors": {
+     "322": 1
+    },
+    "rb": [
+     "41750"
+    ]
+   },
+   {
+    "file": "41749.dat",
+    "name": "Slope Brick Round  3 x  8 x  2 Right",
+    "colors": {
+     "322": 1
+    },
+    "rb": [
+     "41749"
+    ]
+   },
+   {
+    "file": "32013.dat",
+    "name": "Technic Angle Connector #1",
+    "colors": {
+     "71": 5
+    },
+    "rb": [
+     "32013"
+    ]
+   },
+   {
+    "file": "32034.dat",
+    "name": "Technic Angle Connector #2 (180 degree)",
+    "colors": {
+     "0": 5
+    },
+    "rb": [
+     "32034"
+    ]
+   },
+   {
+    "file": "32192.dat",
+    "name": "Technic Angle Connector #4 (135 degree)",
+    "colors": {
+     "15": 5
+    },
+    "rb": [
+     "32192"
+    ]
+   },
+   {
+    "file": "32014.dat",
+    "name": "Technic Angle Connector #6 (90 degree)",
+    "colors": {
+     "14": 5
+    },
+    "rb": [
+     "32014"
+    ]
+   },
+   {
+    "file": "32062.dat",
+    "name": "Technic Axle  2 Notched",
+    "colors": {
+     "4": 12
+    },
+    "rb": [
+     "32062"
+    ]
+   },
+   {
+    "file": "4519.dat",
+    "name": "Technic Axle  3",
+    "colors": {
+     "14": 10
+    },
+    "rb": [
+     "4519"
+    ]
+   },
+   {
+    "file": "3705.dat",
+    "name": "Technic Axle  4",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "3705"
+    ]
+   },
+   {
+    "file": "32073.dat",
+    "name": "Technic Axle  5",
+    "colors": {
+     "71": 6
+    },
+    "rb": [
+     "32073"
+    ]
+   },
+   {
+    "file": "44294.dat",
+    "name": "Technic Axle  7",
+    "colors": {
+     "14": 6
+    },
+    "rb": [
+     "44294"
+    ]
+   },
+   {
+    "file": "3707.dat",
+    "name": "Technic Axle  8",
+    "colors": {
+     "0": 6
+    },
+    "rb": [
+     "3707"
+    ]
+   },
+   {
+    "file": "60485.dat",
+    "name": "Technic Axle  9",
+    "colors": {
+     "71": 6
+    },
+    "rb": [
+     "60485"
+    ]
+   },
+   {
+    "file": "23948.dat",
+    "name": "Technic Axle 11",
+    "colors": {
+     "14": 3
+    },
+    "rb": [
+     "23948"
+    ]
+   },
+   {
+    "file": "45590.dat",
+    "name": "Technic Axle Joiner Double Flexible",
+    "colors": {
+     "0": 6
+    },
+    "rb": [
+     "45590"
+    ]
+   },
+   {
+    "file": "59443.dat",
+    "name": "Technic Axle Joiner Inline Smooth",
+    "colors": {
+     "15": 3
+    },
+    "rb": [
+     "59443"
+    ]
+   },
+   {
+    "file": "3749.dat",
+    "name": "Technic Axle Pin",
+    "colors": {
+     "19": 30
+    },
+    "rb": [
+     "3749"
+    ]
+   },
+   {
+    "file": "18651.dat",
+    "name": "Technic Axle Pin Long with Friction with  2L Axle",
+    "colors": {
+     "0": 15
+    },
+    "rb": [
+     "18651"
+    ]
+   },
+   {
+    "file": "52629.dat",
+    "name": "Technic Ball 19mm for Ball Castor",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "52629"
+    ]
+   },
+   {
+    "file": "60483.dat",
+    "name": "Technic Beam  2 Liftarm",
+    "colors": {
+     "322": 4
+    },
+    "rb": [
+     "60483"
+    ]
+   },
+   {
+    "file": "32140.dat",
+    "name": "Technic Beam  2 x  4 Liftarm Bent 90",
+    "colors": {
+     "14": 5
+    },
+    "rb": [
+     "32140"
+    ]
+   },
+   {
+    "file": "32523.dat",
+    "name": "Technic Beam  3",
+    "colors": {
+     "14": 8
+    },
+    "rb": [
+     "32523"
+    ]
+   },
+   {
+    "file": "60484.dat",
+    "name": "Technic Beam  3 x  3 T-shaped",
+    "colors": {
+     "0": 5
+    },
+    "rb": [
+     "60484"
+    ]
+   },
+   {
+    "file": "32009.dat",
+    "name": "Technic Beam  3 x  3.8 x  7 Liftarm Bent 45 Double",
+    "colors": {
+     "0": 5
+    },
+    "rb": [
+     "32009"
+    ]
+   },
+   {
+    "file": "32526.dat",
+    "name": "Technic Beam  3 x  5 Bent 90",
+    "colors": {
+     "322": 5
+    },
+    "rb": [
+     "32526"
+    ]
+   },
+   {
+    "file": "32271.dat",
+    "name": "Technic Beam  3 x  7 Liftarm Bent 53.13",
+    "colors": {
+     "14": 4
+    },
+    "rb": [
+     "32271"
+    ]
+   },
+   {
+    "file": "32348.dat",
+    "name": "Technic Beam  4 x  4 Liftarm Bent 53.13",
+    "colors": {
+     "0": 5
+    },
+    "rb": [
+     "32348"
+    ]
+   },
+   {
+    "file": "32316.dat",
+    "name": "Technic Beam  5",
+    "colors": {
+     "26": 5
+    },
+    "rb": [
+     "32316"
+    ]
+   },
+   {
+    "file": "14720.dat",
+    "name": "Technic Beam  5 x  3 H-shaped",
+    "colors": {
+     "71": 4
+    },
+    "rb": [
+     "14720"
+    ]
+   },
+   {
+    "file": "39370.dat",
+    "name": "Technic Beam  5 x  3 H-shaped with Ball Socket",
+    "colors": {
+     "322": 1
+    },
+    "rb": [
+     "39370"
+    ]
+   },
+   {
+    "file": "32524.dat",
+    "name": "Technic Beam  7",
+    "colors": {
+     "322": 7
+    },
+    "rb": [
+     "32524"
+    ]
+   },
+   {
+    "file": "64179.dat",
+    "name": "Technic Beam  7 x  5 with Open Center  5 x  3",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "64179"
+    ]
+   },
+   {
+    "file": "40490.dat",
+    "name": "Technic Beam  9",
+    "colors": {
+     "0": 5
+    },
+    "rb": [
+     "40490"
+    ]
+   },
+   {
+    "file": "32525.dat",
+    "name": "Technic Beam 11",
+    "colors": {
+     "26": 5
+    },
+    "rb": [
+     "32525"
+    ]
+   },
+   {
+    "file": "39794.dat",
+    "name": "Technic Beam 11 x  7 with Open Center  9 x  5",
+    "colors": {
+     "26": 2
+    },
+    "rb": [
+     "39794"
+    ]
+   },
+   {
+    "file": "41239.dat",
+    "name": "Technic Beam 13",
+    "colors": {
+     "322": 4
+    },
+    "rb": [
+     "41239"
+    ]
+   },
+   {
+    "file": "32278.dat",
+    "name": "Technic Beam 15",
+    "colors": {
+     "0": 6
+    },
+    "rb": [
+     "32278"
+    ]
+   },
+   {
+    "file": "39790.dat",
+    "name": "Technic Beam 15 x 11 with Open Center 13 x  9",
+    "colors": {
+     "322": 2
+    },
+    "rb": [
+     "39790"
+    ]
+   },
+   {
+    "file": "39369.dat",
+    "name": "Technic Beam 19 x 11 Baseplate",
+    "colors": {
+     "14": 2
+    },
+    "rb": [
+     "39369"
+    ]
+   },
+   {
+    "file": "3713.dat",
+    "name": "Technic Bush with Two Flanges",
+    "colors": {
+     "71": 10
+    },
+    "rb": [
+     "3713"
+    ]
+   },
+   {
+    "file": "49283.dat",
+    "name": "Technic Cable Clip",
+    "colors": {
+     "1": 3,
+     "2": 3,
+     "4": 3,
+     "14": 3,
+     "26": 3,
+     "322": 2
+    },
+    "rb": [
+     "49283"
+    ]
+   },
+   {
+    "file": "39793.dat",
+    "name": "Technic Connector Block  3 x  3 with  9 Perpendicular Holes",
+    "colors": {
+     "0": 6,
+     "26": 8
+    },
+    "rb": [
+     "39793"
+    ]
+   },
+   {
+    "file": "32184.dat",
+    "name": "Technic Cross Block 1 x 3 (Axle/Pin/Axle)",
+    "colors": {
+     "15": 4
+    },
+    "rb": [
+     "32184"
+    ]
+   },
+   {
+    "file": "48989.dat",
+    "name": "Technic Cross Block 1 x 3 (Pin/Pin/Pin) with 4 Pins",
+    "colors": {
+     "71": 12
+    },
+    "rb": [
+     "48989"
+    ]
+   },
+   {
+    "file": "32270.dat",
+    "name": "Technic Gear 12 Tooth Double Bevel",
+    "colors": {
+     "0": 3
+    },
+    "rb": [
+     "32270"
+    ]
+   },
+   {
+    "file": "18575.dat",
+    "name": "Technic Gear 20 Tooth Double Bevel Reinforced",
+    "colors": {
+     "19": 3
+    },
+    "rb": [
+     "18575"
+    ]
+   },
+   {
+    "file": "46372.dat",
+    "name": "Technic Gear 28 Tooth Double Bevel",
+    "colors": {
+     "71": 3
+    },
+    "rb": [
+     "46372"
+    ]
+   },
+   {
+    "file": "32498.dat",
+    "name": "Technic Gear 36 Tooth Double Bevel",
+    "colors": {
+     "0": 3
+    },
+    "rb": [
+     "32498"
+    ]
+   },
+   {
+    "file": "64781.dat",
+    "name": "Technic Gear Rack  1 x 13 with Pegholes and Axleholes",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "64781"
+    ]
+   },
+   {
+    "file": "15458.dat",
+    "name": "Technic Panel  3 x 11",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "15458"
+    ]
+   },
+   {
+    "file": "11954.dat",
+    "name": "Technic Panel Smooth 11 x  2 x  3 with 10 Front Pin Holes",
+    "colors": {
+     "322": 2
+    },
+    "rb": [
+     "11954"
+    ]
+   },
+   {
+    "file": "55615.dat",
+    "name": "Technic Pin Connector Perpendicular  3 x  3 Bent 90 with 4 Pins, Slots Along Beam",
+    "colors": {
+     "71": 4
+    },
+    "rb": [
+     "55615"
+    ]
+   },
+   {
+    "file": "62462.dat",
+    "name": "Technic Pin Joiner Round with Slot",
+    "colors": {
+     "14": 2
+    },
+    "rb": [
+     "62462"
+    ]
+   },
+   {
+    "file": "6558.dat",
+    "name": "Technic Pin Long with Friction and Slot",
+    "colors": {
+     "1": 14
+    },
+    "rb": [
+     "6558"
+    ]
+   },
+   {
+    "file": "87082.dat",
+    "name": "Technic Pin Long with Pin Hole Type 1",
+    "colors": {
+     "71": 2
+    },
+    "rb": [
+     "87082"
+    ]
+   },
+   {
+    "file": "32054.dat",
+    "name": "Technic Pin Long with Stop Bush",
+    "colors": {
+     "71": 10
+    },
+    "rb": [
+     "32054"
+    ]
+   },
+   {
+    "file": "61332.dat",
+    "name": "Technic Pin with Friction Type 2",
+    "colors": {
+     "0": 92
+    },
+    "rb": [
+     "61332"
+    ]
+   },
+   {
+    "file": "3738.dat",
+    "name": "Technic Plate  2 x  8 with Holes",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "3738"
+    ]
+   },
+   {
+    "file": "32005.dat",
+    "name": "Technic Steering Link  6L Type 2",
+    "colors": {
+     "0": 3
+    },
+    "rb": [
+     "32005a"
+    ]
+   },
+   {
+    "file": "48267.dat",
+    "name": "Technic Tooth  1 x  3 with Axlehole with Straight Bottom Cavity",
+    "colors": {
+     "15": 2
+    },
+    "rb": [
+     "48267"
+    ]
+   },
+   {
+    "file": "4185a.dat",
+    "name": "Technic Wedge Belt Wheel - Not Reinforced",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "4185"
+    ]
+   },
+   {
+    "file": "2815.dat",
+    "name": "Technic Wedge Belt Wheel Tyre",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "2815"
+    ]
+   },
+   {
+    "file": "98138p62.dat",
+    "name": "Tile  1 x  1 Round with Black and Metallic Pink Battery Pattern",
+    "colors": {
+     "15": 4
+    },
+    "rb": [
+     "98138pr0062"
+    ]
+   },
+   {
+    "file": "98138.dat",
+    "name": "Tile  1 x  1 Round with Groove",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "98138pr0076"
+    ]
+   },
+   {
+    "file": "15535.dat",
+    "name": "Tile  2 x  2 Round with Hole",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "15535"
+    ]
+   },
+   {
+    "file": "14769.dat",
+    "name": "Tile  2 x  2 Round with Round Underside Stud",
+    "colors": {
+     "15": 2
+    },
+    "rb": [
+     "14769pr0080"
+    ]
+   },
+   {
+    "file": "61254.dat",
+    "name": "Tyre  7/ 45 x 17 Offset Tread with Middle Band",
+    "colors": {
+     "0": 3
+    },
+    "rb": [
+     "61254"
+    ]
+   },
+   {
+    "file": "39367p01.dat",
+    "name": "Wheel 14 x 48 with 4 Spokes with Integral Medium Azure Tyre",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "39367pat0001"
+    ]
+   },
+   {
+    "file": "56903.dat",
+    "name": "Wheel Rim  8 x 18 with Deep Centre Groove and Axle Hole",
+    "colors": {
+     "15": 3
+    },
+    "rb": [
+     "56903"
+    ]
+   },
+   {
+    "file": "41751.dat",
+    "name": "Windscreen  8 x  6 x  2 Curved",
+    "colors": {
+     "322": 1
+    },
+    "rb": [
+     "41751"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "45681-1",
+  "name": "SPIKE Prime Expansion Set",
+  "parts": [
+   {
+    "file": "95342.dat",
+    "name": "Animal Chicken",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "95342"
+    ]
+   },
+   {
+    "file": "11215.dat",
+    "name": "Bracket  5 x  2 x  1.333 with Understud in Centre",
+    "colors": {
+     "15": 2
+    },
+    "rb": [
+     "11215"
+    ]
+   },
+   {
+    "file": "3003.dat",
+    "name": "Brick  2 x  2",
+    "colors": {
+     "0": 2,
+     "15": 2,
+     "322": 2
+    },
+    "rb": [
+     "3003"
+    ]
+   },
+   {
+    "file": "3941.dat",
+    "name": "Brick  2 x  2 Round without Reinforcement",
+    "colors": {
+     "14": 4,
+     "43": 2
+    },
+    "rb": [
+     "3941"
+    ]
+   },
+   {
+    "file": "39789.dat",
+    "name": "Brick  2 x  4 with  3 Axleholes Vertical",
+    "colors": {
+     "1": 2,
+     "2": 2,
+     "4": 2,
+     "14": 2,
+     "26": 2
+    },
+    "rb": [
+     "39789"
+    ]
+   },
+   {
+    "file": "37308.dat",
+    "name": "Electric Powered Up Colour Sensor",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "37308"
+    ]
+   },
+   {
+    "file": "54675.dat",
+    "name": "Electric Powered Up Large Angular Motor with Medium Azure Back",
+    "colors": {
+     "322": 1
+    },
+    "rb": [
+     "54675"
+    ]
+   },
+   {
+    "file": "18674.dat",
+    "name": "Plate  2 x  2 Round with  1 Centre Stud",
+    "colors": {
+     "322": 4
+    },
+    "rb": [
+     "18674"
+    ]
+   },
+   {
+    "file": "85543.dat",
+    "name": "Rubber Belt Round 15 /  1.6",
+    "colors": {
+     "15": 2
+    },
+    "rb": [
+     "85543"
+    ]
+   },
+   {
+    "file": "42022.dat",
+    "name": "Slope Brick Curved  6 x  1",
+    "colors": {
+     "14": 4
+    },
+    "rb": [
+     "42022"
+    ]
+   },
+   {
+    "file": "32016.dat",
+    "name": "Technic Angle Connector #3 (157.5 degree)",
+    "colors": {
+     "322": 4
+    },
+    "rb": [
+     "32016"
+    ]
+   },
+   {
+    "file": "32015.dat",
+    "name": "Technic Angle Connector #5 (112.5 degree)",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "32015"
+    ]
+   },
+   {
+    "file": "32014.dat",
+    "name": "Technic Angle Connector #6 (90 degree)",
+    "colors": {
+     "14": 12
+    },
+    "rb": [
+     "32014"
+    ]
+   },
+   {
+    "file": "32062.dat",
+    "name": "Technic Axle  2 Notched",
+    "colors": {
+     "4": 8
+    },
+    "rb": [
+     "32062"
+    ]
+   },
+   {
+    "file": "4519.dat",
+    "name": "Technic Axle  3",
+    "colors": {
+     "14": 14
+    },
+    "rb": [
+     "4519"
+    ]
+   },
+   {
+    "file": "3705.dat",
+    "name": "Technic Axle  4",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "3705"
+    ]
+   },
+   {
+    "file": "87083.dat",
+    "name": "Technic Axle  4 with Stop",
+    "colors": {
+     "72": 4
+    },
+    "rb": [
+     "87083"
+    ]
+   },
+   {
+    "file": "32073.dat",
+    "name": "Technic Axle  5",
+    "colors": {
+     "71": 4
+    },
+    "rb": [
+     "32073"
+    ]
+   },
+   {
+    "file": "15462.dat",
+    "name": "Technic Axle  5 with Stop",
+    "colors": {
+     "70": 2
+    },
+    "rb": [
+     "15462"
+    ]
+   },
+   {
+    "file": "3706.dat",
+    "name": "Technic Axle  6",
+    "colors": {
+     "4": 4
+    },
+    "rb": [
+     "3706"
+    ]
+   },
+   {
+    "file": "55013.dat",
+    "name": "Technic Axle  8 with Stop",
+    "colors": {
+     "72": 2
+    },
+    "rb": [
+     "55013"
+    ]
+   },
+   {
+    "file": "3708.dat",
+    "name": "Technic Axle 12",
+    "colors": {
+     "4": 2
+    },
+    "rb": [
+     "3708"
+    ]
+   },
+   {
+    "file": "50450.dat",
+    "name": "Technic Axle 32",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "50450"
+    ]
+   },
+   {
+    "file": "59443.dat",
+    "name": "Technic Axle Joiner Inline Smooth",
+    "colors": {
+     "4": 4,
+     "15": 4
+    },
+    "rb": [
+     "59443"
+    ]
+   },
+   {
+    "file": "11214.dat",
+    "name": "Technic Axle Pin Long with Friction with  2L Pin",
+    "colors": {
+     "4": 8
+    },
+    "rb": [
+     "11214"
+    ]
+   },
+   {
+    "file": "43093.dat",
+    "name": "Technic Axle Pin with Friction",
+    "colors": {
+     "1": 24
+    },
+    "rb": [
+     "43093"
+    ]
+   },
+   {
+    "file": "22961.dat",
+    "name": "Technic Axle with Perpendicular Pin Hole",
+    "colors": {
+     "15": 4
+    },
+    "rb": [
+     "22961"
+    ]
+   },
+   {
+    "file": "52629.dat",
+    "name": "Technic Ball 19mm for Ball Castor",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "52629"
+    ]
+   },
+   {
+    "file": "18654.dat",
+    "name": "Technic Beam  1",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "18654"
+    ]
+   },
+   {
+    "file": "32140.dat",
+    "name": "Technic Beam  2 x  4 Liftarm Bent 90",
+    "colors": {
+     "14": 8
+    },
+    "rb": [
+     "32140"
+    ]
+   },
+   {
+    "file": "32523.dat",
+    "name": "Technic Beam  3",
+    "colors": {
+     "14": 6,
+     "15": 4
+    },
+    "rb": [
+     "32523"
+    ]
+   },
+   {
+    "file": "60484.dat",
+    "name": "Technic Beam  3 x  3 T-shaped",
+    "colors": {
+     "14": 4
+    },
+    "rb": [
+     "60484"
+    ]
+   },
+   {
+    "file": "32009.dat",
+    "name": "Technic Beam  3 x  3.8 x  7 Liftarm Bent 45 Double",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "32009"
+    ]
+   },
+   {
+    "file": "32526.dat",
+    "name": "Technic Beam  3 x  5 Bent 90",
+    "colors": {
+     "15": 6,
+     "322": 4
+    },
+    "rb": [
+     "32526"
+    ]
+   },
+   {
+    "file": "32271.dat",
+    "name": "Technic Beam  3 x  7 Liftarm Bent 53.13",
+    "colors": {
+     "14": 4
+    },
+    "rb": [
+     "32271"
+    ]
+   },
+   {
+    "file": "32348.dat",
+    "name": "Technic Beam  4 x  4 Liftarm Bent 53.13",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "32348"
+    ]
+   },
+   {
+    "file": "6629.dat",
+    "name": "Technic Beam  4 x  6 Liftarm Bent 53.13",
+    "colors": {
+     "15": 2
+    },
+    "rb": [
+     "6629"
+    ]
+   },
+   {
+    "file": "32316.dat",
+    "name": "Technic Beam  5",
+    "colors": {
+     "26": 8
+    },
+    "rb": [
+     "32316"
+    ]
+   },
+   {
+    "file": "14720.dat",
+    "name": "Technic Beam  5 x  3 H-shaped",
+    "colors": {
+     "71": 6
+    },
+    "rb": [
+     "14720"
+    ]
+   },
+   {
+    "file": "39370.dat",
+    "name": "Technic Beam  5 x  3 H-shaped with Ball Socket",
+    "colors": {
+     "322": 1
+    },
+    "rb": [
+     "39370"
+    ]
+   },
+   {
+    "file": "99773.dat",
+    "name": "Technic Beam  5 x  3 x  0.5 Liftarm Triangle Type 2",
+    "colors": {
+     "14": 4
+    },
+    "rb": [
+     "99773"
+    ]
+   },
+   {
+    "file": "32524.dat",
+    "name": "Technic Beam  7",
+    "colors": {
+     "322": 6
+    },
+    "rb": [
+     "32524"
+    ]
+   },
+   {
+    "file": "64179.dat",
+    "name": "Technic Beam  7 x  5 with Open Center  5 x  3",
+    "colors": {
+     "0": 8
+    },
+    "rb": [
+     "64179"
+    ]
+   },
+   {
+    "file": "40490.dat",
+    "name": "Technic Beam  9",
+    "colors": {
+     "0": 8
+    },
+    "rb": [
+     "40490"
+    ]
+   },
+   {
+    "file": "32525.dat",
+    "name": "Technic Beam 11",
+    "colors": {
+     "26": 6
+    },
+    "rb": [
+     "32525"
+    ]
+   },
+   {
+    "file": "39794.dat",
+    "name": "Technic Beam 11 x  7 with Open Center  9 x  5",
+    "colors": {
+     "26": 4
+    },
+    "rb": [
+     "39794"
+    ]
+   },
+   {
+    "file": "41239.dat",
+    "name": "Technic Beam 13",
+    "colors": {
+     "322": 6
+    },
+    "rb": [
+     "41239"
+    ]
+   },
+   {
+    "file": "32278.dat",
+    "name": "Technic Beam 15",
+    "colors": {
+     "0": 6
+    },
+    "rb": [
+     "32278"
+    ]
+   },
+   {
+    "file": "39790.dat",
+    "name": "Technic Beam 15 x 11 with Open Center 13 x  9",
+    "colors": {
+     "322": 2
+    },
+    "rb": [
+     "39790"
+    ]
+   },
+   {
+    "file": "65817.dat",
+    "name": "Technic Beam 15 x 11 with Perforated Centre Plate 13 x  9",
+    "colors": {
+     "26": 1
+    },
+    "rb": [
+     "65817"
+    ]
+   },
+   {
+    "file": "32123b.dat",
+    "name": "Technic Bush 1/2 Smooth with Axle Hole Semi-Reduced",
+    "colors": {
+     "14": 16
+    },
+    "rb": [
+     "32123b"
+    ]
+   },
+   {
+    "file": "3713.dat",
+    "name": "Technic Bush with Two Flanges",
+    "colors": {
+     "71": 12
+    },
+    "rb": [
+     "3713"
+    ]
+   },
+   {
+    "file": "49283.dat",
+    "name": "Technic Cable Clip",
+    "colors": {
+     "4": 2,
+     "14": 2,
+     "322": 2
+    },
+    "rb": [
+     "49283"
+    ]
+   },
+   {
+    "file": "6553.dat",
+    "name": "Technic Connector (Axle) with Axle 1.5",
+    "colors": {
+     "71": 6
+    },
+    "rb": [
+     "6553"
+    ]
+   },
+   {
+    "file": "42135.dat",
+    "name": "Technic Connector (Axle/Bush) Type 2",
+    "colors": {
+     "0": 6
+    },
+    "rb": [
+     "42135"
+    ]
+   },
+   {
+    "file": "39793.dat",
+    "name": "Technic Connector Block  3 x  3 with  9 Perpendicular Holes",
+    "colors": {
+     "26": 4
+    },
+    "rb": [
+     "39793"
+    ]
+   },
+   {
+    "file": "98585.dat",
+    "name": "Technic Connector Circular with  2 Pin Holes and  3 Axle Holes",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "98585"
+    ]
+   },
+   {
+    "file": "87408.dat",
+    "name": "Technic Connector Toggle Joint Double with Axle and Pin Holes",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "87408"
+    ]
+   },
+   {
+    "file": "6536.dat",
+    "name": "Technic Cross Block 1 x 2 (Axle/Pin)",
+    "colors": {
+     "0": 16
+    },
+    "rb": [
+     "6536"
+    ]
+   },
+   {
+    "file": "32184.dat",
+    "name": "Technic Cross Block 1 x 3 (Axle/Pin/Axle)",
+    "colors": {
+     "15": 4
+    },
+    "rb": [
+     "32184"
+    ]
+   },
+   {
+    "file": "42003.dat",
+    "name": "Technic Cross Block 1 x 3 (Axle/Pin/Pin)",
+    "colors": {
+     "4": 12
+    },
+    "rb": [
+     "42003"
+    ]
+   },
+   {
+    "file": "65489.dat",
+    "name": "Technic Cross Block 1 x 3 (Pin/Pin/Pin) with 4 Pins Rectangular Centre Hole",
+    "colors": {
+     "71": 10
+    },
+    "rb": [
+     "65489"
+    ]
+   },
+   {
+    "file": "32291.dat",
+    "name": "Technic Cross Block 2 x 2 (Axle/Twin Pin)",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "32291"
+    ]
+   },
+   {
+    "file": "41678.dat",
+    "name": "Technic Cross Block 2 x 2 Split (Axle/Twin Pin)",
+    "colors": {
+     "4": 4
+    },
+    "rb": [
+     "41678"
+    ]
+   },
+   {
+    "file": "63869.dat",
+    "name": "Technic Cross Block 3 x 2 (Axle/Triple Pin)",
+    "colors": {
+     "71": 8
+    },
+    "rb": [
+     "63869"
+    ]
+   },
+   {
+    "file": "6589.dat",
+    "name": "Technic Gear 12 Tooth Bevel",
+    "colors": {
+     "19": 4
+    },
+    "rb": [
+     "6589"
+    ]
+   },
+   {
+    "file": "32270.dat",
+    "name": "Technic Gear 12 Tooth Double Bevel",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "32270"
+    ]
+   },
+   {
+    "file": "32198a.dat",
+    "name": "Technic Gear 20 Tooth Bevel with Two Axlehole Slots",
+    "colors": {
+     "19": 2
+    },
+    "rb": [
+     "32198"
+    ]
+   },
+   {
+    "file": "18575.dat",
+    "name": "Technic Gear 20 Tooth Double Bevel Reinforced",
+    "colors": {
+     "19": 2
+    },
+    "rb": [
+     "18575"
+    ]
+   },
+   {
+    "file": "35185.dat",
+    "name": "Technic Gear 20 Tooth Double Bevel with Clutch on Both Sides",
+    "colors": {
+     "1": 2
+    },
+    "rb": [
+     "35185"
+    ]
+   },
+   {
+    "file": "46372.dat",
+    "name": "Technic Gear 28 Tooth Double Bevel",
+    "colors": {
+     "71": 2
+    },
+    "rb": [
+     "46372"
+    ]
+   },
+   {
+    "file": "32498.dat",
+    "name": "Technic Gear 36 Tooth Double Bevel",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "32498"
+    ]
+   },
+   {
+    "file": "87761.dat",
+    "name": "Technic Gear Rack  1 x  7 with Pegholes and Axleholes",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "87761"
+    ]
+   },
+   {
+    "file": "24121.dat",
+    "name": "Technic Gear Ring Quarter 11 x 11 with 35 Teeth",
+    "colors": {
+     "0": 8
+    },
+    "rb": [
+     "24121"
+    ]
+   },
+   {
+    "file": "24119.dat",
+    "name": "Technic Panel Smooth  7 x  2 x  3",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "24119"
+    ]
+   },
+   {
+    "file": "3673.dat",
+    "name": "Technic Pin",
+    "colors": {
+     "71": 12
+    },
+    "rb": [
+     "3673"
+    ]
+   },
+   {
+    "file": "4274.dat",
+    "name": "Technic Pin  1/2",
+    "colors": {
+     "1": 16
+    },
+    "rb": [
+     "4274"
+    ]
+   },
+   {
+    "file": "49130.dat",
+    "name": "Technic Pin Connector Perpendicular  3 x  3 Bent 90 with 4 Pins, Slots Across Beam",
+    "colors": {
+     "71": 6
+    },
+    "rb": [
+     "49130"
+    ]
+   },
+   {
+    "file": "62462.dat",
+    "name": "Technic Pin Joiner Round with Slot",
+    "colors": {
+     "14": 6
+    },
+    "rb": [
+     "62462"
+    ]
+   },
+   {
+    "file": "6558.dat",
+    "name": "Technic Pin Long with Friction and Slot",
+    "colors": {
+     "1": 36
+    },
+    "rb": [
+     "6558"
+    ]
+   },
+   {
+    "file": "32054.dat",
+    "name": "Technic Pin Long with Stop Bush",
+    "colors": {
+     "4": 6,
+     "71": 6
+    },
+    "rb": [
+     "32054"
+    ]
+   },
+   {
+    "file": "39888.dat",
+    "name": "Technic Pin Long without Friction Type 2",
+    "colors": {
+     "19": 8
+    },
+    "rb": [
+     "39888"
+    ]
+   },
+   {
+    "file": "61332.dat",
+    "name": "Technic Pin with Friction Type 2",
+    "colors": {
+     "0": 80
+    },
+    "rb": [
+     "61332"
+    ]
+   },
+   {
+    "file": "99009.dat",
+    "name": "Technic Turntable 28 Tooth Bottom",
+    "colors": {
+     "71": 2
+    },
+    "rb": [
+     "99009"
+    ]
+   },
+   {
+    "file": "99010.dat",
+    "name": "Technic Turntable 28 Tooth Top",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "99010"
+    ]
+   },
+   {
+    "file": "18939.dat",
+    "name": "Technic Turntable 60 Tooth Bottom",
+    "colors": {
+     "71": 2
+    },
+    "rb": [
+     "18939"
+    ]
+   },
+   {
+    "file": "18938.dat",
+    "name": "Technic Turntable 60 Tooth Top",
+    "colors": {
+     "0": 2
+    },
+    "rb": [
+     "18938"
+    ]
+   },
+   {
+    "file": "15535.dat",
+    "name": "Tile  2 x  2 Round with Hole",
+    "colors": {
+     "0": 4,
+     "4": 2
+    },
+    "rb": [
+     "15535"
+    ]
+   },
+   {
+    "file": "85544.dat",
+    "name": "Train Wheel Large Traction Band",
+    "colors": {
+     "4": 2
+    },
+    "rb": [
+     "85544"
+    ]
+   },
+   {
+    "file": "49295p01.dat",
+    "name": "Wheel 14 x 80 with  4 Spokes with Integral Medium Azure Tyre",
+    "colors": {
+     "0": 4
+    },
+    "rb": [
+     "49295pat0001"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "challenge",
+  "name": "BIOGLOW Challenge Set",
+  "parts": [
+   {
+    "file": "6223.dat",
+    "name": "=Brick  2 x  2",
+    "colors": {
+     "43": 1
+    },
+    "rb": [
+     "6223"
+    ]
+   },
+   {
+    "file": "61408.dat",
+    "name": "=Technic Beam  3 x  0.5 Liftarm with Boss and Pin with Open Central Axle Hole",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "61408"
+    ]
+   },
+   {
+    "file": "66906.dat",
+    "name": "=Technic Pin Towball with Friction",
+    "colors": {
+     "4": 1
+    },
+    "rb": [
+     "66906"
+    ]
+   },
+   {
+    "file": "6190.dat",
+    "name": "~Bar  1 x  3 (Obsolete)",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "6190"
+    ]
+   },
+   {
+    "file": "63965.dat",
+    "name": "~Bar  6L with Thick Stop (Obsolete)",
+    "colors": {
+     "10": 1
+    },
+    "rb": [
+     "63965"
+    ]
+   },
+   {
+    "file": "2446.dat",
+    "name": "~Minifig Helmet Standard (Obsolete)",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "2446"
+    ]
+   },
+   {
+    "file": "2447.dat",
+    "name": "~Minifig Helmet Visor Standard (Obsolete)",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "2447"
+    ]
+   },
+   {
+    "file": "41835.dat",
+    "name": "Animal Bird Songbird",
+    "colors": {
+     "226": 1,
+     "321": 1
+    },
+    "rb": [
+     "41835"
+    ]
+   },
+   {
+    "file": "80674.dat",
+    "name": "Animal Butterfly with Stud Tube",
+    "colors": {
+     "85": 1,
+     "191": 1,
+     "226": 1,
+     "323": 1
+    },
+    "rb": [
+     "80674"
+    ]
+   },
+   {
+    "file": "13564.dat",
+    "name": "Animal Cow Horn  2.25L",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "13564"
+    ]
+   },
+   {
+    "file": "33320.dat",
+    "name": "Animal Frog",
+    "colors": {
+     "2": 1,
+     "26": 1,
+     "226": 1,
+     "297": 1,
+     "330": 1
+    },
+    "rb": [
+     "33320"
+    ]
+   },
+   {
+    "file": "29111.dat",
+    "name": "Animal Spider with Elongated Abdomen",
+    "colors": {
+     "0": 1,
+     "84": 1
+    },
+    "rb": [
+     "29111"
+    ]
+   },
+   {
+    "file": "80497.dat",
+    "name": "Animal Tail with Straight Tip",
+    "colors": {
+     "5": 1
+    },
+    "rb": [
+     "80497"
+    ]
+   },
+   {
+    "file": "30099.dat",
+    "name": "Arch  1 x  5 x  4 Inverted",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "30099"
+    ]
+   },
+   {
+    "file": "16577.dat",
+    "name": "Arch  1 x  8 x  2 Raised",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "16577"
+    ]
+   },
+   {
+    "file": "68211.dat",
+    "name": "Bar  1 L with Three Prongs",
+    "colors": {
+     "10": 1,
+     "19": 1,
+     "70": 1
+    },
+    "rb": [
+     "68211"
+    ]
+   },
+   {
+    "file": "3484.dat",
+    "name": "Bar  1.5L with Clip Type 3",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "14": 1,
+     "15": 1
+    },
+    "rb": [
+     "3484"
+    ]
+   },
+   {
+    "file": "22484.dat",
+    "name": "Bar  2L with Ball Joint-8",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "22484"
+    ]
+   },
+   {
+    "file": "78258.dat",
+    "name": "Bar  2L with Thick Stop and Pin Holes",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "78258"
+    ]
+   },
+   {
+    "file": "87994.dat",
+    "name": "Bar  3L",
+    "colors": {
+     "10": 1,
+     "15": 1,
+     "70": 1
+    },
+    "rb": [
+     "87994"
+    ]
+   },
+   {
+    "file": "87618.dat",
+    "name": "Bar  4.5L with Handle",
+    "colors": {
+     "0": 1,
+     "70": 1
+    },
+    "rb": [
+     "87618"
+    ]
+   },
+   {
+    "file": "30374.dat",
+    "name": "Bar  4L Lightsaber Blade",
+    "colors": {
+     "2": 1,
+     "15": 1
+    },
+    "rb": [
+     "30374"
+    ]
+   },
+   {
+    "file": "4042.dat",
+    "name": "Bar Curved with Axle End and  2 Opposite Studs",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "4042"
+    ]
+   },
+   {
+    "file": "99781.dat",
+    "name": "Bracket  1 x  2 -  1 x  2 Down",
+    "colors": {
+     "2": 1
+    },
+    "rb": [
+     "99781"
+    ]
+   },
+   {
+    "file": "3005.dat",
+    "name": "Brick  1 x  1",
+    "colors": {
+     "47": 1
+    },
+    "rb": [
+     "3005"
+    ]
+   },
+   {
+    "file": "3062b.dat",
+    "name": "Brick  1 x  1 Round with Hollow Stud",
+    "colors": {
+     "2": 1
+    },
+    "rb": [
+     "3062b"
+    ]
+   },
+   {
+    "file": "87087.dat",
+    "name": "Brick  1 x  1 with Stud on 1 Side",
+    "colors": {
+     "2": 1,
+     "4": 1,
+     "29": 1
+    },
+    "rb": [
+     "87087"
+    ]
+   },
+   {
+    "file": "4733.dat",
+    "name": "Brick  1 x  1 with Studs on Four Sides",
+    "colors": {
+     "15": 1,
+     "70": 1
+    },
+    "rb": [
+     "4733"
+    ]
+   },
+   {
+    "file": "49307.dat",
+    "name": "Brick  1 x  1 x  0.667 with Curved Top",
+    "colors": {
+     "2": 1,
+     "27": 1,
+     "191": 1
+    },
+    "rb": [
+     "49307"
+    ]
+   },
+   {
+    "file": "32952.dat",
+    "name": "Brick  1 x  1 x  1.667 with Studs on 1 Side",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "32952"
+    ]
+   },
+   {
+    "file": "3004.dat",
+    "name": "Brick  1 x  2",
+    "colors": {
+     "1": 1,
+     "2": 1,
+     "4": 1,
+     "19": 1,
+     "29": 1,
+     "70": 1,
+     "71": 1
+    },
+    "rb": [
+     "3004"
+    ]
+   },
+   {
+    "file": "53540.dat",
+    "name": "Brick  1 x  2 with  2 Pins with Squared Centre Hole",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "53540"
+    ]
+   },
+   {
+    "file": "37352.dat",
+    "name": "Brick  1 x  2 with Curved Top",
+    "colors": {
+     "1": 1,
+     "2": 1,
+     "4": 1,
+     "29": 1
+    },
+    "rb": [
+     "37352"
+    ]
+   },
+   {
+    "file": "52107.dat",
+    "name": "Brick  1 x  2 with Studs on Sides",
+    "colors": {
+     "1": 1,
+     "4": 1,
+     "14": 1
+    },
+    "rb": [
+     "52107"
+    ]
+   },
+   {
+    "file": "3065.dat",
+    "name": "Brick  1 x  2 without Centre Stud",
+    "colors": {
+     "47": 1
+    },
+    "rb": [
+     "3065"
+    ]
+   },
+   {
+    "file": "80796.dat",
+    "name": "Brick  1 x  2 x  1.667 with 8 Studs on 2 Opposite Sides",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "80796"
+    ]
+   },
+   {
+    "file": "22885.dat",
+    "name": "Brick  1 x  2 x  1.667 with Studs on 1 Side",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "22885"
+    ]
+   },
+   {
+    "file": "3622.dat",
+    "name": "Brick  1 x  3",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "3622"
+    ]
+   },
+   {
+    "file": "3010.dat",
+    "name": "Brick  1 x  4",
+    "colors": {
+     "2": 1,
+     "4": 1
+    },
+    "rb": [
+     "3010"
+    ]
+   },
+   {
+    "file": "2653.dat",
+    "name": "Brick  1 x  4 with Groove",
+    "colors": {
+     "15": 1,
+     "19": 1
+    },
+    "rb": [
+     "2653"
+    ]
+   },
+   {
+    "file": "3009.dat",
+    "name": "Brick  1 x  6",
+    "colors": {
+     "15": 1,
+     "71": 1
+    },
+    "rb": [
+     "3009"
+    ]
+   },
+   {
+    "file": "3008.dat",
+    "name": "Brick  1 x  8",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "3008"
+    ]
+   },
+   {
+    "file": "6111.dat",
+    "name": "Brick  1 x 10",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "6111"
+    ]
+   },
+   {
+    "file": "6112.dat",
+    "name": "Brick  1 x 12",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "6112"
+    ]
+   },
+   {
+    "file": "5907.dat",
+    "name": "Brick  2 x  1 x 1.667 with Curved Top",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "5907"
+    ]
+   },
+   {
+    "file": "3003.dat",
+    "name": "Brick  2 x  2",
+    "colors": {
+     "1": 1,
+     "2": 1,
+     "4": 1,
+     "29": 1
+    },
+    "rb": [
+     "3003"
+    ]
+   },
+   {
+    "file": "2357.dat",
+    "name": "Brick  2 x  2 Corner",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "2357"
+    ]
+   },
+   {
+    "file": "15469.dat",
+    "name": "Brick  2 x  2 Round with 4 Petals Base and Axle Hole",
+    "colors": {
+     "191": 1
+    },
+    "rb": [
+     "15469"
+    ]
+   },
+   {
+    "file": "3941.dat",
+    "name": "Brick  2 x  2 Round without Reinforcement",
+    "colors": {
+     "2": 1,
+     "4": 1,
+     "19": 1,
+     "70": 1
+    },
+    "rb": [
+     "3941"
+    ]
+   },
+   {
+    "file": "30592.dat",
+    "name": "Brick  2 x  2 with Vertical Pin and  1 x  2 Side Plates",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "30592"
+    ]
+   },
+   {
+    "file": "1750.dat",
+    "name": "Brick  2 x  2 x  1 with Curved Bottom",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "1750"
+    ]
+   },
+   {
+    "file": "3002.dat",
+    "name": "Brick  2 x  3",
+    "colors": {
+     "19": 1,
+     "70": 1
+    },
+    "rb": [
+     "3002"
+    ]
+   },
+   {
+    "file": "3001.dat",
+    "name": "Brick  2 x  4",
+    "colors": {
+     "0": 1,
+     "1": 1,
+     "2": 1,
+     "4": 1,
+     "29": 1
+    },
+    "rb": [
+     "3001"
+    ]
+   },
+   {
+    "file": "6222.dat",
+    "name": "Brick  4 x  4 Round with Holes",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "6222"
+    ]
+   },
+   {
+    "file": "87081.dat",
+    "name": "Brick  4 x  4 Round with Pinhole and Snapstud",
+    "colors": {
+     "4": 1
+    },
+    "rb": [
+     "87081"
+    ]
+   },
+   {
+    "file": "7324.dat",
+    "name": "Brick Round  1 x  1 Curved 45 Degrees - 80 LDU Radius",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "7324"
+    ]
+   },
+   {
+    "file": "2630.dat",
+    "name": "Cable Flexible 20L with  2 Bar Connectors and Bar Segments",
+    "colors": {
+     "84": 1
+    },
+    "rb": [
+     "2630"
+    ]
+   },
+   {
+    "file": "59900.dat",
+    "name": "Cone  1 x  1 with Stop",
+    "colors": {
+     "14": 1,
+     "15": 1,
+     "19": 1,
+     "43": 1,
+     "70": 1
+    },
+    "rb": [
+     "59900"
+    ]
+   },
+   {
+    "file": "49309.dat",
+    "name": "Cone  2 x  2 x  2 Inverted",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "49309"
+    ]
+   },
+   {
+    "file": "3942c.dat",
+    "name": "Cone  2 x  2 x  2 with Hollow Stud Open",
+    "colors": {
+     "10": 1,
+     "19": 1
+    },
+    "rb": [
+     "3942c"
+    ]
+   },
+   {
+    "file": "25214.dat",
+    "name": "Cylinder  2 x  2 Elbow with Axle Holes",
+    "colors": {
+     "10": 1,
+     "19": 1,
+     "28": 1,
+     "70": 1
+    },
+    "rb": [
+     "25214"
+    ]
+   },
+   {
+    "file": "30367c.dat",
+    "name": "Cylinder  2 x  2 with Dome Top with Axle Hole and Hollow Stud",
+    "colors": {
+     "47": 1
+    },
+    "rb": [
+     "30367c"
+    ]
+   },
+   {
+    "file": "3262.dat",
+    "name": "Cylinder  2 x  2 with Dome Top with Axle Hole and Vented Stud",
+    "colors": {
+     "4": 1,
+     "70": 1
+    },
+    "rb": [
+     "3262"
+    ]
+   },
+   {
+    "file": "4740.dat",
+    "name": "Dish  2 x  2 Inverted",
+    "colors": {
+     "15": 1,
+     "43": 1,
+     "57": 1
+    },
+    "rb": [
+     "4740"
+    ]
+   },
+   {
+    "file": "2654a.dat",
+    "name": "Dish  2 x  2 with Rim",
+    "colors": {
+     "4": 1,
+     "26": 1,
+     "71": 1
+    },
+    "rb": [
+     "2654"
+    ]
+   },
+   {
+    "file": "43898.dat",
+    "name": "Dish  3 x  3 Inverted",
+    "colors": {
+     "14": 1,
+     "47": 1
+    },
+    "rb": [
+     "43898"
+    ]
+   },
+   {
+    "file": "6908.dat",
+    "name": "Dome  1 x  1 x  0.667",
+    "colors": {
+     "78": 1
+    },
+    "rb": [
+     "6908"
+    ]
+   },
+   {
+    "file": "15395.dat",
+    "name": "Dome  2 x  2 Inverted with Stud and Tube",
+    "colors": {
+     "4": 1,
+     "70": 1
+    },
+    "rb": [
+     "15395"
+    ]
+   },
+   {
+    "file": "3633.dat",
+    "name": "Fence Lattice  1 x  4 x  1",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "3633"
+    ]
+   },
+   {
+    "file": "60601.dat",
+    "name": "Glass for Window  1 x  2 x  2 without Sill",
+    "colors": {
+     "43": 1
+    },
+    "rb": [
+     "60601"
+    ]
+   },
+   {
+    "file": "44567b.dat",
+    "name": "Hinge Plate  1 x  2 Locking without Groove with Single Finger On Side Vertical",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "44567b"
+    ]
+   },
+   {
+    "file": "57906.dat",
+    "name": "Hinge Plate  1 x 12 with Angled Sides and Tapered Ends",
+    "colors": {
+     "2": 1
+    },
+    "rb": [
+     "57906"
+    ]
+   },
+   {
+    "file": "43056.dat",
+    "name": "Hinge Plate  2 x  4.5 Base with Technic Pin Hole and  2 Holes",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "43056"
+    ]
+   },
+   {
+    "file": "43045.dat",
+    "name": "Hinge Plate  2 x  4.5 Top with Technic Pin Hole and  2 Holes",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "43045"
+    ]
+   },
+   {
+    "file": "2142.dat",
+    "name": "Horn Stacked with Axle Holes",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "2142"
+    ]
+   },
+   {
+    "file": "57539.dat",
+    "name": "Hose Flexible 19L",
+    "colors": {
+     "27": 1
+    },
+    "rb": [
+     "57539"
+    ]
+   },
+   {
+    "file": "30162.dat",
+    "name": "Minifig Binoculars with Round Eyepiece",
+    "colors": {
+     "321": 1
+    },
+    "rb": [
+     "30162"
+    ]
+   },
+   {
+    "file": "10187.dat",
+    "name": "Minifig Bladed Claw Spread",
+    "colors": {
+     "2": 1,
+     "297": 1
+    },
+    "rb": [
+     "10187"
+    ]
+   },
+   {
+    "file": "24324.dat",
+    "name": "Minifig Book Base with Two Studs",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "24324"
+    ]
+   },
+   {
+    "file": "24093.dat",
+    "name": "Minifig Book Cover",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "24093"
+    ]
+   },
+   {
+    "file": "30089b.dat",
+    "name": "Minifig Camera Snapshot Type 2",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "30089b"
+    ]
+   },
+   {
+    "file": "60169.dat",
+    "name": "Minifig Chain 16L with  16L Span Straight",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "60169"
+    ]
+   },
+   {
+    "file": "39262.dat",
+    "name": "Minifig Crown with 5 Points",
+    "colors": {
+     "10": 1,
+     "288": 1,
+     "297": 1,
+     "378": 1
+    },
+    "rb": [
+     "39262"
+    ]
+   },
+   {
+    "file": "33183.dat",
+    "name": "Minifig Food Carrot Top",
+    "colors": {
+     "27": 1,
+     "191": 1
+    },
+    "rb": [
+     "33183"
+    ]
+   },
+   {
+    "file": "22667.dat",
+    "name": "Minifig Food Cherry",
+    "colors": {
+     "27": 1
+    },
+    "rb": [
+     "22667"
+    ]
+   },
+   {
+    "file": "61506.dat",
+    "name": "Minifig Hat Fedora",
+    "colors": {
+     "308": 1
+    },
+    "rb": [
+     "61506"
+    ]
+   },
+   {
+    "file": "2514.dat",
+    "name": "Minifig Hat Newsboy Cap",
+    "colors": {
+     "288": 1
+    },
+    "rb": [
+     "2514"
+    ]
+   },
+   {
+    "file": "28621p15.dat",
+    "name": "Minifig Head with Black Eyebrows and Thick Moustache Flared Ends, Angry / Laughing 2-Sided Pattern",
+    "colors": {
+     "14": 1
+    },
+    "rb": [
+     "28621pr0015"
+    ]
+   },
+   {
+    "file": "3626c.dat",
+    "name": "Minifig Head with Hollow Stud",
+    "colors": {
+     "14": 3
+    },
+    "rb": [
+     "3626cpr1964",
+     "3626cpr1769",
+     "3626cpr1965"
+    ]
+   },
+   {
+    "file": "53451.dat",
+    "name": "Minifig Helmet Viking Horn",
+    "colors": {
+     "14": 1,
+     "70": 1
+    },
+    "rb": [
+     "53451"
+    ]
+   },
+   {
+    "file": "30381.dat",
+    "name": "Minifig Hood",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "30381"
+    ]
+   },
+   {
+    "file": "30340.dat",
+    "name": "Minifig Life Ring",
+    "colors": {
+     "297": 1
+    },
+    "rb": [
+     "30340"
+    ]
+   },
+   {
+    "file": "4079.dat",
+    "name": "Minifig Seat  2 x  2",
+    "colors": {
+     "27": 1
+    },
+    "rb": [
+     "4079"
+    ]
+   },
+   {
+    "file": "3837.dat",
+    "name": "Minifig Shovel",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "3837"
+    ]
+   },
+   {
+    "file": "64644.dat",
+    "name": "Minifig Telescope",
+    "colors": {
+     "297": 1,
+     "308": 1
+    },
+    "rb": [
+     "64644"
+    ]
+   },
+   {
+    "file": "53118.dat",
+    "name": "Minifig Video Game Controller",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "53118"
+    ]
+   },
+   {
+    "file": "4865b.dat",
+    "name": "Panel  1 x  2 x  1 with Rounded Corners",
+    "colors": {
+     "4": 1
+    },
+    "rb": [
+     "4865b"
+    ]
+   },
+   {
+    "file": "47847.dat",
+    "name": "Panel  2 x  4 x  6 Rock",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "47847"
+    ]
+   },
+   {
+    "file": "19119.dat",
+    "name": "Plant Flower Stem with Bar and  6 Stems",
+    "colors": {
+     "2": 1,
+     "19": 1
+    },
+    "rb": [
+     "19119"
+    ]
+   },
+   {
+    "file": "24855.dat",
+    "name": "Plant Flower Stem with Bar and Hole",
+    "colors": {
+     "378": 1
+    },
+    "rb": [
+     "24855"
+    ]
+   },
+   {
+    "file": "4367.dat",
+    "name": "Plant Flower with  7 Alternate Petals with Centre Ring with Bar and Pin Hole",
+    "colors": {
+     "4": 1
+    },
+    "rb": [
+     "4367"
+    ]
+   },
+   {
+    "file": "15279.dat",
+    "name": "Plant Grass Stem",
+    "colors": {
+     "288": 1
+    },
+    "rb": [
+     "15279"
+    ]
+   },
+   {
+    "file": "2417.dat",
+    "name": "Plant Leaves  6 x  5",
+    "colors": {
+     "2": 1,
+     "27": 1,
+     "31": 1
+    },
+    "rb": [
+     "2417"
+    ]
+   },
+   {
+    "file": "3565.dat",
+    "name": "Plant Palm Leaf  2 x  6 Rounded with Rounded  1 x 2 Plate",
+    "colors": {
+     "2": 1,
+     "14": 1,
+     "15": 1,
+     "25": 1,
+     "47": 1
+    },
+    "rb": [
+     "3565"
+    ]
+   },
+   {
+    "file": "30093.dat",
+    "name": "Plant Sea Grass",
+    "colors": {
+     "10": 1
+    },
+    "rb": [
+     "30093"
+    ]
+   },
+   {
+    "file": "37695.dat",
+    "name": "Plant Stem with  3 Leaves with Bar and Pin Holes",
+    "colors": {
+     "10": 1
+    },
+    "rb": [
+     "37695"
+    ]
+   },
+   {
+    "file": "3024.dat",
+    "name": "Plate  1 x  1",
+    "colors": {
+     "1": 1,
+     "2": 1,
+     "4": 1,
+     "29": 1
+    },
+    "rb": [
+     "3024"
+    ]
+   },
+   {
+    "file": "6141.dat",
+    "name": "Plate  1 x  1 Round",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "6141"
+    ]
+   },
+   {
+    "file": "32607.dat",
+    "name": "Plate  1 x  1 Round with  3 Leaves",
+    "colors": {
+     "2": 1,
+     "4": 1,
+     "27": 1,
+     "297": 1
+    },
+    "rb": [
+     "32607"
+    ]
+   },
+   {
+    "file": "32828.dat",
+    "name": "Plate  1 x  1 Round with Bar",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "32828"
+    ]
+   },
+   {
+    "file": "5264.dat",
+    "name": "Plate  1 x  1 Round with Hollow Stud and Underside Clip",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "5264"
+    ]
+   },
+   {
+    "file": "85861.dat",
+    "name": "Plate  1 x  1 Round with Open Stud",
+    "colors": {
+     "5": 1,
+     "14": 1,
+     "15": 1,
+     "19": 1,
+     "27": 1,
+     "297": 1,
+     "320": 1
+    },
+    "rb": [
+     "85861"
+    ]
+   },
+   {
+    "file": "24866.dat",
+    "name": "Plate  1 x  1 with  5 Petals",
+    "colors": {
+     "2": 1,
+     "14": 1,
+     "27": 1,
+     "353": 1
+    },
+    "rb": [
+     "24866"
+    ]
+   },
+   {
+    "file": "5904.dat",
+    "name": "Plate  1 x  1 with 12 Petals",
+    "colors": {
+     "4": 1,
+     "46": 1
+    },
+    "rb": [
+     "5904"
+    ]
+   },
+   {
+    "file": "49668.dat",
+    "name": "Plate  1 x  1 with Tooth In-line",
+    "colors": {
+     "15": 1,
+     "19": 1,
+     "191": 1
+    },
+    "rb": [
+     "49668"
+    ]
+   },
+   {
+    "file": "15070.dat",
+    "name": "Plate  1 x  1 with Tooth Perpendicular",
+    "colors": {
+     "10": 1,
+     "14": 1
+    },
+    "rb": [
+     "15070"
+    ]
+   },
+   {
+    "file": "3023b.dat",
+    "name": "Plate  1 x  2",
+    "colors": {
+     "4": 1,
+     "14": 1,
+     "19": 1,
+     "28": 1,
+     "71": 1,
+     "72": 1
+    },
+    "rb": [
+     "3023"
+    ]
+   },
+   {
+    "file": "32028.dat",
+    "name": "Plate  1 x  2 with Door Rail",
+    "colors": {
+     "0": 1,
+     "15": 1
+    },
+    "rb": [
+     "32028"
+    ]
+   },
+   {
+    "file": "15573.dat",
+    "name": "Plate  1 x  2 with Groove with 1 Centre Stud, without Understud",
+    "colors": {
+     "1": 1,
+     "2": 1,
+     "29": 1,
+     "71": 1
+    },
+    "rb": [
+     "15573"
+    ]
+   },
+   {
+    "file": "2540.dat",
+    "name": "Plate  1 x  2 with Handle",
+    "colors": {
+     "0": 1,
+     "2": 1
+    },
+    "rb": [
+     "2540"
+    ]
+   },
+   {
+    "file": "35480.dat",
+    "name": "Plate  1 x  2 with Round Ends and 2 Open Studs",
+    "colors": {
+     "0": 1,
+     "1": 1,
+     "2": 1,
+     "15": 1,
+     "19": 1,
+     "27": 1,
+     "70": 1
+    },
+    "rb": [
+     "35480"
+    ]
+   },
+   {
+    "file": "88072.dat",
+    "name": "Plate  1 x  2 with Vertical Bar on Long Side and Short Arm",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "88072"
+    ]
+   },
+   {
+    "file": "3623.dat",
+    "name": "Plate  1 x  3",
+    "colors": {
+     "2": 1,
+     "70": 1,
+     "71": 1
+    },
+    "rb": [
+     "3623"
+    ]
+   },
+   {
+    "file": "3172.dat",
+    "name": "Plate  1 x  3 with Offset Peghole on Underside",
+    "colors": {
+     "4": 1
+    },
+    "rb": [
+     "3172"
+    ]
+   },
+   {
+    "file": "77850.dat",
+    "name": "Plate  1 x  3 with Round Ends and  3 Open Studs",
+    "colors": {
+     "10": 1,
+     "15": 1,
+     "70": 1
+    },
+    "rb": [
+     "77850"
+    ]
+   },
+   {
+    "file": "3710.dat",
+    "name": "Plate  1 x  4",
+    "colors": {
+     "2": 1,
+     "4": 1,
+     "15": 1,
+     "19": 1,
+     "71": 1
+    },
+    "rb": [
+     "3710"
+    ]
+   },
+   {
+    "file": "77845.dat",
+    "name": "Plate  1 x  4 Round Ends with  2 Open Studs on Ends",
+    "colors": {
+     "4": 1,
+     "70": 1
+    },
+    "rb": [
+     "77845"
+    ]
+   },
+   {
+    "file": "30043.dat",
+    "name": "Plate  1 x  4 with Arm",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "30043"
+    ]
+   },
+   {
+    "file": "15706.dat",
+    "name": "Plate  1 x  4 with Plate  1 x  4 at 45 Degrees",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "15706"
+    ]
+   },
+   {
+    "file": "41740.dat",
+    "name": "Plate  1 x  4 with Two Studs and Groove",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "41740"
+    ]
+   },
+   {
+    "file": "78329.dat",
+    "name": "Plate  1 x  5",
+    "colors": {
+     "10": 1
+    },
+    "rb": [
+     "78329"
+    ]
+   },
+   {
+    "file": "3666.dat",
+    "name": "Plate  1 x  6",
+    "colors": {
+     "4": 1,
+     "19": 1,
+     "71": 1
+    },
+    "rb": [
+     "3666"
+    ]
+   },
+   {
+    "file": "3460.dat",
+    "name": "Plate  1 x  8",
+    "colors": {
+     "19": 1,
+     "70": 1,
+     "71": 1
+    },
+    "rb": [
+     "3460"
+    ]
+   },
+   {
+    "file": "4510.dat",
+    "name": "Plate  1 x  8 with Door Rail",
+    "colors": {
+     "0": 1,
+     "15": 1
+    },
+    "rb": [
+     "4510"
+    ]
+   },
+   {
+    "file": "4477.dat",
+    "name": "Plate  1 x 10",
+    "colors": {
+     "28": 1,
+     "70": 1,
+     "72": 1
+    },
+    "rb": [
+     "4477"
+    ]
+   },
+   {
+    "file": "60479.dat",
+    "name": "Plate  1 x 12",
+    "colors": {
+     "4": 1,
+     "15": 1,
+     "19": 1
+    },
+    "rb": [
+     "60479"
+    ]
+   },
+   {
+    "file": "3022.dat",
+    "name": "Plate  2 x  2",
+    "colors": {
+     "1": 1,
+     "2": 1,
+     "4": 1,
+     "29": 1,
+     "71": 1
+    },
+    "rb": [
+     "3022"
+    ]
+   },
+   {
+    "file": "2420.dat",
+    "name": "Plate  2 x  2 Corner",
+    "colors": {
+     "2": 1
+    },
+    "rb": [
+     "2420"
+    ]
+   },
+   {
+    "file": "18674.dat",
+    "name": "Plate  2 x  2 Round with  1 Centre Stud",
+    "colors": {
+     "70": 1,
+     "72": 1
+    },
+    "rb": [
+     "18674"
+    ]
+   },
+   {
+    "file": "4032a.dat",
+    "name": "Plate  2 x  2 Round with Axlehole",
+    "colors": {
+     "0": 1,
+     "2": 1,
+     "10": 1,
+     "19": 1,
+     "71": 1
+    },
+    "rb": [
+     "4032a"
+    ]
+   },
+   {
+    "file": "98284.dat",
+    "name": "Plate  2 x  2 Round with Hole and 4 Vertical Bars",
+    "colors": {
+     "70": 1,
+     "378": 1
+    },
+    "rb": [
+     "98284"
+    ]
+   },
+   {
+    "file": "33909.dat",
+    "name": "Plate  2 x  2 with 2 Studs on One Edge",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "33909"
+    ]
+   },
+   {
+    "file": "87580.dat",
+    "name": "Plate  2 x  2 with Groove with 1 Centre Stud",
+    "colors": {
+     "2": 1,
+     "10": 1
+    },
+    "rb": [
+     "87580"
+    ]
+   },
+   {
+    "file": "4304.dat",
+    "name": "Plate  2 x  2 x  0.667 with Two Studs On Side and Two Raised with Partial Closed Understud",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "4304"
+    ]
+   },
+   {
+    "file": "3021.dat",
+    "name": "Plate  2 x  3",
+    "colors": {
+     "2": 1,
+     "28": 1,
+     "70": 1,
+     "71": 1
+    },
+    "rb": [
+     "3021"
+    ]
+   },
+   {
+    "file": "3020.dat",
+    "name": "Plate  2 x  4",
+    "colors": {
+     "0": 1,
+     "2": 1,
+     "15": 1,
+     "27": 1,
+     "33": 1,
+     "71": 1
+    },
+    "rb": [
+     "3020"
+    ]
+   },
+   {
+    "file": "65509.dat",
+    "name": "Plate  2 x  4 with Groove with  2 Studs",
+    "colors": {
+     "10": 1
+    },
+    "rb": [
+     "65509"
+    ]
+   },
+   {
+    "file": "3795.dat",
+    "name": "Plate  2 x  6",
+    "colors": {
+     "15": 1,
+     "70": 1
+    },
+    "rb": [
+     "3795"
+    ]
+   },
+   {
+    "file": "18980.dat",
+    "name": "Plate  2 x  6 with Two Rounded Corners",
+    "colors": {
+     "10": 1
+    },
+    "rb": [
+     "18980"
+    ]
+   },
+   {
+    "file": "3832.dat",
+    "name": "Plate  2 x 10",
+    "colors": {
+     "19": 1,
+     "70": 1
+    },
+    "rb": [
+     "3832"
+    ]
+   },
+   {
+    "file": "91988.dat",
+    "name": "Plate  2 x 14",
+    "colors": {
+     "15": 1,
+     "19": 1
+    },
+    "rb": [
+     "91988"
+    ]
+   },
+   {
+    "file": "3176.dat",
+    "name": "Plate  3 x  2 with Hole",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "3176"
+    ]
+   },
+   {
+    "file": "11212.dat",
+    "name": "Plate  3 x  3",
+    "colors": {
+     "2": 1,
+     "19": 1
+    },
+    "rb": [
+     "11212"
+    ]
+   },
+   {
+    "file": "68568.dat",
+    "name": "Plate  3 x  3 with  2 x  2 Corner Round and  2 x  2 with  1 x  1 Corner Round Cutout",
+    "colors": {
+     "2": 1,
+     "15": 1
+    },
+    "rb": [
+     "68568"
+    ]
+   },
+   {
+    "file": "35470.dat",
+    "name": "Plate  3 x  5 Cloud Shape with  3 Studs",
+    "colors": {
+     "10": 1
+    },
+    "rb": [
+     "35470"
+    ]
+   },
+   {
+    "file": "3031.dat",
+    "name": "Plate  4 x  4",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "3031"
+    ]
+   },
+   {
+    "file": "60474.dat",
+    "name": "Plate  4 x  4 Round with Hole and Snapstud",
+    "colors": {
+     "19": 1,
+     "308": 1
+    },
+    "rb": [
+     "60474"
+    ]
+   },
+   {
+    "file": "3032.dat",
+    "name": "Plate  4 x  6",
+    "colors": {
+     "2": 1,
+     "4": 1,
+     "19": 1
+    },
+    "rb": [
+     "3032"
+    ]
+   },
+   {
+    "file": "3035.dat",
+    "name": "Plate  4 x  8",
+    "colors": {
+     "10": 1,
+     "70": 1,
+     "71": 1
+    },
+    "rb": [
+     "3035"
+    ]
+   },
+   {
+    "file": "3030.dat",
+    "name": "Plate  4 x 10",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "3030"
+    ]
+   },
+   {
+    "file": "80015.dat",
+    "name": "Plate  5 x  5 with  4 x  4 Corner Round and  4 x  4 with  3 x  3 Corner Round Cutout",
+    "colors": {
+     "4": 1
+    },
+    "rb": [
+     "80015"
+    ]
+   },
+   {
+    "file": "11213.dat",
+    "name": "Plate  6 x  6 Round with Hole and Snapstud",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "11213"
+    ]
+   },
+   {
+    "file": "3036.dat",
+    "name": "Plate  6 x  8",
+    "colors": {
+     "27": 1
+    },
+    "rb": [
+     "3036"
+    ]
+   },
+   {
+    "file": "3033.dat",
+    "name": "Plate  6 x 10",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "3033"
+    ]
+   },
+   {
+    "file": "3028.dat",
+    "name": "Plate  6 x 12",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "3028"
+    ]
+   },
+   {
+    "file": "3456.dat",
+    "name": "Plate  6 x 14",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "3456"
+    ]
+   },
+   {
+    "file": "74611.dat",
+    "name": "Plate  8 x  8 Round with Hole and Snapstud",
+    "colors": {
+     "2": 1,
+     "71": 1
+    },
+    "rb": [
+     "74611"
+    ]
+   },
+   {
+    "file": "60477.dat",
+    "name": "Slope Brick 18  4 x  1",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "60477"
+    ]
+   },
+   {
+    "file": "30363.dat",
+    "name": "Slope Brick 18  4 x  2",
+    "colors": {
+     "70": 1,
+     "71": 1
+    },
+    "rb": [
+     "30363"
+    ]
+   },
+   {
+    "file": "54200.dat",
+    "name": "Slope Brick 31  1 x  1 x  0.667",
+    "colors": {
+     "1": 1,
+     "2": 1,
+     "4": 1,
+     "29": 1,
+     "70": 1
+    },
+    "rb": [
+     "54200"
+    ]
+   },
+   {
+    "file": "85984.dat",
+    "name": "Slope Brick 31  1 x  2 x  0.667",
+    "colors": {
+     "1": 1,
+     "2": 1,
+     "4": 1,
+     "27": 1
+    },
+    "rb": [
+     "85984"
+    ]
+   },
+   {
+    "file": "4286.dat",
+    "name": "Slope Brick 33  3 x  1",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "4286"
+    ]
+   },
+   {
+    "file": "3298.dat",
+    "name": "Slope Brick 33  3 x  2",
+    "colors": {
+     "70": 1,
+     "72": 1
+    },
+    "rb": [
+     "3298"
+    ]
+   },
+   {
+    "file": "3675.dat",
+    "name": "Slope Brick 33  3 x  3 Double Convex",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "3675"
+    ]
+   },
+   {
+    "file": "15571.dat",
+    "name": "Slope Brick 45  1 x  2 Triple with Bottom Stud Holder",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "15571"
+    ]
+   },
+   {
+    "file": "3040b.dat",
+    "name": "Slope Brick 45  2 x  1",
+    "colors": {
+     "1": 1,
+     "2": 1,
+     "4": 1,
+     "19": 1,
+     "29": 1,
+     "308": 1
+    },
+    "rb": [
+     "3040b"
+    ]
+   },
+   {
+    "file": "3665a.dat",
+    "name": "Slope Brick 45  2 x  1 Inverted without Inner Stopper Ring",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "3665"
+    ]
+   },
+   {
+    "file": "28192.dat",
+    "name": "Slope Brick 45  2 x  1 with Cutout and without Stud",
+    "colors": {
+     "2": 1,
+     "27": 1
+    },
+    "rb": [
+     "28192"
+    ]
+   },
+   {
+    "file": "3039.dat",
+    "name": "Slope Brick 45  2 x  2",
+    "colors": {
+     "4": 1,
+     "28": 1
+    },
+    "rb": [
+     "3039"
+    ]
+   },
+   {
+    "file": "3046.dat",
+    "name": "Slope Brick 45  2 x  2 Double Concave",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "3046a"
+    ]
+   },
+   {
+    "file": "13548.dat",
+    "name": "Slope Brick 45  2 x  2 Double Convex with 45 Corner",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "13548"
+    ]
+   },
+   {
+    "file": "3037.dat",
+    "name": "Slope Brick 45  2 x  4",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "3037"
+    ]
+   },
+   {
+    "file": "22388.dat",
+    "name": "Slope Brick 50  1 x  1 x  0.667 Quadruple",
+    "colors": {
+     "19": 1,
+     "191": 1
+    },
+    "rb": [
+     "22388"
+    ]
+   },
+   {
+    "file": "11477.dat",
+    "name": "Slope Brick Curved  2 x  1",
+    "colors": {
+     "2": 1,
+     "19": 1,
+     "70": 1
+    },
+    "rb": [
+     "11477"
+    ]
+   },
+   {
+    "file": "15068.dat",
+    "name": "Slope Brick Curved  2 x  2 x  0.667",
+    "colors": {
+     "2": 1,
+     "15": 1,
+     "72": 1
+    },
+    "rb": [
+     "15068"
+    ]
+   },
+   {
+    "file": "3573.dat",
+    "name": "Slope Brick Curved  4 x  1 x  1.667",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "3573"
+    ]
+   },
+   {
+    "file": "76065.dat",
+    "name": "String Braided 21L with End Studs and Minifig Grips",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "14210"
+    ]
+   },
+   {
+    "file": "32013.dat",
+    "name": "Technic Angle Connector #1",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "10": 1
+    },
+    "rb": [
+     "32013"
+    ]
+   },
+   {
+    "file": "32016.dat",
+    "name": "Technic Angle Connector #3 (157.5 degree)",
+    "colors": {
+     "14": 1,
+     "308": 1
+    },
+    "rb": [
+     "32016"
+    ]
+   },
+   {
+    "file": "32015.dat",
+    "name": "Technic Angle Connector #5 (112.5 degree)",
+    "colors": {
+     "27": 1,
+     "70": 1,
+     "288": 1
+    },
+    "rb": [
+     "32015"
+    ]
+   },
+   {
+    "file": "32062.dat",
+    "name": "Technic Axle  2 Notched",
+    "colors": {
+     "4": 1
+    },
+    "rb": [
+     "32062"
+    ]
+   },
+   {
+    "file": "4519.dat",
+    "name": "Technic Axle  3",
+    "colors": {
+     "14": 1,
+     "71": 1
+    },
+    "rb": [
+     "4519"
+    ]
+   },
+   {
+    "file": "24316.dat",
+    "name": "Technic Axle  3 with Stop",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "24316"
+    ]
+   },
+   {
+    "file": "3705.dat",
+    "name": "Technic Axle  4",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "3705"
+    ]
+   },
+   {
+    "file": "32073.dat",
+    "name": "Technic Axle  5",
+    "colors": {
+     "14": 1,
+     "71": 1
+    },
+    "rb": [
+     "32073"
+    ]
+   },
+   {
+    "file": "15462.dat",
+    "name": "Technic Axle  5 with Stop",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "15462"
+    ]
+   },
+   {
+    "file": "3706.dat",
+    "name": "Technic Axle  6",
+    "colors": {
+     "4": 1
+    },
+    "rb": [
+     "3706"
+    ]
+   },
+   {
+    "file": "23948.dat",
+    "name": "Technic Axle 11",
+    "colors": {
+     "14": 1
+    },
+    "rb": [
+     "23948"
+    ]
+   },
+   {
+    "file": "50450.dat",
+    "name": "Technic Axle 32",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "50450"
+    ]
+   },
+   {
+    "file": "42195.dat",
+    "name": "Technic Axle Joiner  3L with Two Flat Sides",
+    "colors": {
+     "4": 1,
+     "71": 1,
+     "84": 1,
+     "288": 1
+    },
+    "rb": [
+     "42195"
+    ]
+   },
+   {
+    "file": "59443.dat",
+    "name": "Technic Axle Joiner Inline Smooth",
+    "colors": {
+     "0": 1,
+     "2": 1,
+     "70": 1
+    },
+    "rb": [
+     "59443"
+    ]
+   },
+   {
+    "file": "3749.dat",
+    "name": "Technic Axle Pin",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "3749"
+    ]
+   },
+   {
+    "file": "11214.dat",
+    "name": "Technic Axle Pin Long with Friction with  2L Pin",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "11214"
+    ]
+   },
+   {
+    "file": "65249.dat",
+    "name": "Technic Axle Pin Long without Friction with  2L Axle",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "65249"
+    ]
+   },
+   {
+    "file": "43093.dat",
+    "name": "Technic Axle Pin with Friction",
+    "colors": {
+     "1": 1
+    },
+    "rb": [
+     "43093"
+    ]
+   },
+   {
+    "file": "32474.dat",
+    "name": "Technic Ball Joint with Axlehole Blind",
+    "colors": {
+     "4": 1,
+     "71": 1
+    },
+    "rb": [
+     "32474"
+    ]
+   },
+   {
+    "file": "18654.dat",
+    "name": "Technic Beam  1",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "10": 1,
+     "15": 1,
+     "19": 1,
+     "27": 1,
+     "70": 1,
+     "71": 1
+    },
+    "rb": [
+     "18654"
+    ]
+   },
+   {
+    "file": "43857.dat",
+    "name": "Technic Beam  2",
+    "colors": {
+     "4": 1,
+     "71": 1
+    },
+    "rb": [
+     "43857"
+    ]
+   },
+   {
+    "file": "60483.dat",
+    "name": "Technic Beam  2 Liftarm",
+    "colors": {
+     "2": 1,
+     "4": 1,
+     "27": 1
+    },
+    "rb": [
+     "60483"
+    ]
+   },
+   {
+    "file": "41677.dat",
+    "name": "Technic Beam  2 x  0.5 Liftarm",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "41677"
+    ]
+   },
+   {
+    "file": "32140.dat",
+    "name": "Technic Beam  2 x  4 Liftarm Bent 90",
+    "colors": {
+     "27": 1
+    },
+    "rb": [
+     "32140"
+    ]
+   },
+   {
+    "file": "32523.dat",
+    "name": "Technic Beam  3",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "10": 1,
+     "15": 1,
+     "70": 1,
+     "72": 1,
+     "92": 1
+    },
+    "rb": [
+     "32523"
+    ]
+   },
+   {
+    "file": "60484.dat",
+    "name": "Technic Beam  3 x  3 T-shaped",
+    "colors": {
+     "14": 1,
+     "71": 1
+    },
+    "rb": [
+     "60484"
+    ]
+   },
+   {
+    "file": "32249.dat",
+    "name": "Technic Beam  3 x  3 x  0.5 Liftarm Bent 90 Quarter Circle",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "32249"
+    ]
+   },
+   {
+    "file": "32009.dat",
+    "name": "Technic Beam  3 x  3.8 x  7 Liftarm Bent 45 Double",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "32009"
+    ]
+   },
+   {
+    "file": "32526.dat",
+    "name": "Technic Beam  3 x  5 Bent 90",
+    "colors": {
+     "0": 1,
+     "2": 1,
+     "71": 1
+    },
+    "rb": [
+     "32526"
+    ]
+   },
+   {
+    "file": "2477.dat",
+    "name": "Technic Beam  3 x  5 Bent 90 with Alternating Holes",
+    "colors": {
+     "4": 1,
+     "15": 1
+    },
+    "rb": [
+     "2477"
+    ]
+   },
+   {
+    "file": "32271.dat",
+    "name": "Technic Beam  3 x  7 Liftarm Bent 53.13",
+    "colors": {
+     "15": 1,
+     "27": 1,
+     "70": 1
+    },
+    "rb": [
+     "32271"
+    ]
+   },
+   {
+    "file": "32348.dat",
+    "name": "Technic Beam  4 x  4 Liftarm Bent 53.13",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "32348"
+    ]
+   },
+   {
+    "file": "6629.dat",
+    "name": "Technic Beam  4 x  6 Liftarm Bent 53.13",
+    "colors": {
+     "4": 1
+    },
+    "rb": [
+     "6629"
+    ]
+   },
+   {
+    "file": "32316.dat",
+    "name": "Technic Beam  5",
+    "colors": {
+     "4": 1,
+     "27": 1,
+     "70": 1,
+     "71": 1,
+     "72": 1
+    },
+    "rb": [
+     "32316"
+    ]
+   },
+   {
+    "file": "32017.dat",
+    "name": "Technic Beam  5 x  0.5",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "32017"
+    ]
+   },
+   {
+    "file": "32524.dat",
+    "name": "Technic Beam  7",
+    "colors": {
+     "2": 1,
+     "4": 1,
+     "10": 1,
+     "14": 1,
+     "15": 1,
+     "27": 1,
+     "70": 1,
+     "191": 1,
+     "484": 1
+    },
+    "rb": [
+     "32524"
+    ]
+   },
+   {
+    "file": "2391.dat",
+    "name": "Technic Beam  7 with Alternating Holes",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "2391"
+    ]
+   },
+   {
+    "file": "64179.dat",
+    "name": "Technic Beam  7 x  5 with Open Center  5 x  3",
+    "colors": {
+     "0": 1,
+     "71": 1
+    },
+    "rb": [
+     "64179"
+    ]
+   },
+   {
+    "file": "40490.dat",
+    "name": "Technic Beam  9",
+    "colors": {
+     "0": 1,
+     "10": 1,
+     "15": 1,
+     "72": 1
+    },
+    "rb": [
+     "40490"
+    ]
+   },
+   {
+    "file": "32525.dat",
+    "name": "Technic Beam 11",
+    "colors": {
+     "27": 1,
+     "70": 1,
+     "71": 1
+    },
+    "rb": [
+     "32525"
+    ]
+   },
+   {
+    "file": "73507.dat",
+    "name": "Technic Beam 11 with Alternating Holes",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "73507"
+    ]
+   },
+   {
+    "file": "39794.dat",
+    "name": "Technic Beam 11 x  7 with Open Center  9 x  5",
+    "colors": {
+     "0": 1,
+     "27": 1
+    },
+    "rb": [
+     "39794"
+    ]
+   },
+   {
+    "file": "32278.dat",
+    "name": "Technic Beam 15",
+    "colors": {
+     "2": 1,
+     "15": 1,
+     "70": 1,
+     "71": 1
+    },
+    "rb": [
+     "32278"
+    ]
+   },
+   {
+    "file": "39790.dat",
+    "name": "Technic Beam 15 x 11 with Open Center 13 x  9",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "39790"
+    ]
+   },
+   {
+    "file": "73230.dat",
+    "name": "Technic Brick  1 x  1 with Axlehole",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "73230"
+    ]
+   },
+   {
+    "file": "6541.dat",
+    "name": "Technic Brick  1 x  1 with Hole",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "6541"
+    ]
+   },
+   {
+    "file": "32064a.dat",
+    "name": "Technic Brick  1 x  2 with Axlehole with Open Sides and Stud Blocker",
+    "colors": {
+     "2": 1
+    },
+    "rb": [
+     "32064a"
+    ]
+   },
+   {
+    "file": "3700.dat",
+    "name": "Technic Brick  1 x  2 with Hole",
+    "colors": {
+     "2": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1,
+     "72": 1,
+     "84": 1
+    },
+    "rb": [
+     "3700"
+    ]
+   },
+   {
+    "file": "32000.dat",
+    "name": "Technic Brick  1 x  2 with Holes",
+    "colors": {
+     "15": 1,
+     "19": 1,
+     "70": 1
+    },
+    "rb": [
+     "32000"
+    ]
+   },
+   {
+    "file": "85943.dat",
+    "name": "Technic Brick  1 x  2 with Two Liftarms",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "85943"
+    ]
+   },
+   {
+    "file": "80431.dat",
+    "name": "Technic Brick  1 x  2 x  1.333 with Hole and Rotation Joint Socket",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "80431"
+    ]
+   },
+   {
+    "file": "3895.dat",
+    "name": "Technic Brick  1 x 12 with Holes",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "3895"
+    ]
+   },
+   {
+    "file": "32531a.dat",
+    "name": "Technic Brick  4 x  6 with Open Centre  2 x  4 with Cross Underside Studs",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "32531"
+    ]
+   },
+   {
+    "file": "32555.dat",
+    "name": "Technic Brick  5 x  5 Corner with Holes",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "32555"
+    ]
+   },
+   {
+    "file": "32123b.dat",
+    "name": "Technic Bush 1/2 Smooth with Axle Hole Semi-Reduced",
+    "colors": {
+     "5": 1,
+     "14": 1
+    },
+    "rb": [
+     "32123b"
+    ]
+   },
+   {
+    "file": "57585.dat",
+    "name": "Technic Bush with Three Axles",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "57585"
+    ]
+   },
+   {
+    "file": "3713.dat",
+    "name": "Technic Bush with Two Flanges",
+    "colors": {
+     "0": 1,
+     "4": 1
+    },
+    "rb": [
+     "3713"
+    ]
+   },
+   {
+    "file": "6575a.dat",
+    "name": "Technic Cam with Narrow Slit and Recessed Axlehole",
+    "colors": {
+     "0": 1,
+     "72": 1
+    },
+    "rb": [
+     "6575"
+    ]
+   },
+   {
+    "file": "6553.dat",
+    "name": "Technic Connector (Axle) with Axle 1.5",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "6553"
+    ]
+   },
+   {
+    "file": "42135.dat",
+    "name": "Technic Connector (Axle/Bush) Type 2",
+    "colors": {
+     "14": 1
+    },
+    "rb": [
+     "42135"
+    ]
+   },
+   {
+    "file": "39793.dat",
+    "name": "Technic Connector Block  3 x  3 with  9 Perpendicular Holes",
+    "colors": {
+     "0": 1,
+     "72": 1
+    },
+    "rb": [
+     "39793"
+    ]
+   },
+   {
+    "file": "2393.dat",
+    "name": "Technic Cross Block  1 x  3 (Pin/Pin/Pin) with  2 Pins",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "2393"
+    ]
+   },
+   {
+    "file": "32184.dat",
+    "name": "Technic Cross Block 1 x 3 (Axle/Pin/Axle)",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "32184"
+    ]
+   },
+   {
+    "file": "42003.dat",
+    "name": "Technic Cross Block 1 x 3 (Axle/Pin/Pin)",
+    "colors": {
+     "25": 1,
+     "27": 1,
+     "71": 1
+    },
+    "rb": [
+     "42003"
+    ]
+   },
+   {
+    "file": "65489.dat",
+    "name": "Technic Cross Block 1 x 3 (Pin/Pin/Pin) with 4 Pins Rectangular Centre Hole",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "65489"
+    ]
+   },
+   {
+    "file": "32291.dat",
+    "name": "Technic Cross Block 2 x 2 (Axle/Twin Pin)",
+    "colors": {
+     "10": 1
+    },
+    "rb": [
+     "32291"
+    ]
+   },
+   {
+    "file": "63869.dat",
+    "name": "Technic Cross Block 3 x 2 (Axle/Triple Pin)",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "63869"
+    ]
+   },
+   {
+    "file": "32270.dat",
+    "name": "Technic Gear 12 Tooth Double Bevel",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "32270"
+    ]
+   },
+   {
+    "file": "18575.dat",
+    "name": "Technic Gear 20 Tooth Double Bevel Reinforced",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "18575"
+    ]
+   },
+   {
+    "file": "46372.dat",
+    "name": "Technic Gear 28 Tooth Double Bevel",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "46372"
+    ]
+   },
+   {
+    "file": "3743.dat",
+    "name": "Technic Gear Rack  1 x  4",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "3743"
+    ]
+   },
+   {
+    "file": "71709.dat",
+    "name": "Technic Panel  3 x  7",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "71709"
+    ]
+   },
+   {
+    "file": "64782.dat",
+    "name": "Technic Panel  5 x 11",
+    "colors": {
+     "71": 1,
+     "72": 1
+    },
+    "rb": [
+     "64782"
+    ]
+   },
+   {
+    "file": "11954.dat",
+    "name": "Technic Panel Smooth 11 x  2 x  3 with 10 Front Pin Holes",
+    "colors": {
+     "70": 1
+    },
+    "rb": [
+     "11954"
+    ]
+   },
+   {
+    "file": "3673.dat",
+    "name": "Technic Pin",
+    "colors": {
+     "14": 1,
+     "71": 1
+    },
+    "rb": [
+     "3673"
+    ]
+   },
+   {
+    "file": "89678.dat",
+    "name": "Technic Pin  1/2 with Friction",
+    "colors": {
+     "4": 1
+    },
+    "rb": [
+     "89678"
+    ]
+   },
+   {
+    "file": "65826.dat",
+    "name": "Technic Pin  1/2 with Stud Tube",
+    "colors": {
+     "10": 1
+    },
+    "rb": [
+     "65826"
+    ]
+   },
+   {
+    "file": "32002.dat",
+    "name": "Technic Pin  3/4",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "32002"
+    ]
+   },
+   {
+    "file": "62462.dat",
+    "name": "Technic Pin Joiner Round with Slot",
+    "colors": {
+     "4": 1,
+     "10": 1,
+     "71": 1,
+     "288": 1,
+     "330": 1
+    },
+    "rb": [
+     "62462"
+    ]
+   },
+   {
+    "file": "42924.dat",
+    "name": "Technic Pin Long with Friction Type 2",
+    "colors": {
+     "1": 1
+    },
+    "rb": [
+     "42924"
+    ]
+   },
+   {
+    "file": "65304.dat",
+    "name": "Technic Pin Long with Stop Bush Type 2",
+    "colors": {
+     "71": 1
+    },
+    "rb": [
+     "65304"
+    ]
+   },
+   {
+    "file": "39888.dat",
+    "name": "Technic Pin Long without Friction Type 2",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "39888"
+    ]
+   },
+   {
+    "file": "80477.dat",
+    "name": "Technic Pin with Friction and Towball on  1L Bar",
+    "colors": {
+     "72": 1
+    },
+    "rb": [
+     "80477"
+    ]
+   },
+   {
+    "file": "61332.dat",
+    "name": "Technic Pin with Friction Type 2",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "61332"
+    ]
+   },
+   {
+    "file": "3738.dat",
+    "name": "Technic Plate  2 x  8 with Holes",
+    "colors": {
+     "10": 1
+    },
+    "rb": [
+     "3738"
+    ]
+   },
+   {
+    "file": "4697b.dat",
+    "name": "Technic Pneumatic T-Piece - Type 2",
+    "colors": {
+     "0": 1,
+     "297": 1
+    },
+    "rb": [
+     "4697b"
+    ]
+   },
+   {
+    "file": "25269.dat",
+    "name": "Tile  1 x  1 Corner Round",
+    "colors": {
+     "43": 1
+    },
+    "rb": [
+     "25269"
+    ]
+   },
+   {
+    "file": "98138p26.dat",
+    "name": "Tile  1 x  1 Round with Alpaca Face Pattern",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "98138pr0026"
+    ]
+   },
+   {
+    "file": "98138.dat",
+    "name": "Tile  1 x  1 Round with Groove",
+    "colors": {
+     "2": 1,
+     "4": 1,
+     "15": 2,
+     "329": 1,
+     "10375": 1
+    },
+    "rb": [
+     "98138pr9980",
+     "98138pr0008",
+     "98138"
+    ]
+   },
+   {
+    "file": "98138p83.dat",
+    "name": "Tile  1 x  1 Round with White \"LIGHT\" on Red Half and Angry Eyes Pattern",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "98138pr0083"
+    ]
+   },
+   {
+    "file": "15712.dat",
+    "name": "Tile  1 x  1 with Clip (Thick C-Clip)",
+    "colors": {
+     "4": 1
+    },
+    "rb": [
+     "15712"
+    ]
+   },
+   {
+    "file": "3069b.dat",
+    "name": "Tile  1 x  2 with Groove",
+    "colors": {
+     "14": 1,
+     "19": 1,
+     "35": 1,
+     "43": 1
+    },
+    "rb": [
+     "3069b"
+    ]
+   },
+   {
+    "file": "63864.dat",
+    "name": "Tile  1 x  3",
+    "colors": {
+     "2": 1,
+     "484": 1
+    },
+    "rb": [
+     "63864"
+    ]
+   },
+   {
+    "file": "2431.dat",
+    "name": "Tile  1 x  4 with Groove",
+    "colors": {
+     "4": 1,
+     "10": 1,
+     "72": 1
+    },
+    "rb": [
+     "2431"
+    ]
+   },
+   {
+    "file": "6636.dat",
+    "name": "Tile  1 x  6",
+    "colors": {
+     "4": 1,
+     "19": 1
+    },
+    "rb": [
+     "6636"
+    ]
+   },
+   {
+    "file": "14719.dat",
+    "name": "Tile  2 x  2 Corner",
+    "colors": {
+     "4": 1,
+     "70": 1,
+     "72": 1
+    },
+    "rb": [
+     "14719"
+    ]
+   },
+   {
+    "file": "15535.dat",
+    "name": "Tile  2 x  2 Round with Hole",
+    "colors": {
+     "0": 1,
+     "19": 1
+    },
+    "rb": [
+     "15535"
+    ]
+   },
+   {
+    "file": "14769.dat",
+    "name": "Tile  2 x  2 Round with Round Underside Stud",
+    "colors": {
+     "70": 1,
+     "322": 1
+    },
+    "rb": [
+     "14769pr1075",
+     "14769"
+    ]
+   },
+   {
+    "file": "3068b.dat",
+    "name": "Tile  2 x  2 with Groove",
+    "colors": {
+     "15": 1,
+     "484": 1
+    },
+    "rb": [
+     "3068bpr0501",
+     "3068b"
+    ]
+   },
+   {
+    "file": "87079.dat",
+    "name": "Tile  2 x  4",
+    "colors": {
+     "0": 1,
+     "4": 1
+    },
+    "rb": [
+     "87079"
+    ]
+   },
+   {
+    "file": "10202.dat",
+    "name": "Tile  6 x  6 with Groove and Underside Studs",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "10202"
+    ]
+   },
+   {
+    "file": "61485.dat",
+    "name": "Turntable Flat Base  4 x  4",
+    "colors": {
+     "0": 1
+    },
+    "rb": [
+     "61485"
+    ]
+   },
+   {
+    "file": "45677.dat",
+    "name": "Wedge  4 x  4 x  0.667 Curved",
+    "colors": {
+     "15": 1
+    },
+    "rb": [
+     "45677pr0037"
+    ]
+   },
+   {
+    "file": "60592.dat",
+    "name": "Window  1 x  2 x  2 without Sill",
+    "colors": {
+     "19": 1
+    },
+    "rb": [
+     "60592"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "extra",
+  "name": "Common Technic & bricks",
+  "parts": [
+   {
+    "file": "66906.dat",
+    "name": "=Technic Pin Towball with Friction",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3023.dat",
+    "name": "~Moved to 3023b",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "4265c.dat",
+    "name": "~Moved to 32123",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3004.dat",
+    "name": "Brick  1 x  2",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3010.dat",
+    "name": "Brick  1 x  4",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3003.dat",
+    "name": "Brick  2 x  2",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3001.dat",
+    "name": "Brick  2 x  4",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "39789.dat",
+    "name": "Brick  2 x  4 with  3 Axleholes Vertical",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3024.dat",
+    "name": "Plate  1 x  1",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3022.dat",
+    "name": "Plate  2 x  2",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3020.dat",
+    "name": "Plate  2 x  4",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "4519.dat",
+    "name": "Technic Axle  3",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3705.dat",
+    "name": "Technic Axle  4",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "32073.dat",
+    "name": "Technic Axle  5",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3706.dat",
+    "name": "Technic Axle  6",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3707.dat",
+    "name": "Technic Axle  8",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3737.dat",
+    "name": "Technic Axle 10",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3749.dat",
+    "name": "Technic Axle Pin",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "43093.dat",
+    "name": "Technic Axle Pin with Friction",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "32009.dat",
+    "name": "Technic Beam  3 x  3.8 x  7 Liftarm Bent 45 Double",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "64179.dat",
+    "name": "Technic Beam  7 x  5 with Open Center  5 x  3",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "32278.dat",
+    "name": "Technic Beam 15",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "39790.dat",
+    "name": "Technic Beam 15 x 11 with Open Center 13 x  9",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3700.dat",
+    "name": "Technic Brick  1 x  2 with Hole",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3701.dat",
+    "name": "Technic Brick  1 x  4 with Holes",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3894.dat",
+    "name": "Technic Brick  1 x  6 with Holes",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3702.dat",
+    "name": "Technic Brick  1 x  8 with Holes",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3713.dat",
+    "name": "Technic Bush with Two Flanges",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "6536.dat",
+    "name": "Technic Cross Block 1 x 2 (Axle/Pin)",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "32184.dat",
+    "name": "Technic Cross Block 1 x 3 (Axle/Pin/Axle)",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3673.dat",
+    "name": "Technic Pin",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "6558.dat",
+    "name": "Technic Pin Long with Friction and Slot",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "32054.dat",
+    "name": "Technic Pin Long with Stop Bush",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "2780.dat",
+    "name": "Technic Pin with Friction and Slots",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "61332.dat",
+    "name": "Technic Pin with Friction Type 2",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3070b.dat",
+    "name": "Tile  1 x  1 with Groove",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3069b.dat",
+    "name": "Tile  1 x  2 with Groove",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   },
+   {
+    "file": "3068b.dat",
+    "name": "Tile  2 x  2 with Groove",
+    "colors": {
+     "0": 1,
+     "4": 1,
+     "15": 1,
+     "71": 1
+    },
+    "rb": []
+   }
+  ]
+ }
+]

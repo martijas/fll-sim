@@ -1,12 +1,14 @@
 import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import type { SceneBody, SeasonConfig, ShapeSpec } from "@fll-sim/sim";
+import type { SceneBody, SeasonConfig, ShapeSpec, VisualSpec } from "@fll-sim/sim";
+import type { Library } from "@fll-sim/ldraw";
+import { mat4From3x4, partObject } from "./ldrawMesh";
 
 export type CameraMode = "orbit" | "top" | "follow";
 
 export interface FieldViewHandle {
-  setScene(bodies: SceneBody[], ids: string[]): void;
+  setScene(bodies: SceneBody[], ids: string[], lib?: Library | null, visuals?: Record<string, VisualSpec[]>): void;
   setTransforms(t: Float32Array): void;
   addTrail(xMm: number, yMm: number): void;
   clearTrail(): void;
@@ -192,7 +194,7 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
   }
 
   useImperativeHandle(ref, () => ({
-    setScene(bodies, ids) {
+    setScene(bodies, ids, lib, visuals) {
       const s = st.current!;
       s.dynamic.clear();
       s.bodies = ids.map((id) => {
@@ -200,7 +202,14 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
         const spec = bodies.find((b) => b.id === id);
         g.userData.kind = spec?.kind ?? "field";
         g.userData.id = id;
-        spec?.shapes.forEach((sh) => g.add(shapeMesh(sh)));
+        const vis = visuals?.[id];
+        if (lib && vis?.length) {
+          for (const v of vis) {
+            const o = partObject(lib, v.file, v.color);
+            o.matrix.copy(mat4From3x4(v.m, 0.001));
+            g.add(o);
+          }
+        } else spec?.shapes.forEach((sh) => g.add(shapeMesh(sh)));
         s.dynamic.add(g);
         return g;
       });

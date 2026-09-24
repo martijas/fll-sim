@@ -1,0 +1,8 @@
+{
+  "name": "@fll-sim/assembly",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": { "@fll-sim/ldraw": "workspace:*", "@fll-sim/sim": "workspace:*", "@fll-sim/units": "workspace:*" }
+}

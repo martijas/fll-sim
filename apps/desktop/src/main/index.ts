@@ -90,6 +90,12 @@ function smokeTest(win: BrowserWindow, prefix: string) {
       await win.webContents.executeJavaScript(`(() => { const set = (i, v) => { const el = document.querySelectorAll(".toolbar input[type=number]")[i]; const s = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set; s.call(el, v); el.dispatchEvent(new Event("input", { bubbles: true })); }; set(0, "${x}"); set(1, "${y}"); set(2, "${h}"); })()`);
       await wait(1500);
     }
+    if (process.env.FLLSIM_SMOKE_JS) {
+      // Arbitrary UI script (dev only), e.g. to exercise the builder.
+      console.log("[smoke-js] " + (await win.webContents.executeJavaScript(process.env.FLLSIM_SMOKE_JS)));
+      await wait(Number(process.env.FLLSIM_SMOKE_JS_WAIT ?? 3000));
+      await shot("0-script");
+    }
     console.log("[smoke] " + (await win.webContents.executeJavaScript(`location.href + " isolated=" + self.crossOriginIsolated`)));
     await shot("1-loaded");
     await win.webContents.executeJavaScript(`document.querySelector("button.primary")?.click()`);

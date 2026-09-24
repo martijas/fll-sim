@@ -10,6 +10,10 @@ files:
 extraResources:
   - from: ../../seasons
     to: seasons
+  - from: resources/ldraw
+    to: apps/desktop/resources/ldraw
+  - from: resources/robots
+    to: apps/desktop/resources/robots
 linux:
   target: [deb, AppImage]
   category: Education

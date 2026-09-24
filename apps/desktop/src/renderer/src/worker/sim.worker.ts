@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 // Simulation worker: physics + MicroPython in lockstep, paced against wall-clock time.
-import { PORTS, Simulation, SpikeApi, makeDriveBase, type Port } from "@fll-sim/sim";
+import { PORTS, Simulation, SpikeApi, type Port } from "@fll-sim/sim";
 import { runPython, settle } from "@fll-sim/runtime-python";
 import wasmUrl from "@micropython/micropython-webassembly-pyscript/micropython.wasm?url";
 import { CTRL, type Frame, type FromWorker, type ToWorker } from "./protocol";
@@ -105,7 +105,7 @@ async function handle(m: ToWorker) {
     if (m.type === "init") {
       ctrl = new Int32Array(m.ctrl);
       const mat = m.mat ? { width: m.mat.width, height: m.mat.height, data: new Uint8ClampedArray(m.mat.data) } : null;
-      sim = await Simulation.create({ season: m.season, robot: makeDriveBase(m.robot), start: m.start, mat });
+      sim = await Simulation.create({ season: m.season, robot: m.robot, start: m.start, mat });
       api = new SpikeApi(sim);
       sim.stepMs(250); // let the robot settle on the mat
       post({ type: "scene", bodies: sim.scene, bodyIds: sim.bodies.map((b) => b.id) });

@@ -1,4 +1,4 @@
-import type { DriveBaseOptions, HubEvent, SceneBody, SeasonConfig, StartPose } from "@fll-sim/sim";
+import type { HubEvent, RobotModel, SceneBody, SeasonConfig, StartPose } from "@fll-sim/sim";
 import type { RunResult } from "@fll-sim/runtime-python";
 import { CTRL, type Frame, type FromWorker, type MatPayload, type ToWorker } from "../worker/protocol";
 import SimWorker from "../worker/sim.worker.ts?worker";
@@ -25,7 +25,7 @@ export class SimController {
 
   constructor(
     private cb: SimCallbacks,
-    private cfg: { season: SeasonConfig; mat: MatPayload | null; robot: DriveBaseOptions; start: StartPose },
+    private cfg: { season: SeasonConfig; mat: MatPayload | null; robot: RobotModel; start: StartPose },
   ) {
     Atomics.store(this.ctrl, CTRL.SPEED_X100, 100);
   }

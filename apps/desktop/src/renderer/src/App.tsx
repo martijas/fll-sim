@@ -1,5 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { SeasonConfig, StartPose } from "@fll-sim/sim";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { makeDriveBase, type RobotModel, type SeasonConfig, type StartPose, type VisualSpec } from "@fll-sim/sim";
+import type { Library } from "@fll-sim/ldraw";
+import { assemble, parseModel, serializeModel, type ModelPart } from "@fll-sim/assembly";
+import { Builder } from "./components/Builder";
+import { loadLibrary, type CatalogCategory } from "./lib/ldraw";
 import { readLlsp3, writePythonLlsp3, type Llsp3Project } from "@fll-sim/llsp3";
 import { compileBlocks, type CompileResult } from "@fll-sim/runtime-blocks";
 import { FieldView, type CameraMode, type FieldViewHandle } from "./three/FieldView";
@@ -38,6 +42,11 @@ export function App() {
   const [showRobot, setShowRobot] = useState(false);
   /** Set when a Word Blocks project is open: the editor shows its compiled Python read-only. */
   const [blocks, setBlocks] = useState<CompileResult | null>(null);
+  const [tab, setTab] = useState<"sim" | "build">("sim");
+  const [ldraw, setLdraw] = useState<{ lib: Library; catalog: CatalogCategory[] } | null>(null);
+  const [buildParts, setBuildParts] = useState<ModelPart[]>([]);
+  /** "drivebase" = port-configured default robot; "ldraw" = the model from the builder. */
+  const [robotSource, setRobotSource] = useState<"drivebase" | "ldraw">(() => (localStorage.getItem("fllsim.robotSource") === "ldraw" ? "ldraw" : "drivebase"));
   const field = useRef<FieldViewHandle>(null);
   const ctl = useRef<SimController | null>(null);
   const consoleEnd = useRef<HTMLDivElement>(null);
@@ -60,12 +69,58 @@ export function App() {
     })();
   }, []);
 
+  // LDraw part library + the saved builder model.
+  const buildLoaded = useRef(false);
+  useEffect(() => {
+    loadLibrary()
+      .then(async (l) => {
+        setLdraw(l);
+        const saved = localStorage.getItem("fllsim.buildModel");
+        const savedParts = saved ? parseModel(l.lib, saved).parts : [];
+        if (savedParts.length) setBuildParts(savedParts);
+        else {
+          // First run: start the builder with the example real-parts drive base.
+          const ex = await window.fllsim.readAsset("apps/desktop/resources/robots/spike-drivebase.ldr");
+          if (ex) setBuildParts(parseModel(l.lib, new TextDecoder("latin1").decode(ex)).parts);
+        }
+        buildLoaded.current = true;
+      })
+      .catch((e) => log(`LEGO parts library unavailable: ${e}`, "err"));
+  }, [log]);
+  useEffect(() => {
+    if (!buildLoaded.current) return; // don't overwrite the saved model before it has been loaded
+    try {
+      localStorage.setItem("fllsim.buildModel", serializeModel(buildParts));
+      localStorage.setItem("fllsim.robotSource", robotSource);
+    } catch {
+      /* storage full or unavailable */
+    }
+  }, [buildParts, robotSource]);
+
+  const robotModel: RobotModel = useMemo(() => {
+    if (robotSource === "ldraw" && ldraw && buildParts.length) {
+      try {
+        return assemble(ldraw.lib, buildParts, { name: "Built robot" }).robot;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return makeDriveBase(toDriveBaseOptions(robot));
+  }, [robotSource, ldraw, buildParts, robot]);
+  const robotVisuals = useMemo(() => {
+    const v: Record<string, VisualSpec[]> = {};
+    for (const b of robotModel.bodies) if (b.visuals?.length) v[b.id] = b.visuals;
+    return v;
+  }, [robotModel]);
+  const visualsRef = useRef({ lib: null as Library | null, visuals: robotVisuals });
+  visualsRef.current = { lib: ldraw?.lib ?? null, visuals: robotVisuals };
+
   // (Re)create the simulation controller when season/mat are ready.
   useEffect(() => {
     if (!season) return;
     const c = new SimController(
       {
-        scene: (bodies, ids) => field.current?.setScene(bodies, ids),
+        scene: (bodies, ids) => field.current?.setScene(bodies, ids, visualsRef.current.lib, visualsRef.current.visuals),
         frame: (f) => {
           field.current?.setTransforms(f.transforms);
           if (f.running) field.current?.addTrail(f.pose.xMm, f.pose.yMm);
@@ -88,13 +143,13 @@ export function App() {
           log(`Simulator error: ${m}`, "err");
         },
       },
-      { season, mat: mat?.payload ?? null, robot: toDriveBaseOptions(robot), start },
+      { season, mat: mat?.payload ?? null, robot: robotModel, start },
     );
     ctl.current = c;
     c.boot();
     return () => c.dispose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [season, mat, robot]);
+  }, [season, mat, robotModel]);
 
   useEffect(() => {
     consoleEnd.current?.scrollIntoView({ block: "end" });
@@ -235,6 +290,10 @@ export function App() {
     <div className="app">
       <header className="toolbar">
         <div className="brand">FLL Sim <span>{season.name} · {season.id}</span></div>
+        <div className="tabs">
+          <button className={tab === "sim" ? "on" : ""} onClick={() => setTab("sim")}>Simulate</button>
+          <button className={tab === "build" ? "on" : ""} onClick={() => setTab("build")} disabled={!ldraw}>Build</button>
+        </div>
         <div className="group">
           <button onClick={openFile} title="Open .llsp3 / .py (Ctrl+O)">Open</button>
           <button onClick={() => saveFile(false)} title="Save as .llsp3 (Ctrl+S)">Save</button>
@@ -260,11 +319,31 @@ export function App() {
           <label>X <input type="number" value={start.xMm} step={5} disabled={running} onChange={(e) => applyStart({ ...start, xMm: Number(e.target.value) })} /></label>
           <label>Y <input type="number" value={start.yMm} step={5} disabled={running} onChange={(e) => applyStart({ ...start, yMm: Number(e.target.value) })} /></label>
           <label>Heading <input type="number" value={start.headingDeg} step={5} disabled={running} onChange={(e) => applyStart({ ...start, headingDeg: Number(e.target.value) })} /></label>
-          <button onClick={() => setShowRobot(true)} disabled={running} title="Motor and sensor ports, wheels">Robot…</button>
+          <select value={robotSource} disabled={running} onChange={(e) => setRobotSource(e.target.value as "drivebase" | "ldraw")} title="Which robot to simulate">
+            <option value="drivebase">Robot: standard drive base</option>
+            <option value="ldraw" disabled={!buildParts.length}>Robot: my build ({buildParts.length} parts)</option>
+          </select>
+          <button onClick={() => setShowRobot(true)} disabled={running || robotSource !== "drivebase"} title="Motor and sensor ports, wheels">Ports…</button>
           <button onClick={importMat} title="Load a scan/photo of your mat, cropped to its edges">Mat image…</button>
         </div>
       </header>
-      <main className="main">
+      {tab === "build" && ldraw && (
+        <Builder
+          lib={ldraw.lib}
+          catalog={ldraw.catalog}
+          parts={buildParts}
+          onChange={setBuildParts}
+          log={log}
+          onUseAsRobot={(p) => {
+            const r = assemble(ldraw.lib, p);
+            for (const w of r.report.warnings) log(`⚠ ${w}`, "err");
+            log(`Robot from builder: ${r.report.bodies} rigid groups, ${r.report.motors} motors (${r.robot.motors.map((m) => m.port).join(", ") || "none"}), sensors ${r.robot.sensors.map((x) => `${x.type} ${x.port}`).join(", ") || "none"}`, "info");
+            setRobotSource("ldraw");
+            setTab("sim");
+          }}
+        />
+      )}
+      <main className="main" style={{ display: tab === "sim" ? undefined : "none" }}>
         <section className="left">
           <div className="field-wrap">
             <FieldView ref={field} season={season} matCanvas={mat?.canvas ?? null} />

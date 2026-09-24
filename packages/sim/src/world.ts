@@ -162,7 +162,7 @@ export class Simulation {
       const vt = vols.reduce((s, x) => s + x, 0) || 1;
       b.shapes.forEach((s, i) => {
         const cd = colliderDesc(s)
-          .setMass((b.massKg * vols[i]) / vt)
+          .setMass(s.massKg ?? (b.massKg * vols[i]) / vt)
           .setFriction(FRICTION[s.material ?? "plastic"])
           .setFrictionCombineRule(RAPIER.CoefficientCombineRule.Multiply)
           .setRestitution(0.05)
@@ -182,7 +182,10 @@ export class Simulation {
     }
     for (const j of m.freeJoints) {
       const a = { x: mmToM(j.anchorMm.x), y: mmToM(j.anchorMm.y), z: mmToM(j.anchorMm.z) };
-      this.world.createImpulseJoint(RAPIER.JointData.revolute(a, a, j.axis), byId.get(j.a)!, byId.get(j.b)!, true).setContactsEnabled(false);
+      const joint = this.world.createImpulseJoint(RAPIER.JointData.revolute(a, a, j.axis), byId.get(j.a)!, byId.get(j.b)!, true) as RAPIER.RevoluteImpulseJoint;
+      joint.setContactsEnabled(false);
+      // Friction pins hold position against small loads: a velocity motor towards 0.
+      if (j.friction) joint.configureMotorVelocity(0, 0.002);
     }
     for (const s of m.sensors) {
       this.sensors.set(s.port, {
@@ -393,7 +396,8 @@ function colliderDesc(s: ShapeSpec): RAPIER.ColliderDesc {
     case "cylinder": {
       const d = RAPIER.ColliderDesc.cylinder(mmToM(s.lengthMm) / 2, mmToM(s.radiusMm)).setTranslation(p.x, p.y, p.z);
       // Rapier cylinders are along +y.
-      if (s.axis === "x") d.setRotation(quatFromAxisAngle({ x: 0, y: 0, z: 1 }, Math.PI / 2));
+      if (s.rot) d.setRotation(s.rot);
+      else if (s.axis === "x") d.setRotation(quatFromAxisAngle({ x: 0, y: 0, z: 1 }, Math.PI / 2));
       else if (s.axis === "z") d.setRotation(quatFromAxisAngle({ x: 1, y: 0, z: 0 }, Math.PI / 2));
       return d;
     }

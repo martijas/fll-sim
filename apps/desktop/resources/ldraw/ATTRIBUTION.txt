@@ -1,0 +1,4 @@
+Part geometry: LDraw Parts Library, https://library.ldraw.org — licensed under CC BY 4.0 (older parts CC BY 2.0); see CAreadme.txt of the library.
+Connection data: LDCad Shadow Library by Roland Melkert and contributors, https://github.com/RolandMelkert/LDCadShadowLibrary — CC BY-SA 4.0.
+Set inventories and element mapping: Rebrickable, https://rebrickable.com.
+LEGO® is a trademark of the LEGO Group, which does not sponsor, authorize or endorse this software.

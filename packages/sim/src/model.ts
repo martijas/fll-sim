@@ -19,9 +19,20 @@ export const FRICTION: Record<Material, number> = {
 };
 
 export type ShapeSpec =
-  | { kind: "box"; sizeMm: Vec3; posMm: Vec3; rot?: Quat; color: string; material?: Material }
-  | { kind: "cylinder"; radiusMm: number; lengthMm: number; /** cylinder axis */ axis: "x" | "y" | "z"; posMm: Vec3; color: string; material?: Material }
-  | { kind: "sphere"; radiusMm: number; posMm: Vec3; color: string; material?: Material };
+  | { kind: "box"; sizeMm: Vec3; posMm: Vec3; rot?: Quat; color: string; material?: Material; massKg?: number }
+  | {
+      kind: "cylinder"; radiusMm: number; lengthMm: number;
+      /** cylinder axis (ignored when `rot` is given: then the axis is rot applied to +Y) */
+      axis: "x" | "y" | "z"; rot?: Quat; posMm: Vec3; color: string; material?: Material; massKg?: number;
+    }
+  | { kind: "sphere"; radiusMm: number; posMm: Vec3; color: string; material?: Material; massKg?: number };
+
+/** A real LEGO part (or subfile) drawn for a body: 3x4 row-major matrix from part LDU to body mm. */
+export interface VisualSpec {
+  file: string;
+  color: number;
+  m: number[];
+}
 
 export interface BodySpec {
   id: string;
@@ -30,6 +41,8 @@ export interface BodySpec {
   shapes: ShapeSpec[];
   /** Extra rotational inertia about a local axis (e.g. motor rotor reflected through gearbox). */
   extraInertia?: { axis: Vec3; kgm2: number };
+  /** LDraw parts to render for this body (else the collision shapes are drawn). */
+  visuals?: VisualSpec[];
 }
 
 export interface MotorJointSpec {
@@ -51,6 +64,8 @@ export interface FreeJointSpec {
   b: string;
   anchorMm: Vec3;
   axis: Vec3;
+  /** Friction pins: joint resists turning a little. */
+  friction?: boolean;
 }
 
 export type Port = "A" | "B" | "C" | "D" | "E" | "F";
