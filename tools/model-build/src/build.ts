@@ -125,7 +125,7 @@ export class Build {
 
   snaps(part: number, pred?: (s: SnapInfo) => boolean): (SnapInfo & { t: [number, number] })[] {
     const p = this.parts[part];
-    return analyzePart(this.lib, p.file).snaps.filter((s) => s.kind === "cyl").map((s) => info(s, p.m, part)).filter((s) => !pred || pred(s));
+    return analyzePart(this.lib, p.file).snaps.filter((s) => s.kind === "cyl" || s.kind === "clp" || s.kind === "fgr").map((s) => info(s, p.m, part)).filter((s) => !pred || pred(s));
   }
 
   /** Axis-aligned bounds of a part (or the whole model) in the LDraw frame. */

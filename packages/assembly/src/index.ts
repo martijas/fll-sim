@@ -104,6 +104,10 @@ export interface WSnap {
   friction: boolean;
   /** Sections along the axis as [from, to] intervals relative to `o` (first listed at the +axis end). */
   secs: { shape: string; r: number; t0: number; t1: number }[];
+  /** a clip holding a bar */
+  clip?: boolean;
+  /** click-hinge / hinge-brick fingers (connect only to complementary fingers) */
+  finger?: boolean;
 }
 
 function parseSecs(secs: string, yScale: number): Sec[] {
@@ -124,7 +128,7 @@ const scalev = (a: Vec3, s: number): Vec3 => [a[0] * s, a[1] * s, a[2] * s];
 const cross = (a: Vec3, b: Vec3): Vec3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 
 export function worldSnapFor(s: Snap, m: Mat4, part: number, node: number, friction: boolean): WSnap | null {
-  if (s.kind !== "cyl" || !s.secs) return null;
+  if ((s.kind !== "cyl" && s.kind !== "clp" && s.kind !== "fgr") || !s.secs) return null;
   const w = mul(m, s.m);
   const ycol: Vec3 = [w[1], w[5], w[9]];
   const yScale = Math.hypot(...ycol) || 1;
@@ -147,8 +151,10 @@ export function worldSnapFor(s: Snap, m: Mat4, part: number, node: number, frict
     rMin: Math.min(...secs.map((x) => x.r)),
     axle: secs.some((x) => x.shape === "A"),
     round: secs.some((x) => x.shape === "R"),
-    stud: /stud/i.test(s.id ?? "") || (s.caps === "one" && L <= 4.5 && secs.every((x) => x.shape === "R")),
+    stud: s.kind === "cyl" && (/stud/i.test(s.id ?? "") || (s.caps === "one" && L <= 4.5 && secs.every((x) => x.shape === "R"))),
     friction,
+    clip: s.kind === "clp",
+    finger: s.kind === "fgr",
   };
 }
 
@@ -170,7 +176,15 @@ export interface Connection {
  * frictionless pins (light grey, tan) and axles in round holes turn almost freely.
  * Rough values, to be calibrated against real parts.
  */
-export const JOINT_FRICTION = { frictionPin: 0.006, freePin: 0.0002, axleInRoundHole: 0.0003 };
+export const JOINT_FRICTION = {
+  frictionPin: 0.006, freePin: 0.0002, axleInRoundHole: 0.0003,
+  /** a bar in a clip turns stiffly and holds its angle */
+  clip: 0.01,
+  /** a bar in an axle hole: snug */
+  barInAxleHole: 0.002,
+  /** click hinges / hinge bricks hold their angle (clicks) */
+  clickHinge: 0.03,
+};
 
 /** Find male/female snap matches between different nodes. */
 export function findConnections(snaps: WSnap[]): Connection[] {
@@ -198,6 +212,7 @@ export function findConnections(snaps: WSnap[]): Connection[] {
     }
     for (const f of cands) {
       if (f.node === m.node || f.part === m.part) continue;
+      if (!!m.finger !== !!f.finger) continue; // fingers only mesh with fingers
       if (Math.abs(Math.abs(dot(m.a, f.a)) - 1) > 0.01) continue; // parallel
       if ((m.stud || f.stud) && dot(m.a, f.a) < 0) continue; // studs only clip in one direction
       const d = sub(m.o, f.o);
@@ -213,8 +228,18 @@ export function findConnections(snaps: WSnap[]): Connection[] {
       // A stud has exactly one seated position: the anti-stud's origin (the part's underside)
       // sits on the stud's base (the top surface it stands on).
       if ((m.stud || f.stud) && Math.abs(mo) > 1.5) continue;
+      if (m.finger) {
+        // complementary fingers: same radius and length, side by side on the same axis
+        if (Math.abs(m.r - f.r) > 1 || Math.abs(m.t1 - m.t0 - (f.t1 - f.t0)) > 1.5 || Math.abs(overlap - (f.t1 - f.t0)) > 2) continue;
+        const k = `${Math.min(m.node, f.node)}-${Math.max(m.node, f.node)}-${m.o.map((v) => Math.round(v)).join(",")}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        const mid = addv(f.o, scalev(f.a, (Math.max(m0, f.t0) + Math.min(m1, f.t1)) / 2));
+        out.push({ a: m.node, b: f.node, kind: "revolute", point: mid, axis: f.a, friction: true, frictionNm: JOINT_FRICTION.clickHinge, slides: false, depth: overlap });
+        continue;
+      }
       // Section by section: what actually sits inside the hole?
-      let axleInAxle = 0, roundIn = 0, pinInRound = 0, bad = 0;
+      let axleInAxle = 0, roundIn = 0, pinInRound = 0, barInAxle = 0, bad = 0;
       if (!(m.stud || f.stud)) {
         for (const ms of m.secs) {
           const a0 = mo + Math.min(ms.t0 * s, ms.t1 * s), a1 = mo + Math.max(ms.t0 * s, ms.t1 * s);
@@ -228,6 +253,7 @@ export function findConnections(snaps: WSnap[]): Connection[] {
               continue;
             }
             if (mShape === "A" && fShape === "A") axleInAxle += ov;
+            else if (fShape === "A" && ms.r <= 4.5) { roundIn += ov; barInAxle += ov; } // a bar turns in an axle hole
             else if (fShape === "R") {
               roundIn += ov;
               if (mShape === "R") pinInRound += ov;
@@ -245,8 +271,8 @@ export function findConnections(snaps: WSnap[]): Connection[] {
       const mid = addv(f.o, scalev(f.a, (Math.max(m0, f.t0) + Math.min(m1, f.t1)) / 2));
       // friction only where a friction pin's pin section (not its axle end) turns in the hole
       const friction = (m.friction && pinInRound >= 0.9) || (f.friction && roundIn >= 0.9 && !m.stud);
-      const frictionNm = friction ? JOINT_FRICTION.frictionPin : pinInRound >= 0.9 ? JOINT_FRICTION.freePin : JOINT_FRICTION.axleInRoundHole;
-      const slides = !rigid && !m.stud && !f.stud && pinInRound < 0.9 && roundIn >= 0.9;
+      const frictionNm = f.clip || m.clip ? JOINT_FRICTION.clip : barInAxle >= 0.9 ? JOINT_FRICTION.barInAxleHole : friction ? JOINT_FRICTION.frictionPin : pinInRound >= 0.9 ? JOINT_FRICTION.freePin : JOINT_FRICTION.axleInRoundHole;
+      const slides = !rigid && !m.stud && !f.stud && !m.clip && !f.clip && pinInRound < 0.9 && barInAxle < 0.9 && roundIn >= 0.9;
       out.push({ a: m.node, b: f.node, kind: rigid ? "rigid" : "revolute", point: mid, axis: f.a, friction, frictionNm, slides, depth: m.stud || f.stud ? overlap : axleInAxle + roundIn });
     }
   }

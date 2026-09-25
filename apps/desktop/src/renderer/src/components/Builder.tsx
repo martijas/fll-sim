@@ -179,7 +179,7 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
   const placedSnaps = useMemo(() => {
     const out: { part: number; s: Snap; m: Mat4 }[] = [];
     parts.forEach((p, i) => {
-      for (const s of analyzePart(lib, p.file).snaps) if (s.kind === "cyl") out.push({ part: i, s, m: mul(p.m, s.m) });
+      for (const s of analyzePart(lib, p.file).snaps) if (s.kind === "cyl" || s.kind === "clp" || s.kind === "fgr") out.push({ part: i, s, m: mul(p.m, s.m) });
     });
     return out;
   }, [parts, lib]);

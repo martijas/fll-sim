@@ -371,14 +371,21 @@ export function parseSnap(line: string, m: Mat4): Snap[] | null {
   const ori = (attr(line, "ori") ?? "1 0 0 0 1 0 0 0 1").split(/\s+/).map(Number);
   const local = new Float64Array([ori[0], ori[1], ori[2], pos[0], ori[3], ori[4], ori[5], pos[1], ori[6], ori[7], ori[8], pos[2]]);
   const base = mul(m, local);
+  // Clips hold a bar (radius, length); click-hinge fingers interleave (a sequence of finger
+  // lengths starting with a finger for genderOfs=M or a gap for F): both as round cylinders.
+  const radius = attr(line, "radius");
+  const secs = kind === "clp" ? `R ${radius ?? 4} ${attr(line, "length") ?? 8}`
+    : kind === "fgr" ? `R ${radius ?? 4} ${(attr(line, "seq") ?? "8").split(/\s+/).map(Number).reduce((a, b) => a + b, 0)}`
+    : attr(line, "secs") ?? "";
+  const gender = kind === "clp" ? "F" : kind === "fgr" ? ((attr(line, "genderOfs") ?? "M").toUpperCase() === "F" ? "F" : "M") : (attr(line, "gender") ?? "M").toUpperCase() === "F" ? "F" : "M";
   const mk = (mm: Mat4): Snap => ({
     kind,
     src: -1,
     id: attr(line, "id"),
-    gender: (attr(line, "gender") ?? "M").toUpperCase() === "F" ? "F" : "M",
-    secs: attr(line, "secs") ?? "",
+    gender,
+    secs,
     caps: attr(line, "caps") ?? "none",
-    center: attr(line, "center") === "true",
+    center: attr(line, "center") === "true" || kind === "clp",
     slide: attr(line, "slide") === "true",
     grid: attr(line, "grid"),
     m: mm,

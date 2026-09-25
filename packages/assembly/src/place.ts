@@ -46,7 +46,7 @@ export function placeOnSnap(target: Mat4, partSnap: Mat4, o: PlaceOptions = {}):
 }
 
 export function partSnaps(lib: Library, file: string): Snap[] {
-  return flatten(lib, file, 16, { geometry: false }).snaps.filter((s) => s.kind === "cyl");
+  return flatten(lib, file, 16, { geometry: false }).snaps.filter((s) => s.kind === "cyl" || s.kind === "clp" || s.kind === "fgr");
 }
 
 // ---- automatic fitting ------------------------------------------------------------------------------

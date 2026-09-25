@@ -136,11 +136,11 @@
     "book": "m12",
     "parts": 116,
     "pose": {
-      "xMm": 1899,
-      "yMm": 791,
-      "headingDeg": 93
+      "xMm": 1898,
+      "yMm": 790,
+      "headingDeg": 94
     },
-    "fitMeanMm": 3.65
+    "fitMeanMm": 3.71
   },
   "m12-post": {
     "file": "apps/desktop/resources/missions/m12-post.ldr",
