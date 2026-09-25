@@ -66,6 +66,8 @@ export interface FreeJointSpec {
   axis: Vec3;
   /** Friction pins: joint resists turning a little. */
   friction?: boolean;
+  /** Torque (N·m) the joint resists turning with (Coulomb friction; sums its pins/axles). */
+  frictionNm?: number;
 }
 
 export type Port = "A" | "B" | "C" | "D" | "E" | "F";

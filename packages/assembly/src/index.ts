@@ -153,7 +153,22 @@ export function worldSnapFor(s: Snap, m: Mat4, part: number, node: number, frict
 }
 
 export type ConnKind = "rigid" | "revolute";
-export interface Connection { a: number; b: number; kind: ConnKind; point: Vec3; axis: Vec3; friction: boolean; /** engaged length (LDU) */ depth: number }
+export interface Connection {
+  a: number; b: number; kind: ConnKind; point: Vec3; axis: Vec3;
+  /** a friction pin's ridged section turns in the hole */
+  friction: boolean;
+  /** resisting torque (N·m) when this connection turns, see JOINT_FRICTION */
+  frictionNm: number;
+  /** engaged length (LDU) */ depth: number;
+}
+
+/**
+ * Turning resistance of Technic connections (N·m per engaged connection). Friction pins (black,
+ * blue, dark grey 3L…) have ridges that grip the hole and hold a beam against gravity;
+ * frictionless pins (light grey, tan) and axles in round holes turn almost freely.
+ * Rough values, to be calibrated against real parts.
+ */
+export const JOINT_FRICTION = { frictionPin: 0.006, freePin: 0.0002, axleInRoundHole: 0.0003 };
 
 /** Find male/female snap matches between different nodes. */
 export function findConnections(snaps: WSnap[]): Connection[] {
@@ -197,7 +212,7 @@ export function findConnections(snaps: WSnap[]): Connection[] {
       // sits on the stud's base (the top surface it stands on).
       if ((m.stud || f.stud) && Math.abs(mo) > 1.5) continue;
       // Section by section: what actually sits inside the hole?
-      let axleInAxle = 0, roundIn = 0, bad = 0;
+      let axleInAxle = 0, roundIn = 0, pinInRound = 0, bad = 0;
       if (!(m.stud || f.stud)) {
         for (const ms of m.secs) {
           const a0 = mo + Math.min(ms.t0 * s, ms.t1 * s), a1 = mo + Math.max(ms.t0 * s, ms.t1 * s);
@@ -211,7 +226,10 @@ export function findConnections(snaps: WSnap[]): Connection[] {
               continue;
             }
             if (mShape === "A" && fShape === "A") axleInAxle += ov;
-            else if (fShape === "R") roundIn += ov;
+            else if (fShape === "R") {
+              roundIn += ov;
+              if (mShape === "R") pinInRound += ov;
+            }
             else bad += ov; // round pin in an axle hole
           }
         }
@@ -223,7 +241,10 @@ export function findConnections(snaps: WSnap[]): Connection[] {
       seen.add(k);
       const rigid = m.stud || f.stud || axleInAxle >= 0.9;
       const mid = addv(f.o, scalev(f.a, (Math.max(m0, f.t0) + Math.min(m1, f.t1)) / 2));
-      out.push({ a: m.node, b: f.node, kind: rigid ? "rigid" : "revolute", point: mid, axis: f.a, friction: m.friction || f.friction, depth: m.stud || f.stud ? overlap : axleInAxle + roundIn });
+      // friction only where a friction pin's pin section (not its axle end) turns in the hole
+      const friction = (m.friction && pinInRound >= 0.9) || (f.friction && roundIn >= 0.9 && !m.stud);
+      const frictionNm = friction ? JOINT_FRICTION.frictionPin : pinInRound >= 0.9 ? JOINT_FRICTION.freePin : JOINT_FRICTION.axleInRoundHole;
+      out.push({ a: m.node, b: f.node, kind: rigid ? "rigid" : "revolute", point: mid, axis: f.a, friction, frictionNm, depth: m.stud || f.stud ? overlap : axleInAxle + roundIn });
     }
   }
   return out;
@@ -513,7 +534,7 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     const [a, b] = k.split(",").map(Number);
     if (motorPairs.has([bodies[a].id, bodies[b].id].sort().join("|"))) continue;
     const c = cs[0];
-    freeJoints.push({ id: `hinge${freeJoints.length}`, a: bodies[a].id, b: bodies[b].id, anchorMm: v3(addv(toRobotPoint(c.point), shift)), axis: v3(norm(dirToRobotVec(c.axis))), friction: cs.some((x) => x.friction) });
+    freeJoints.push({ id: `hinge${freeJoints.length}`, a: bodies[a].id, b: bodies[b].id, anchorMm: v3(addv(toRobotPoint(c.point), shift)), axis: v3(norm(dirToRobotVec(c.axis))), friction: cs.some((x) => x.friction), frictionNm: cs.filter((x) => x.kind === "revolute").reduce((t, x) => t + x.frictionNm, 0) });
   }
 
   // Loose bodies (not connected to the hub's body by any path).

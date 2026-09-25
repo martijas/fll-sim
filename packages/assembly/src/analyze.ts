@@ -13,6 +13,9 @@ export type Electronics =
   | { kind: "color" | "distance"; point: Vec3; dir: Vec3 }
   | { kind: "force"; point: Vec3; dir: Vec3 };
 
+/** Friction pins whose LDraw title doesn't say so (dark grey 3L pins with stop bush / centre hole). */
+const FRICTION_PARTS = new Set(["32054", "65304", "87082"]);
+
 export interface PartInfo {
   file: string;
   title: string;
@@ -170,7 +173,9 @@ export function analyzePart(lib: Library, file: string): PartInfo {
   const bb = full.mesh.positions.length ? bounds(full.mesh.positions) : { min: [0, 0, 0] as Vec3, max: [0, 0, 0] as Vec3 };
   const lower = title.toLowerCase();
   const connector = /^technic (pin|axle|bush)|^technic axle|axle pin|^technic pin/.test(lower) && !/connector|joiner|beam|block/.test(lower);
-  const friction = /friction/.test(lower);
+  // "Technic Pin with Friction" (black/blue) vs "... without Friction" / plain "Technic Pin"
+  // (light grey/tan): the title, not the colour, says which one it is.
+  const friction = (/\bwith friction/.test(lower) && !/without friction/.test(lower)) || FRICTION_PARTS.has(normName(f).replace(/\.dat$/, ""));
   const rubber = /tyre|tire|rubber|tread|traction/.test(lower) || (/wheel/.test(lower) && /tyre/.test(lower));
 
   let boxes: Box[] = [];

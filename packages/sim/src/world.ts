@@ -16,6 +16,8 @@ export function initPhysics(): Promise<void> {
 }
 
 export const DT = 0.001; // physics + firmware tick, s
+/** Hinge friction: deflection (rad) at which a held joint pushes back with its full friction torque. */
+const FRICTION_HOLD_RAD = 0.005;
 
 // Collision groups: membership in the high 16 bits, filter in the low 16 bits.
 const G_FIELD = 0x0001, G_ROBOT = 0x0002, G_MODEL = 0x0004, G_QUERY = 0x0008;
@@ -79,7 +81,9 @@ export class Simulation {
   readonly motors = new Map<Port, MotorBinding>();
   readonly sensors = new Map<Port, SensorBinding>();
   /** Mission models whose moving parts are still frozen: bodies + bounding circle (m, world). */
-  private frozen: { bodies: RAPIER.RigidBody[]; x: number; z: number; rM: number }[] = [];
+  private frozen: { bodies: RAPIER.RigidBody[]; friction: Simulation["frictionJoints"]; x: number; z: number; rM: number }[] = [];
+  /** Hinges with friction (see addJointFriction). */
+  private frictionJoints: { joint: RAPIER.RevoluteImpulseJoint; a: RAPIER.RigidBody; b: RAPIER.RigidBody; axis: Vec3; k: number; hold: number; slip: number }[] = [];
   /** Collider pairs that never touch (see excludePair). */
   private excluded = new Map<number, Set<number>>();
   private hooks: RAPIER.PhysicsHooks = {
@@ -192,6 +196,7 @@ export class Simulation {
     const origin = matToWorld({ x: pose.xMm, y: pose.yMm }, this.matPlacement, 0);
     const rot = quatFromAxisAngle({ x: 0, y: 1, z: 0 }, degToRad(pose.headingDeg));
     const byId = new Map<string, RAPIER.RigidBody>();
+    const modelFriction: typeof this.frictionJoints = []; // active once the model wakes up
     const shapesOf = new Map(m.bodies.map((b) => [b.id, b.shapes]));
     for (const b of m.bodies) {
       // Moving parts start frozen (fixed): the model stays exactly as set up, as friction
@@ -219,7 +224,7 @@ export class Simulation {
       const a = { x: mmToM(j.anchorMm.x), y: mmToM(j.anchorMm.y), z: mmToM(j.anchorMm.z) };
       const joint = this.world.createImpulseJoint(RAPIER.JointData.revolute(a, a, j.axis), byId.get(j.a)!, byId.get(j.b)!, false) as RAPIER.RevoluteImpulseJoint;
       joint.setContactsEnabled(false);
-      if (j.friction) joint.configureMotorVelocity(0, 0.002);
+      this.addJointFriction(joint, byId.get(j.a)!, byId.get(j.b)!, j, modelFriction);
     }
     // Colliders of one model that already overlap as built (pins through holes, parts nested in
     // each other, voxel slack) must not push each other apart; everything else keeps colliding,
@@ -246,8 +251,13 @@ export class Simulation {
       }
       // frozen = fixed (created dynamic first so their mass properties are computed)
       for (const b of moving) b.setBodyType(RAPIER.RigidBodyType.Fixed, false);
-      this.frozen.push({ bodies: moving, x: origin.x, z: origin.z, rM: mmToM(r) });
+      this.frozen.push({ bodies: moving, friction: modelFriction, x: origin.x, z: origin.z, rM: mmToM(r) });
     }
+  }
+
+  private wake(f: Simulation["frozen"][number]) {
+    for (const b of f.bodies) this.unfreeze(b);
+    this.frictionJoints.push(...f.friction);
   }
 
   private unfreeze(b: RAPIER.RigidBody) {
@@ -257,9 +267,40 @@ export class Simulation {
     b.setAngvel({ x: 0, y: 0, z: 0 }, true);
   }
 
+  /**
+   * Coulomb friction for a hinge (friction pins grip, frictionless pins barely): a position motor
+   * holds the current angle with its torque capped at the joint's friction torque. Below that
+   * load the joint stays put; above it, it slips and the hold point follows (see updateFriction).
+   */
+  private addJointFriction(joint: RAPIER.RevoluteImpulseJoint, a: RAPIER.RigidBody, b: RAPIER.RigidBody, j: { axis: Vec3; friction?: boolean; frictionNm?: number }, list = this.frictionJoints) {
+    const torque = j.frictionNm ?? (j.friction ? 0.006 : 0);
+    if (torque <= 0) return;
+    const k = torque / FRICTION_HOLD_RAD; // full friction torque at FRICTION_HOLD_RAD deflection
+    joint.configureMotorModel(RAPIER.MotorModel.ForceBased); // max force in N·m, not acceleration
+    joint.configureMotorPosition(0, k, k * 0.005);
+    joint.setMotorMaxForce(torque);
+    list.push({ joint, a, b, axis: j.axis, k, hold: 0, slip: torque / k });
+  }
+
+  /** Let slipping friction joints keep their new angle instead of springing back. */
+  private updateFriction() {
+    for (const f of this.frictionJoints) {
+      if (f.a.isSleeping() && f.b.isSleeping()) continue;
+      const qa = toQ(f.a.rotation()), qb = toQ(f.b.rotation());
+      // relative rotation of b in a's frame, angle about the joint axis (both share the build frame)
+      const r = { w: qa.w * qb.w + qa.x * qb.x + qa.y * qb.y + qa.z * qb.z, x: qa.w * qb.x - qa.x * qb.w - qa.y * qb.z + qa.z * qb.y, y: qa.w * qb.y + qa.x * qb.z - qa.y * qb.w - qa.z * qb.x, z: qa.w * qb.z - qa.x * qb.y + qa.y * qb.x - qa.z * qb.w };
+      const angle = 2 * Math.atan2(r.x * f.axis.x + r.y * f.axis.y + r.z * f.axis.z, r.w);
+      let d = f.hold - angle;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      if (Math.abs(d) <= f.slip) continue;
+      f.hold = angle + Math.sign(d) * f.slip;
+      f.joint.configureMotorPosition(f.hold, f.k, f.k * 0.005);
+    }
+  }
+
   /** Unfreeze all mission models (tests). */
   unfreezeModels() {
-    for (const f of this.frozen) for (const b of f.bodies) this.unfreeze(b);
+    for (const f of this.frozen) this.wake(f);
     this.frozen = [];
   }
 
@@ -269,7 +310,7 @@ export class Simulation {
     const reach = mmToM(Math.hypot(this.robot.footprintMm.w, this.robot.footprintMm.l) / 2 + 60);
     this.frozen = this.frozen.filter((f) => {
       if (Math.hypot(p.x - f.x, p.z - f.z) > f.rM + reach) return true;
-      for (const b of f.bodies) this.unfreeze(b);
+      this.wake(f);
       return false;
     });
   }
@@ -329,7 +370,7 @@ export class Simulation {
       const joint = this.world.createImpulseJoint(RAPIER.JointData.revolute(a, a, j.axis), byId.get(j.a)!, byId.get(j.b)!, true) as RAPIER.RevoluteImpulseJoint;
       joint.setContactsEnabled(false);
       // Friction pins hold position against small loads: a velocity motor towards 0.
-      if (j.friction) joint.configureMotorVelocity(0, 0.002);
+      this.addJointFriction(joint, byId.get(j.a)!, byId.get(j.b)!, j);
     }
     for (const s of m.sensors) {
       this.sensors.set(s.port, {
@@ -359,6 +400,7 @@ export class Simulation {
       m.housing.applyTorqueImpulse({ x: axisW.x * imp, y: axisW.y * imp, z: axisW.z * imp }, true);
     }
     if (this.frozen.length && this.timeMs % 5 === 0) this.wakeModels();
+    if (this.frictionJoints.length) this.updateFriction();
     if (this.excluded.size) this.world.step(undefined, this.hooks);
     else this.world.step();
     this.timeMs += 1;
