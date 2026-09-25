@@ -27,7 +27,11 @@ interface Target {
   component?: string;
   /** Drop the connected component(s) containing a part with this label. */
   withoutComponent?: string;
-  /** Game pieces: label prefixes; each becomes one free piece (tagged `[loose:<prefix>]`). */
+  /**
+   * Game pieces: label prefixes; each becomes one free piece (tagged `[loose:<prefix>]`).
+   * "<prefix>@<N>": held on to what it rests against until pulled with more than N newtons;
+   * "<prefix>~": keeps its own hinges (otherwise a piece is one solid object).
+   */
   loose?: string[];
   /** Not held by Dual Lock (the whole model can be moved). */
   free?: boolean;
@@ -45,12 +49,14 @@ const MAP: Record<string, Target[]> = {
     { id: "m01", withoutComponent: "5x5 L-shaped technic brick", search: 60, hint: [880, 139], rot: [0, 20] },
     { id: "m01-stand", component: "5x5 L-shaped technic brick", search: 50, hint: [1050, 227] },
   ],
-  m02: [{ id: "m02", loose: ["seed 1", "seed 2", "seed 3"] }],
+  // the seeds sit on the stalk (bars in clips) until the robot knocks them off
+  m02: [{ id: "m02", loose: ["seed 1@1", "seed 2@1", "seed 3@1"] }],
   m03: [{ id: "m03" }],
-  m04: [{ id: "m04", loose: ["katydid", "leaf (left)", "leaf (middle)"] }],
+  // the katydid stands in its slot (leaning on the nest) until it is pushed
+  m04: [{ id: "m04", loose: ["katydid@0.3", "leaf (left)", "leaf (middle)"] }],
   m05: [{ id: "m05" }],
   "m06-07": [{ id: "m06-07", search: 60 }],
-  "m08-09": [{ id: "m08-09", search: 60, outline: ["root"], rot: [0, 25], loose: ["research platform"] }],
+  "m08-09": [{ id: "m08-09", search: 60, outline: ["root"], rot: [0, 25], loose: ["research platform~"] }],
   m10: [{ id: "m10a", labels: ["spider"], outline: ["green 3x5 L", "lime 2L"] }, { id: "m10b", labels: ["snail"] }],
   m11: [{ id: "m11", search: 50 }],
   m12: [{ id: "m12", exclude: ["post", "tie"], search: 50 }, { id: "m12-post", labels: ["post", "tie"], search: 40 }],
@@ -98,7 +104,7 @@ for (const [book, targets] of Object.entries(MAP)) {
     if (t.exclude) parts = parts.filter((p) => !t.exclude!.some((l) => lab(p).includes(l)));
     if (t.loose)
       parts = parts.map((p) => {
-        const piece = t.loose!.find((l) => lab(p).replace(/ \[loose:[^\]]*\]/, "").startsWith(l.toLowerCase()));
+        const piece = t.loose!.find((l) => lab(p).replace(/ \[loose:[^\]]*\]/, "").startsWith(l.split("@")[0].replace(/~$/, "").toLowerCase()));
         const base = (p.label ?? "").replace(/ \[loose:[^\]]*\]/, "");
         return piece ? { ...p, label: `${base} [loose:${piece}]` } : p;
       });

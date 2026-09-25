@@ -18,15 +18,18 @@ function train(g1: string, g2: string, studs: number) {
   const b = new Build(lib, "gears");
   const beam = b.place("32278.dat", 71, IDENTITY);
   const z1 = -140, z2 = -140 + studs * 20;
-  const ax = [z1, z2].map((z) => b.attach("3705.dat", 0, { to: beam, where: near([0, 0, z]), accept: (m) => m[7] < -35 && m[7] > -45 }));
-  const gear = (i: number, file: string) => b.attach(file, 7, { to: ax[i], accept: (m) => Math.abs(m[7] + 40) < 3 });
-  return { b, beam, gears: [gear(0, g1), gear(1, g2)] };
+  const ax = [z1, z2].map((z) => b.attach("3705.dat", 0, { to: beam, where: near([0, 0, z]), accept: (m) => m[7] < -25 && m[7] > -35 }));
+  // gears resting on the beam (their axles would slide down otherwise)
+  const gear = (i: number, file: string) => b.attach(file, 7, { to: ax[i], accept: (m) => Math.abs(m[7] + 20) < 3 });
+  const gears = [gear(0, g1), gear(1, g2)];
+  const post = b.place("32278.dat", 72, orient("+x", "+z", "-y", [60, 150, 100])); // holds it all off the table
+  return { b, beam, post, gears };
 }
 
 async function spin(g1: string, g2: string, studs: number) {
-  const { b, beam, gears } = train(g1, g2, studs);
+  const { b, beam, post, gears } = train(g1, g2, studs);
   const { robot, bodyOfPart } = assemble(lib, b.parts, { autoPorts: false });
-  const sim = await Simulation.create({ season, robot: makeDriveBase({}), start: { xMm: 230, yMm: 180, headingDeg: 0 }, fieldModels: [{ id: "t", model: robot, pose: { xMm: 1000, yMm: 600, headingDeg: 0 }, fixedBodies: [bodyOfPart[beam]] }], footprints: false });
+  const sim = await Simulation.create({ season, robot: makeDriveBase({}), start: { xMm: 230, yMm: 180, headingDeg: 0 }, fieldModels: [{ id: "t", model: robot, pose: { xMm: 1000, yMm: 600, headingDeg: 0 }, fixedBodies: [bodyOfPart[beam], bodyOfPart[post]] }], footprints: false });
   const body = (i: number) => sim.bodies.find((x) => x.id === `t:${bodyOfPart[gears[i]]}`)!.body;
   sim.unfreezeModels();
   // gear 1 sits on a (medium) motor: its rotor inertia
@@ -51,12 +54,13 @@ async function spin(g1: string, g2: string, studs: number) {
 function crossed(g1: string, g2: string, b2: Float64Array, hole2: number[], accept2: (m: Float64Array) => boolean) {
   const b = new Build(lib, "crossed");
   const beamA = b.place("32278.dat", 71, IDENTITY);
-  const ax1 = b.attach("3705.dat", 0, { to: beamA, where: near([0, 0, -140]), accept: (m) => m[7] < -35 && m[7] > -45 });
-  const gear1 = b.attach(g1, 7, { to: ax1, accept: (m) => Math.abs(m[7] + 40) < 3 });
+  const ax1 = b.attach("3705.dat", 0, { to: beamA, where: near([0, 0, -140]), accept: (m) => m[7] < -25 && m[7] > -35 });
+  const gear1 = b.attach(g1, 7, { to: ax1, accept: (m) => Math.abs(m[7] + 20) < 3 });
   const beamB = b.place("32278.dat", 72, b2);
   const ax2 = b.attach("3705.dat", 0, { to: beamB, where: near(hole2), accept: (m) => accept2(m) });
   const gear2 = b.attach(g2, 14, { to: ax2, accept: (m) => accept2(m) && true });
-  return { b, fixed: [beamA, beamB], gears: [gear1, gear2] };
+  const post = b.place("32278.dat", 72, orient("+x", "+z", "-y", [60, 150, 100])); // holds it all off the table
+  return { b, fixed: [beamA, beamB, post], gears: [gear1, gear2] };
 }
 
 type Q = { x: number; y: number; z: number; w: number };
@@ -107,18 +111,19 @@ describe("gears", () => {
   });
   it("a worm drives a 24 tooth gear 24:1 and can't be turned back from the gear", async () => {
     // worm on a horizontal axle along x, 40 LDU (pitch radius 30 + worm 10) beside the 24t
-    const setup = () => crossed("3648b.dat", "4716.dat", orient("-z", "+x", "-y", [-50, 100, -100]), [-50, -40, -100], (m) => Math.abs(m[7] + 40) < 3 && Math.abs(m[3]) < 25);
+    const setup = () => crossed("3648b.dat", "4716.dat", orient("-z", "+x", "-y", [-50, 120, -100]), [-50, -20, -100], (m) => Math.abs(m[7] + 20) < 3 && Math.abs(m[3]) < 25);
     const s1 = setup();
     const fwd = await run(s1, (body, ax) => motor(body(1), ax[1], 10));
     expect(fwd.gears.map((g) => g.label)).toEqual(["worm:24"]);
     expect(Math.abs(Math.abs(fwd.turned[0] / fwd.turned[1]) - 1 / 24)).toBeLessThan(0.02 / 24);
     // back-driving: a strong torque on the gear barely moves anything
     const back = await run(setup(), (body, ax) => body(0).applyTorqueImpulse(scale(ax[0], 0.05 * 0.001), true));
-    expect(Math.abs(back.turned[0])).toBeLessThan(0.02);
+    // unlocked, 50 mN·m would spin the gear ~45 rad in 0.3 s; locked it only settles a little
+    expect(Math.abs(back.turned[0])).toBeLessThan(0.1);
   });
   it("two 12 tooth double bevels at right angles turn 1:1", async () => {
     // gear 2 on an axle along z whose line meets gear 1's axis 15 LDU (one pitch radius) above it
-    const setup = crossed("32270.dat", "32270.dat", orient("+y", "+z", "+x", [0, -55, -85]), [0, -55, -85], (m) => Math.abs(m[11] + 125) < 3);
+    const setup = crossed("32270.dat", "32270.dat", orient("+y", "+z", "+x", [0, -35, -85]), [0, -35, -85], (m) => Math.abs(m[11] + 125) < 3);
     const r = await run(setup, (body, ax) => motor(body(0), ax[0], 10));
     expect(r.gears.map((g) => g.label)).toEqual(["12:12"]);
     expect(Math.abs(Math.abs(r.turned[1] / r.turned[0]) - 1)).toBeLessThan(0.02);

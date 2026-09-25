@@ -3,7 +3,7 @@ import {
   type Quat, type Vec3, add, dot, matToWorld, mmToM, mToMm, quatFromAxisAngle, rotate, worldToMat, wrapDeg, radToDeg, degToRad,
 } from "@fll-sim/units";
 import { HubState } from "./hub";
-import { FRICTION, type GearSpec, type Port, type RobotModel, type SensorType, type ShapeSpec } from "./model";
+import { FRICTION, type FreeJointSpec, type GearSpec, type WeldSpec, type Port, type RobotModel, type SensorType, type ShapeSpec } from "./model";
 import { MotorController } from "./motor";
 import { type MatImage, type SeasonConfig, matPlacement } from "./season";
 import { shapeBounds } from "./shapes";
@@ -18,6 +18,8 @@ export function initPhysics(): Promise<void> {
 export const DT = 0.001; // physics + firmware tick, s
 /** Hinge friction: deflection (rad) at which a held joint pushes back with its full friction torque. */
 const FRICTION_HOLD_RAD = 0.005;
+/** Sliding axles: deflection (m) at which a held slide pushes back with its full friction force. */
+const FRICTION_HOLD_M = 0.0002;
 
 // Collision groups: membership in the high 16 bits, filter in the low 16 bits.
 const G_FIELD = 0x0001, G_ROBOT = 0x0002, G_MODEL = 0x0004, G_QUERY = 0x0008;
@@ -81,9 +83,11 @@ export class Simulation {
   readonly motors = new Map<Port, MotorBinding>();
   readonly sensors = new Map<Port, SensorBinding>();
   /** Mission models whose moving parts are still frozen: bodies + bounding circle (m, world). */
-  private frozen: { bodies: RAPIER.RigidBody[]; friction: Simulation["frictionJoints"]; gears: GearConstraint[]; gearFriction: FrictionRow[]; x: number; z: number; rM: number }[] = [];
-  /** Meshing gears (see solveGears). */
+  private frozen: { bodies: RAPIER.RigidBody[]; friction: Simulation["frictionJoints"]; gears: GearConstraint[]; gearFriction: FrictionRow[]; welds: Weld[]; x: number; z: number; rM: number }[] = [];
+  /** Meshing gears (see solveConstraints). */
   private gears: GearConstraint[] = [];
+  /** Breakable holds of game pieces (see Weld). */
+  private welds: Weld[] = [];
   /** Friction of the hinges gears turn on, solved together with the gears. */
   private gearFriction: FrictionRow[] = [];
   /** Hinges with friction (see addJointFriction). */
@@ -226,13 +230,13 @@ export class Simulation {
       this.bodies.push({ id: prefix + b.id, body, kind });
       this.scene.push({ id: prefix + b.id, kind, shapes: b.shapes });
     }
+    const carriers: RAPIER.RigidBody[] = [];
     for (const j of m.freeJoints) {
-      const a = { x: mmToM(j.anchorMm.x), y: mmToM(j.anchorMm.y), z: mmToM(j.anchorMm.z) };
-      const joint = this.world.createImpulseJoint(RAPIER.JointData.revolute(a, a, j.axis), byId.get(j.a)!, byId.get(j.b)!, false) as RAPIER.RevoluteImpulseJoint;
-      joint.setContactsEnabled(false);
-      this.addJointFriction(joint, byId.get(j.a)!, byId.get(j.b)!, j, modelFriction);
+      const carrier = this.addHinge(j, byId, modelFriction, false);
+      if (carrier) carriers.push(carrier);
     }
     for (const g of m.gears ?? []) modelGears.push(gearConstraint(g, byId));
+    const modelWelds = (m.welds ?? []).map((w) => weldConstraint(w, byId));
     // meshing teeth interlock: the gear constraint handles them, not collisions (a joint that
     // constrains nothing, only to switch their contacts off natively)
     const zero = { x: 0, y: 0, z: 0 };
@@ -262,7 +266,7 @@ export class Simulation {
         if (noContact.has([m.bodies[x.body].id, m.bodies[y.body].id].sort().join("|"))) continue;
         this.excludePair(x.handle, y.handle);
       }
-    const moving = m.bodies.filter((b) => !fixed.has(b.id)).map((b) => byId.get(b.id)!);
+    const moving = [...m.bodies.filter((b) => !fixed.has(b.id)).map((b) => byId.get(b.id)!), ...carriers];
     if (moving.length) {
       let r = 0;
       for (const b of m.bodies) for (const sh of shapesOf.get(b.id)!) {
@@ -271,7 +275,7 @@ export class Simulation {
       }
       // frozen = fixed (created dynamic first so their mass properties are computed)
       for (const b of moving) b.setBodyType(RAPIER.RigidBodyType.Fixed, false);
-      this.frozen.push({ bodies: moving, friction: modelFriction, gears: modelGears, gearFriction: modelGearFriction, x: origin.x, z: origin.z, rM: mmToM(r) });
+      this.frozen.push({ bodies: moving, friction: modelFriction, gears: modelGears, gearFriction: modelGearFriction, welds: modelWelds, x: origin.x, z: origin.z, rM: mmToM(r) });
     }
   }
 
@@ -280,6 +284,7 @@ export class Simulation {
     this.frictionJoints.push(...f.friction);
     this.gears.push(...f.gears);
     this.gearFriction.push(...f.gearFriction);
+    this.welds.push(...f.welds);
   }
 
   private unfreeze(b: RAPIER.RigidBody) {
@@ -290,28 +295,60 @@ export class Simulation {
   }
 
   /**
+   * A hinge between two bodies. An axle in round holes can also slide: hole side ─slide joint
+   * (stops + friction)─ carrier ─hinge─ axle side, where the carrier is a small hidden body.
+   * Returns the carrier, if any.
+   */
+  private addHinge(j: FreeJointSpec, byId: Map<string, RAPIER.RigidBody>, friction: FrictionJoint[], wake: boolean): RAPIER.RigidBody | undefined {
+    const anchor = { x: mmToM(j.anchorMm.x), y: mmToM(j.anchorMm.y), z: mmToM(j.anchorMm.z) };
+    const A = byId.get(j.a)!, B = byId.get(j.b)!;
+    if (!j.slide) {
+      const joint = this.world.createImpulseJoint(RAPIER.JointData.revolute(anchor, anchor, j.axis), A, B, wake) as RAPIER.RevoluteImpulseJoint;
+      joint.setContactsEnabled(false);
+      this.addJointFriction(joint, A, B, j, friction);
+      return undefined;
+    }
+    const axleSide = j.slide.body === j.a ? A : B, holeSide = axleSide === A ? B : A;
+    // the carrier sits where the bodies' frames are (all bodies share the build frame)
+    const t = holeSide.translation(), q = holeSide.rotation();
+    const carrier = this.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(t.x, t.y, t.z).setRotation(q).setAdditionalMassProperties(0.001, anchor, { x: 1e-8, y: 1e-8, z: 1e-8 }, { x: 0, y: 0, z: 0, w: 1 }));
+    const slide = this.world.createImpulseJoint(RAPIER.JointData.prismatic(anchor, anchor, j.axis), holeSide, carrier, wake) as RAPIER.PrismaticImpulseJoint;
+    slide.setContactsEnabled(false);
+    slide.setLimits(mmToM(j.slide.minMm), mmToM(j.slide.maxMm));
+    this.addJointFriction(slide, holeSide, carrier, { axis: j.axis, frictionNm: j.slide.frictionN }, friction, "slide");
+    const hinge = this.world.createImpulseJoint(RAPIER.JointData.revolute(anchor, anchor, j.axis), carrier, axleSide, wake) as RAPIER.RevoluteImpulseJoint;
+    hinge.setContactsEnabled(false);
+    this.addJointFriction(hinge, carrier, axleSide, j, friction, "turn", holeSide);
+    // no contacts between the axle and the hole side either
+    const off = this.world.createImpulseJoint(RAPIER.JointData.generic(anchor, anchor, { x: 1, y: 0, z: 0 }, 0 as RAPIER.JointAxesMask), holeSide, axleSide, wake);
+    off.setContactsEnabled(false);
+    return carrier;
+  }
+
+  /**
    * Coulomb friction for a hinge (friction pins grip, frictionless pins barely): a position motor
    * holds the current angle with its torque capped at the joint's friction torque. Below that
    * load the joint stays put; above it, it slips and the hold point follows (see updateFriction).
    */
-  private addJointFriction(joint: RAPIER.RevoluteImpulseJoint, a: RAPIER.RigidBody, b: RAPIER.RigidBody, j: { axis: Vec3; friction?: boolean; frictionNm?: number }, list = this.frictionJoints) {
+  private addJointFriction(joint: RAPIER.RevoluteImpulseJoint | RAPIER.PrismaticImpulseJoint, a: RAPIER.RigidBody, b: RAPIER.RigidBody, j: { axis: Vec3; friction?: boolean; frictionNm?: number }, list = this.frictionJoints, kind: "turn" | "slide" = "turn", frame?: RAPIER.RigidBody) {
     // (hinges that gears turn on are handed over to the gear solver: see takeGearFriction)
+    // turn: torque (N·m); slide: force (N)
     const torque = j.frictionNm ?? (j.friction ? 0.006 : 0);
     if (torque <= 0) return;
-    const k = torque / FRICTION_HOLD_RAD; // full friction torque at FRICTION_HOLD_RAD deflection
+    const k = torque / (kind === "slide" ? FRICTION_HOLD_M : FRICTION_HOLD_RAD); // full friction at that deflection
     joint.configureMotorModel(RAPIER.MotorModel.ForceBased); // max force in N·m, not acceleration
     joint.configureMotorPosition(0, k, k * 0.005);
     joint.setMotorMaxForce(torque);
-    list.push({ joint, a, b, axis: j.axis, k, hold: 0, slip: torque / k, torque });
+    list.push({ joint, a, b, axis: j.axis, k, hold: 0, slip: torque / k, torque, kind, frame });
   }
 
   /** Let slipping friction joints keep their new angle instead of springing back. */
   private updateFriction() {
     for (const f of this.frictionJoints) {
       if (f.a.isSleeping() && f.b.isSleeping()) continue;
-      const angle = hingeAngle(f.a, f.b, f.axis);
+      const angle = f.kind === "slide" ? slideOffset(f.a, f.b, f.axis) : hingeAngle(f.a, f.b, f.axis);
       let d = f.hold - angle;
-      d = Math.atan2(Math.sin(d), Math.cos(d));
+      if (f.kind === "turn") d = Math.atan2(Math.sin(d), Math.cos(d));
       if (Math.abs(d) <= f.slip) continue;
       f.hold = angle + Math.sign(d) * f.slip;
       f.joint.configureMotorPosition(f.hold, f.k, f.k * 0.005);
@@ -385,13 +422,7 @@ export class Simulation {
       joint.setContactsEnabled(false);
       this.motors.set(j.port, { ctl: new MotorController(j.motor), housing, output, axisLocal: j.axisOut, angleDeg: 0 });
     }
-    for (const j of m.freeJoints) {
-      const a = { x: mmToM(j.anchorMm.x), y: mmToM(j.anchorMm.y), z: mmToM(j.anchorMm.z) };
-      const joint = this.world.createImpulseJoint(RAPIER.JointData.revolute(a, a, j.axis), byId.get(j.a)!, byId.get(j.b)!, true) as RAPIER.RevoluteImpulseJoint;
-      joint.setContactsEnabled(false);
-      // Friction pins hold position against small loads: a velocity motor towards 0.
-      this.addJointFriction(joint, byId.get(j.a)!, byId.get(j.b)!, j);
-    }
+    for (const j of m.freeJoints) this.addHinge(j, byId, this.frictionJoints, true);
     const robotGears = (m.gears ?? []).map((g) => gearConstraint(g, byId));
     this.gears.push(...robotGears);
     this.gearFriction.push(...takeGearFriction(robotGears, this.frictionJoints));
@@ -424,7 +455,7 @@ export class Simulation {
     }
     if (this.frozen.length && this.timeMs % 5 === 0) this.wakeModels();
     if (this.frictionJoints.length) this.updateFriction();
-    if (this.gears.length) solveGears(this.gears, this.gearFriction);
+    if (this.gears.length || this.welds.length) solveConstraints(this.gears, this.gearFriction, this.welds);
     // (Rapier only runs the contact hooks when an event queue is passed too)
     if (this.excluded.size) this.world.step(this.events, this.hooks);
     else this.world.step();
@@ -600,9 +631,22 @@ export class Simulation {
 }
 
 // ---- gears ----------------------------------------------------------------------------------------
-interface FrictionJoint { joint: RAPIER.RevoluteImpulseJoint; a: RAPIER.RigidBody; b: RAPIER.RigidBody; axis: Vec3; k: number; hold: number; slip: number; torque: number }
+interface FrictionJoint {
+  joint: RAPIER.RevoluteImpulseJoint | RAPIER.PrismaticImpulseJoint; a: RAPIER.RigidBody; b: RAPIER.RigidBody; axis: Vec3;
+  k: number; hold: number; slip: number; torque: number; kind: "turn" | "slide";
+  /** for a sliding axle's hinge: the body with the hole (what gears count as the gear's holder) */
+  frame?: RAPIER.RigidBody;
+}
 /** Hinge friction solved by the gear solver: holds the angle `hold`, slips above `torque`. */
 interface FrictionRow { a: RAPIER.RigidBody; b: RAPIER.RigidBody; axis: Vec3; torque: number; hold: number }
+
+/** How far body b has slid relative to a along `axis` (a's frame; both share the build frame), m. */
+function slideOffset(a: RAPIER.RigidBody, b: RAPIER.RigidBody, axis: Vec3): number {
+  const pa = a.translation(), pb = b.translation();
+  const d = rotate(conj(toQ(a.rotation())), { x: pb.x - pa.x, y: pb.y - pa.y, z: pb.z - pa.z });
+  return d.x * axis.x + d.y * axis.y + d.z * axis.z;
+}
+const conj = (q: Quat): Quat => ({ x: -q.x, y: -q.y, z: -q.z, w: q.w });
 
 /** Angle of body b relative to a about `axis` (a's frame; both bodies share the build frame). */
 function hingeAngle(a: RAPIER.RigidBody, b: RAPIER.RigidBody, axis: Vec3): number {
@@ -622,7 +666,7 @@ function takeGearFriction(gears: GearConstraint[], friction: FrictionJoint[]): F
   for (const g of gears) { pairs.add(key(g.a, g.fa)); pairs.add(key(g.b, g.fb)); }
   for (let i = friction.length - 1; i >= 0; i--) {
     const f = friction[i];
-    if (!pairs.has(key(f.a, f.b))) continue;
+    if (f.kind !== "turn" || !(pairs.has(key(f.a, f.b)) || (f.frame && pairs.has(key(f.frame, f.b))))) continue;
     friction.splice(i, 1);
     f.joint.setMotorMaxForce(0);
     rows.push({ a: f.a, b: f.b, axis: f.axis, torque: f.torque, hold: 0 });
@@ -661,29 +705,53 @@ function trackGearError(gears: GearConstraint[]) {
   }
 }
 
-function solveGears(gears: GearConstraint[], friction: FrictionRow[]) {
+/**
+ * A breakable hold: a game piece stays attached to what it sits on (friction, a clip, a bar) until
+ * something pulls on it harder than `breakN`; then it comes off for good.
+ */
+interface Weld {
+  a: RAPIER.RigidBody; b: RAPIER.RigidBody;
+  /** the hold point in each body's own frame (m) and b's rotation relative to a when made */
+  pa: Vec3; pb: Vec3; q0: Quat;
+  breakN: number;
+  broken: boolean;
+}
+
+function weldConstraint(w: WeldSpec, byId: Map<string, RAPIER.RigidBody>): Weld {
+  const A = byId.get(w.a)!, B = byId.get(w.b)!;
+  const P = { x: mmToM(w.pointMm.x), y: mmToM(w.pointMm.y), z: mmToM(w.pointMm.z) };
+  // (bodies of one model share the build frame: the point is the same in both)
+  return { a: A, b: B, pa: P, pb: P, q0: { x: 0, y: 0, z: 0, w: 1 }, breakN: w.breakN, broken: false };
+}
+
+/**
+ * Constraints solved with impulses before each physics step, all together (a few passes):
+ * gear meshes, the friction of the hinges gears turn on, and breakable holds.
+ * A row is Σ (v_body·lin + ω_body·ang) + bias = 0 with the impulse clamped to ±limit.
+ */
+function solveConstraints(gears: GearConstraint[], friction: FrictionRow[], welds: Weld[]) {
   const inv = (b: RAPIER.RigidBody, v: Vec3): Vec3 => {
     if (!b.isDynamic()) return { x: 0, y: 0, z: 0 };
     const e = b.effectiveWorldInvInertia().elements; // m11 m12 m13 m22 m23 m33
     return { x: e[0] * v.x + e[1] * v.y + e[2] * v.z, y: e[1] * v.x + e[3] * v.y + e[4] * v.z, z: e[2] * v.x + e[4] * v.y + e[5] * v.z };
   };
-  // one row = Σ ω_body · t_body (+ bias) = 0, impulse clamped to ±limit (accumulated per tick)
-  interface Row { terms: [RAPIER.RigidBody, Vec3][]; bias: number; limit: number; acc: number; onSlip?: () => void }
-  const row = (pairs: [RAPIER.RigidBody, Vec3, number][], bias: number, limit: number, onSlip?: () => void): Row => {
+  const invMass = (b: RAPIER.RigidBody) => (b.isDynamic() && b.mass() > 0 ? 1 / b.mass() : 0);
+  interface Term { b: RAPIER.RigidBody; lin?: Vec3; ang: Vec3 }
+  interface Row { terms: Term[]; bias: number; limit: number; acc: number; onSlip?: () => void; group?: Weld }
+  const zero = { x: 0, y: 0, z: 0 };
+  const add = (p: Vec3, q: Vec3, s: number) => ({ x: p.x + q.x * s, y: p.y + q.y * s, z: p.z + q.z * s });
+  const crossV = (p: Vec3, q: Vec3) => ({ x: p.y * q.z - p.z * q.y, y: p.z * q.x - p.x * q.z, z: p.x * q.y - p.y * q.x });
+  /** angular-only row from (body, vector, sign) triples; bodies may repeat */
+  const angRow = (pairs: [RAPIER.RigidBody, Vec3, number][], bias: number, limit: number, onSlip?: () => void): Row => {
     const m = new Map<RAPIER.RigidBody, Vec3>();
-    for (const [b, v, sgn] of pairs) {
-      const t = m.get(b) ?? { x: 0, y: 0, z: 0 };
-      m.set(b, { x: t.x + v.x * sgn, y: t.y + v.y * sgn, z: t.z + v.z * sgn });
-    }
-    return { terms: [...m], bias, limit, acc: 0, onSlip };
+    for (const [b, v, sgn] of pairs) m.set(b, add(m.get(b) ?? zero, v, sgn));
+    return { terms: [...m].map(([b, ang]) => ({ b, ang })), bias, limit, acc: 0, onSlip };
   };
   const rows: Row[] = [];
   for (const g of gears) {
     if (!g.a.isDynamic() && !g.b.isDynamic()) continue;
     const Ja = rotate(toQ(g.fa.rotation()), g.ja), Jb = rotate(toQ(g.fb.rotation()), g.jb);
-    const r = row([[g.a, Ja, 1], [g.fa, Ja, -1], [g.b, Jb, -1], [g.fb, Jb, 1]], 0, g.maxImp, () => (g.err = 0));
-    r.bias = (0.2 * g.err) / DT;
-    rows.push(r);
+    rows.push(angRow([[g.a, Ja, 1], [g.fa, Ja, -1], [g.b, Jb, -1], [g.fb, Jb, 1]], (0.2 * g.err) / DT, g.maxImp, () => (g.err = 0)));
   }
   for (const f of friction) {
     if (!f.a.isDynamic() && !f.b.isDynamic()) continue;
@@ -691,14 +759,38 @@ function solveGears(gears: GearConstraint[], friction: FrictionRow[]) {
     const angle = hingeAngle(f.a, f.b, f.axis);
     let d = angle - f.hold;
     d = Math.atan2(Math.sin(d), Math.cos(d));
-    rows.push(row([[f.b, J, 1], [f.a, J, -1]], (0.2 * d) / DT, f.torque * DT, () => (f.hold = angle)));
+    rows.push(angRow([[f.b, J, 1], [f.a, J, -1]], (0.2 * d) / DT, f.torque * DT, () => (f.hold = angle)));
+  }
+  for (const w of welds) {
+    if (w.broken || (!w.a.isDynamic() && !w.b.isDynamic())) continue;
+    const qa = toQ(w.a.rotation()), qb = toQ(w.b.rotation());
+    const ta = toV(w.a.translation()), tb = toV(w.b.translation());
+    const PA = add(ta, rotate(qa, w.pa), 1), PB = add(tb, rotate(qb, w.pb), 1);
+    const rA = add(PA, toV(w.a.worldCom()), -1), rB = add(PB, toV(w.b.worldCom()), -1);
+    const e = add(PA, PB, -1);
+    const limF = w.breakN * DT, limT = w.breakN * 0.05 * DT; // torque: the force at 5 cm
+    for (const n of [{ x: 1, y: 0, z: 0 }, { x: 0, y: 1, z: 0 }, { x: 0, y: 0, z: 1 }]) {
+      rows.push({ terms: [{ b: w.a, lin: n, ang: crossV(rA, n) }, { b: w.b, lin: add(zero, n, -1), ang: add(zero, crossV(rB, n), -1) }], bias: (0.2 * dot(e, n)) / DT, limit: limF, acc: 0, group: w });
+    }
+    // rotation error: b relative to a, compared with when it was made (small-angle vector, world)
+    const rel = qmul(conj(qa), qb), err = qmul(rel, conj(w.q0));
+    const s = err.w < 0 ? -2 : 2;
+    const th = rotate(qa, { x: err.x * s, y: err.y * s, z: err.z * s });
+    for (const n of [{ x: 1, y: 0, z: 0 }, { x: 0, y: 1, z: 0 }, { x: 0, y: 0, z: 1 }]) {
+      rows.push({ terms: [{ b: w.b, ang: n }, { b: w.a, ang: add(zero, n, -1) }], bias: (0.2 * dot(th, n)) / DT, limit: limT, acc: 0, group: w });
+    }
   }
   for (let pass = 0; pass < 8; pass++)
     for (const r of rows) {
+      if (r.group?.broken) continue;
       let cdot = 0, k = 0;
-      for (const [b, t] of r.terms) {
-        cdot += dot(toV(b.angvel()), t);
-        k += dot(t, inv(b, t));
+      for (const t of r.terms) {
+        cdot += dot(toV(t.b.angvel()), t.ang);
+        k += dot(t.ang, inv(t.b, t.ang));
+        if (t.lin) {
+          cdot += dot(toV(t.b.linvel()), t.lin);
+          k += invMass(t.b) * dot(t.lin, t.lin);
+        }
       }
       if (k < 1e-15) continue;
       let lambda = -(cdot + r.bias) / k;
@@ -706,9 +798,17 @@ function solveGears(gears: GearConstraint[], friction: FrictionRow[]) {
       if (Math.abs(r.acc + lambda) > r.limit && pass === 7) r.onSlip?.();
       lambda = acc - r.acc;
       r.acc = acc;
-      for (const [b, t] of r.terms) if (b.isDynamic()) b.applyTorqueImpulse({ x: t.x * lambda, y: t.y * lambda, z: t.z * lambda }, true);
+      for (const t of r.terms) {
+        if (!t.b.isDynamic()) continue;
+        t.b.applyTorqueImpulse({ x: t.ang.x * lambda, y: t.ang.y * lambda, z: t.ang.z * lambda }, true);
+        if (t.lin) t.b.applyImpulse({ x: t.lin.x * lambda, y: t.lin.y * lambda, z: t.lin.z * lambda }, true);
+      }
     }
+  // a hold that had to push with all it has gives way
+  for (const r of rows) if (r.group && !r.group.broken && Math.abs(r.acc) >= r.limit * 0.999) r.group.broken = true;
 }
+
+const qmul = (a: Quat, b: Quat): Quat => ({ w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z, x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y, y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x, z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w });
 
 function colliderDesc(s: ShapeSpec): RAPIER.ColliderDesc {
   const p = { x: mmToM(s.posMm.x), y: mmToM(s.posMm.y), z: mmToM(s.posMm.z) };

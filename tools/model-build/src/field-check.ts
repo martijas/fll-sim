@@ -26,6 +26,7 @@ for (const [id, e] of Object.entries(index)) {
   const t0 = performance.now();
   const { robot: model, fixedBodies } = assembleMissionModel(lib, parseModel(lib, readFileSync(join(repo, e.file), "latin1")).parts, { name: id, fixed: e.fixed });
   fieldModels.push({ id, model, pose: e.pose, fixedBodies });
+  if (model.welds?.length) console.log(`${id}: holds ${JSON.stringify(model.welds)}`);
   console.log(`${id}: ${model.bodies.length} bodies, ${model.bodies.reduce((s, b) => s + b.shapes.length, 0)} colliders, ${model.freeJoints.length} joints, assemble ${(performance.now() - t0).toFixed(0)} ms`);
 }
 const sim = await Simulation.create({ season, robot: makeDriveBase({}), start: { xMm: 230, yMm: 180, headingDeg: 0 }, fieldModels });
@@ -41,6 +42,8 @@ for (let done = 0; done < MS; done += 500) {
 const dt = performance.now() - t0;
 console.log(`\n${MS} ms simulated in ${dt.toFixed(0)} ms wall (${(dt / MS).toFixed(2)} ms per step)`);
 const after = sim.transforms();
+const welds = (sim as unknown as { welds: { broken: boolean }[] }).welds;
+if (welds.length) console.log(`holds: ${welds.length}, broken ${welds.filter((w) => w.broken).length}`);
 const moved: [string, number, number][] = [];
 for (let i = 0; i * 7 < after.length; i++) {
   const d = Math.hypot(after[i * 7] - before[i * 7], after[i * 7 + 1] - before[i * 7 + 1], after[i * 7 + 2] - before[i * 7 + 2]) * 1000;

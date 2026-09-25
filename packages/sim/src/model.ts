@@ -68,6 +68,12 @@ export interface FreeJointSpec {
   friction?: boolean;
   /** Torque (N·m) the joint resists turning with (Coulomb friction; sums its pins/axles). */
   frictionNm?: number;
+  /**
+   * An axle in round holes also slides along the axis: `body` (the axle's side) moves between
+   * minMm and maxMm relative to the other body (stops: bushes, gears, beams on the axle; the axle
+   * never leaves its holes), resisted by frictionN.
+   */
+  slide?: { body: string; minMm: number; maxMm: number; frictionN: number };
 }
 
 export type Port = "A" | "B" | "C" | "D" | "E" | "F";
@@ -111,6 +117,15 @@ export interface GearSpec {
   maxTorqueNm?: number;
 }
 
+/** A game piece held on by friction (a clip, a bar, a pin): comes off above `breakN`. */
+export interface WeldSpec {
+  a: string;
+  b: string;
+  /** where it's held, model frame (mm) */
+  pointMm: Vec3;
+  breakN: number;
+}
+
 export interface RobotModel {
   name: string;
   bodies: BodySpec[];
@@ -118,6 +133,8 @@ export interface RobotModel {
   freeJoints: FreeJointSpec[];
   /** Meshing gears (none for hand-made models). */
   gears?: GearSpec[];
+  /** Breakable holds (mission models' game pieces). */
+  welds?: WeldSpec[];
   sensors: SensorSpec[];
   hub: HubSpec;
   /** Robot footprint (for launch-area inspection), mm. */

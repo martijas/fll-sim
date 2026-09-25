@@ -187,49 +187,49 @@
 0 // leaf (middle): hose segment [loose:leaf (middle)]
 1 84 -17.8038 -123.2317 81.5736 0 0.8123 -0.5833 -0.0797 0.5814 0.8097 0.9968 0.0465 0.0648 2630k02.dat
 0 STEP
-0 // katydid (right): katydid leaf [loose:katydid]
+0 // katydid (right): katydid leaf [loose:katydid@0.3]
 1 2 173.4972 -49.5847 36.9419 -0.7049 -0.0564 -0.7071 -0.0797 0.9968 0 0.7049 0.0564 -0.7071 57906.dat
-0 // katydid (right): brown 1x4 round-end plate [loose:katydid]
+0 // katydid (right): brown 1x4 round-end plate [loose:katydid@0.3]
 1 70 144.8519 -44.8 65.5872 -0.7049 -0.0564 -0.7071 -0.0797 0.9968 0 0.7049 0.0564 -0.7071 77845.dat
-0 // katydid (right): brown 1x2 round-end plate [loose:katydid]
+0 // katydid (right): brown 1x2 round-end plate [loose:katydid@0.3]
 1 70 158.4979 -35.2306 51.9412 0.7049 -0.0564 0.7071 0.0797 0.9968 0 -0.7049 0.0564 0.7071 35480.dat
-0 // katydid (right): 2x2 jumper plate [loose:katydid]
+0 // katydid (right): 2x2 jumper plate [loose:katydid@0.3]
 1 10 130.3037 -38.4204 80.1354 0.7049 -0.0564 0.7071 0.0797 0.9968 0 -0.7049 0.0564 0.7071 87580.dat
-0 // katydid (right): T-piece leg [loose:katydid]
+0 // katydid (right): T-piece leg [loose:katydid@0.3]
 1 0 165.0953 -26.4586 45.3438 0.7049 0.0564 -0.7071 0.0797 -0.9968 0 -0.7049 -0.0564 -0.7071 4697b.dat
-0 // katydid (right): T-piece leg [loose:katydid]
+0 // katydid (right): T-piece leg [loose:katydid@0.3]
 1 0 150.9982 -28.0535 59.4409 0.7049 0.0564 -0.7071 0.0797 -0.9968 0 -0.7049 -0.0564 -0.7071 4697b.dat
-0 // katydid (right): click hinge plate (clipped to the leaf fingers) [loose:katydid]
+0 // katydid (right): click hinge plate (clipped to the leaf fingers) [loose:katydid@0.3]
 1 0 84.2908 -77.7348 126.1483 0.7071 -0.7049 0.0564 0 -0.0797 -0.9968 0.7071 0.7049 -0.0564 44567b.dat
-0 // katydid (right): 1x2 plate with handle [loose:katydid]
+0 // katydid (right): 1x2 plate with handle [loose:katydid@0.3]
 1 2 89.9296 -77.0968 120.5095 -0.7071 -0.7049 -0.0564 0 -0.0797 0.9968 -0.7071 0.7049 0.0564 2540.dat
-0 // katydid (right): hose end (on handle bar) [loose:katydid]
+0 // katydid (right): hose end (on handle bar) [loose:katydid@0.3]
 1 84 93.1832 -97.1926 124.327 -0.7049 0.0564 0.7071 -0.0797 -0.9968 0 0.7049 -0.0564 0.7071 2630k01.dat
-0 // katydid (right): hose end (on handle bar) [loose:katydid]
+0 // katydid (right): hose end (on handle bar) [loose:katydid@0.3]
 1 84 86.1121 -97.1926 117.2559 -0.7049 0.0564 0.7071 -0.0797 -0.9968 0 0.7049 -0.0564 0.7071 2630k01.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 103.7102 -123.2317 131.908 -0.7049 0.6073 0.3666 -0.0797 -0.5814 0.8097 0.7049 0.5415 0.4582 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 117.4565 -145.8174 143.099 -0.7049 0.3516 0.6161 -0.0797 -0.9023 0.4237 0.7049 0.2495 0.664 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 124.7286 -173.0375 147.2915 -0.7049 0.1649 0.6899 -0.0797 -0.9848 0.154 0.7049 0.0535 0.7073 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 127.1022 -201.1254 146.4873 -0.7049 0.0036 0.7093 -0.0797 -0.994 -0.0742 0.7049 -0.1089 0.7009 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 124.5594 -229.8724 140.6922 -0.7049 -0.1828 0.6854 -0.0797 -0.9397 -0.3326 0.7049 -0.2891 0.6478 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 116.0601 -254.2867 129.4307 -0.7049 -0.434 0.5611 -0.0797 -0.7375 -0.6706 0.7049 -0.5174 0.4853 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 98.9924 -266.6469 110.9646 -0.7049 -0.7078 0.0475 -0.0797 0.0126 -0.9967 0.7049 -0.7063 -0.0653 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 81.0084 -254.2867 94.379 -0.7049 -0.5174 -0.4853 -0.0797 0.7375 -0.6706 0.7049 -0.434 -0.5611 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 69.7469 -229.8724 85.8797 -0.7049 -0.2891 -0.6478 -0.0797 0.9397 -0.3326 0.7049 -0.1828 -0.6854 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 63.9518 -201.1254 83.337 -0.7049 -0.1089 -0.7009 -0.0797 0.994 -0.0742 0.7049 0.0036 -0.7093 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 63.1476 -173.0375 85.7105 -0.7049 0.0535 -0.7073 -0.0797 0.9848 0.154 0.7049 0.1649 -0.6899 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 67.3401 -145.8174 92.9827 -0.7049 0.2495 -0.664 -0.0797 0.9023 0.4237 0.7049 0.3516 -0.6161 2630k02.dat
-0 // katydid (right): hose segment [loose:katydid]
+0 // katydid (right): hose segment [loose:katydid@0.3]
 1 84 78.5311 -123.2317 106.7289 -0.7049 0.5415 -0.4582 -0.0797 0.5814 0.8097 0.7049 0.6073 -0.3666 2630k02.dat

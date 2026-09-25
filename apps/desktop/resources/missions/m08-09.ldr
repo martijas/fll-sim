@@ -454,9 +454,9 @@
 0 STEP
 0 // platform back 15L
 1 71 80 -187 -218 0 1 0 0.8 0 -0.6 -0.6 0 -0.8 32278.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 70 -115 -122 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 70 -139 -154 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
 0 // blue 3L pin
 1 1 100 -271 -330 1 0 0 0 0.8 0.6 0 -0.6 0.8 42924.dat
@@ -474,13 +474,13 @@
 1 4 20 -107 -78 0 1 0 0.6 0 0.8 0.8 0 -0.6 32316.dat
 0 // dark grey 3x7 panel
 1 72 0 -163 -186 1 0 0 0 -0.8 -0.6 0 0.6 -0.8 71709.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 70 -151 -170 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 -70 -151 -170 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 70 -175 -202 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 -70 -175 -202 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
 0 // platform front 15L
 1 71 -80 -187 -218 0 1 0 0.8 0 -0.6 -0.6 0 -0.8 32278.dat
@@ -494,17 +494,17 @@
 1 72 -40 -107 -78 0 1 0 0.6 0 0.8 0.8 0 -0.6 32523.dat
 0 // red 5L
 1 4 -20 -107 -78 0 1 0 0.6 0 0.8 0.8 0 -0.6 32316.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 -70 -115 -122 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 -70 -139 -154 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
 0 // blue 3L pin
 1 1 -100 -271 -330 -1 0 0 0 0.8 -0.6 0 -0.6 -0.8 42924.dat
 0 // tan 1L
 1 19 -100 -271 -330 0 1 0 -0.6 0 -0.8 -0.8 0 0.6 18654.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 60 -135 -132 0 1 0 -0.8 0 0.6 0.6 0 0.8 61332.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 -60 -135 -132 0 1 0 -0.8 0 0.6 0.6 0 0.8 61332.dat
 0 // yellow 7L
 1 14 0 -143 -126 0 0 1 -0.6 0.8 0 -0.8 -0.6 0 32524.dat
@@ -526,13 +526,13 @@
 1 1 0 -207 -178 1 0 0 0 0.8 0.6 0 -0.6 0.8 42924.dat
 0 // dark grey 3L
 1 72 0 -223 -166 0 1 0 0.6 0 0.8 0.8 0 -0.6 32523.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 40 -295 -112 0 1 0 -0.8 0 0.6 0.6 0 0.8 61332.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 80 -295 -112 0 1 0 -0.8 0 0.6 0.6 0 0.8 61332.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 -80 -295 -112 0 1 0 -0.8 0 0.6 0.6 0 0.8 61332.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 -40 -295 -112 0 1 0 -0.8 0 0.6 0.6 0 0.8 61332.dat
 0 // grey 3x5 L liftarm
 1 71 20 -303 -106 0 0 1 0.6 -0.8 0 0.8 0.6 0 32526.dat
@@ -548,9 +548,9 @@
 1 0 -110 -271 -130 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
 0 // grey 11L extension
 1 71 -100 -158.7691 -22.9952 0 1 0 0.83 0 0.5577 0.5577 0 -0.83 32525.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 -90 -214.5383 60.0097 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 -90 -203.3844 43.4087 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
 0 // grey axle/pin cross block
 1 71 -80 -214.5383 60.0097 0 0 1 -0.83 0.5577 0 -0.5577 -0.83 0 42003.dat
@@ -558,7 +558,7 @@
 1 4 -110 -192.2306 26.8077 -1 0 0 0 0.8 -0.6 0 -0.6 -0.8 89678.dat
 0 // red 1/2 pin with stud
 1 4 -110 -181.0768 10.2068 -1 0 0 0 0.8 -0.6 0 -0.6 -0.8 89678.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 -90 -169.923 -6.3942 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
 0 // dark grey axle/pin (pivot)
 1 72 -100 -103 -106 -1 0 0 0 0.8 -0.6 0 -0.6 -0.8 11214.dat
@@ -572,9 +572,9 @@
 1 0 -80 -204.4615 -80.1971 0 1 0 -0.9057 0 0.4239 0.4239 0 0.9057 40490.dat
 0 // grey 11L extension
 1 71 100 -158.7691 -22.9952 0 1 0 0.83 0 0.5577 0.5577 0 -0.83 32525.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 90 -214.5383 60.0097 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 90 -203.3844 43.4087 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
 0 // grey axle/pin cross block
 1 71 80 -214.5383 60.0097 0 0 1 -0.83 0.5577 0 -0.5577 -0.83 0 42003.dat
@@ -582,7 +582,7 @@
 1 4 110 -192.2306 26.8077 1 0 0 0 0.8 0.6 0 -0.6 0.8 89678.dat
 0 // red 1/2 pin with stud
 1 4 110 -181.0768 10.2068 1 0 0 0 0.8 0.6 0 -0.6 0.8 89678.dat
-0 // research platform [loose:research platform]
+0 // research platform [loose:research platform~]
 1 0 90 -169.923 -6.3942 1 0 0 0 0.8 0.6 0 -0.6 0.8 61332.dat
 0 // dark grey axle/pin (pivot)
 1 72 100 -103 -106 1 0 0 0 0.8 0.6 0 -0.6 0.8 11214.dat

@@ -159,6 +159,8 @@ export interface Connection {
   friction: boolean;
   /** resisting torque (N·m) when this connection turns, see JOINT_FRICTION */
   frictionNm: number;
+  /** only an axle turns in a round hole: it can slide along the hole too */
+  slides: boolean;
   /** engaged length (LDU) */ depth: number;
 }
 
@@ -244,7 +246,8 @@ export function findConnections(snaps: WSnap[]): Connection[] {
       // friction only where a friction pin's pin section (not its axle end) turns in the hole
       const friction = (m.friction && pinInRound >= 0.9) || (f.friction && roundIn >= 0.9 && !m.stud);
       const frictionNm = friction ? JOINT_FRICTION.frictionPin : pinInRound >= 0.9 ? JOINT_FRICTION.freePin : JOINT_FRICTION.axleInRoundHole;
-      out.push({ a: m.node, b: f.node, kind: rigid ? "rigid" : "revolute", point: mid, axis: f.a, friction, frictionNm, depth: m.stud || f.stud ? overlap : axleInAxle + roundIn });
+      const slides = !rigid && !m.stud && !f.stud && pinInRound < 0.9 && roundIn >= 0.9;
+      out.push({ a: m.node, b: f.node, kind: rigid ? "rigid" : "revolute", point: mid, axis: f.a, friction, frictionNm, slides, depth: m.stud || f.stud ? overlap : axleInAxle + roundIn });
     }
   }
   return out;
@@ -284,6 +287,8 @@ export interface AssembleOptions {
   glue?: (part: ModelPart, index: number) => boolean;
   /** Whether glued part `part` may stick to `target` (default: any). */
   glueTo?: (part: ModelPart, target: ModelPart) => boolean;
+  /** Parts with the same key become one rigid body (e.g. a game piece), whatever connects them. */
+  rigidGroup?: (part: ModelPart) => string | null;
   /** Fewer, bigger colliders: mostly solid parts become a single box (for large field models). */
   coarse?: boolean;
   /** Default port assignment for electronics without a !FLLSIM PORT line (in part order). */
@@ -304,7 +309,7 @@ export interface AssemblyReport {
 interface Node { part: number; rotor: boolean }
 
 /** Build a physics RobotModel from placed LDraw parts. */
-export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = {}): { robot: RobotModel; report: AssemblyReport; bodyOfPart: string[] } {
+export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = {}): { robot: RobotModel; report: AssemblyReport; bodyOfPart: string[]; toModelMm: (ldu: Vec3) => { x: number; y: number; z: number } } {
   const warnings: string[] = [];
   const infos = parts.map((p) => analyzePart(lib, p.file));
 
@@ -417,6 +422,16 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
       }
       if (!changed) break;
     }
+  }
+
+  if (o.rigidGroup) {
+    const first = new Map<string, number>();
+    parts.forEach((p, i) => {
+      const k = o.rigidGroup!(p);
+      if (k === null) return;
+      if (first.has(k)) dsu.union(first.get(k)!, i);
+      else first.set(k, i);
+    });
   }
 
   // Clusters -> bodies.
@@ -536,7 +551,13 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     const [a, b] = k.split(",").map(Number);
     if (motorPairs.has([bodies[a].id, bodies[b].id].sort().join("|"))) continue;
     const c = cs[0];
-    freeJoints.push({ id: `hinge${freeJoints.length}`, a: bodies[a].id, b: bodies[b].id, anchorMm: v3(addv(toRobotPoint(c.point), shift)), axis: v3(norm(dirToRobotVec(c.axis))), friction: cs.some((x) => x.friction), frictionNm: cs.filter((x) => x.kind === "revolute").reduce((t, x) => t + x.frictionNm, 0) });
+    const hinge: FreeJointSpec = { id: `hinge${freeJoints.length}`, a: bodies[a].id, b: bodies[b].id, anchorMm: v3(addv(toRobotPoint(c.point), shift)), axis: v3(norm(dirToRobotVec(c.axis))), friction: cs.some((x) => x.friction), frictionNm: cs.filter((x) => x.kind === "revolute").reduce((t, x) => t + x.frictionNm, 0) };
+    const rev = cs.filter((x) => x.kind === "revolute");
+    if (rev.length && rev.every((x) => x.slides)) {
+      const range = slideRange(parts, infos, rev, (i) => bodyIndex.get(clusterOf[i])!);
+      if (range) hinge.slide = { body: bodies[bodyIndex.get(clusterOf[rev[0].a])!].id, minMm: range[0] * LDU, maxMm: range[1] * LDU, frictionN: AXLE_SLIDE_FRICTION_N };
+    }
+    freeJoints.push(hinge);
   }
 
   const gears = findGears(parts, infos, parts.map((_, i) => bodies[bodyIndex.get(clusterOf[i])!].id), freeJoints, motors, shift);
@@ -575,7 +596,68 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     footprintMm: { w: fw * 2, l: fl * 2, h: fh },
   };
   const bodyOfPart = parts.map((_, i) => bodies[bodyIndex.get(clusterOf[i])!].id);
-  return { robot, report: { bodies: bodies.length, joints: freeJoints.length, motors: motors.length, gears: gears.length, loose, warnings }, bodyOfPart };
+  return { robot, report: { bodies: bodies.length, joints: freeJoints.length, motors: motors.length, gears: gears.length, loose, warnings }, bodyOfPart, toModelMm: (p: Vec3) => v3(addv(toRobotPoint(p), shift)) };
+}
+
+// ---- sliding axles --------------------------------------------------------------------------------
+/** An axle slides easily in a round hole (a loose one falls through a beam under its own weight). */
+const AXLE_SLIDE_FRICTION_N = 0.005;
+
+/**
+ * How far (LDU, along the hole axis, + = the connection's axis direction) the axle side of these
+ * axle-in-round-hole connections can slide: until something on the axle (bush, gear, beam…) hits
+ * a part of the other body on the axle's line, and never so far that the axle leaves its holes.
+ * Null when it can't really move.
+ */
+function slideRange(parts: ModelPart[], infos: PartInfo[], cs: Connection[], bodyOfPart: (i: number) => number): [number, number] | null {
+  const c = cs[0];
+  const u = norm(c.axis), P = c.point;
+  const axleBody = bodyOfPart(c.a), holeBody = bodyOfPart(c.b);
+  const axles = new Set(cs.map((x) => x.a)), holes = new Set(cs.map((x) => x.b));
+  // a part's extent along the axis and how far it reaches out from the axis line (LDU)
+  const extent = (i: number) => {
+    let lo = Infinity, hi = -Infinity, reach = 0, minPerp = Infinity;
+    const inf = infos[i], m = parts[i].m;
+    for (const k of corners(inf.min, inf.max)) {
+      const w: Vec3 = [m[0] * k[0] + m[1] * k[1] + m[2] * k[2] + m[3], m[4] * k[0] + m[5] * k[1] + m[6] * k[2] + m[7], m[8] * k[0] + m[9] * k[1] + m[10] * k[2] + m[11]];
+      const d = sub(w, P), t = dot(d, u);
+      lo = Math.min(lo, t); hi = Math.max(hi, t);
+      const perp = Math.hypot(...sub(d, scalev(u, t)));
+      reach = Math.max(reach, perp); minPerp = Math.min(minPerp, perp);
+    }
+    // on the axle's line: its box (roughly) surrounds the line
+    const inf2 = infos[i], mid: Vec3 = [(inf2.min[0] + inf2.max[0]) / 2, (inf2.min[1] + inf2.max[1]) / 2, (inf2.min[2] + inf2.max[2]) / 2];
+    const cw: Vec3 = [m[0] * mid[0] + m[1] * mid[1] + m[2] * mid[2] + m[3], m[4] * mid[0] + m[5] * mid[1] + m[6] * mid[2] + m[7], m[8] * mid[0] + m[9] * mid[1] + m[10] * mid[2] + m[11]];
+    const dc = sub(cw, P);
+    const centreOff = Math.hypot(...sub(dc, scalev(u, dot(dc, u))));
+    return { lo, hi, reach, onLine: centreOff < reach - 4 };
+  };
+  let min = -400, max = 400;
+  // stay engaged: at least 4 LDU of axle inside the holes
+  const ax = [...axles].map(extent), ho = [...holes].map(extent);
+  const a0 = Math.min(...ax.map((e) => e.lo)), a1 = Math.max(...ax.map((e) => e.hi));
+  const h0 = Math.min(...ho.map((e) => e.lo)), h1 = Math.max(...ho.map((e) => e.hi));
+  max = Math.min(max, h1 - 4 - a0);
+  min = Math.max(min, h0 + 4 - a1);
+  // stops: wide parts on the axle side vs parts of the hole side, both on the axle's line
+  const walls: { lo: number; hi: number }[] = [];
+  const blockers: { lo: number; hi: number }[] = [];
+  parts.forEach((_, i) => {
+    const b = bodyOfPart(i);
+    if (b !== axleBody && b !== holeBody) return;
+    const e = extent(i);
+    if (!e.onLine) return;
+    if (b === holeBody) walls.push(e);
+    else if (!axles.has(i) && e.reach > 8) blockers.push(e);
+  });
+  for (const p of blockers)
+    for (const w of walls) {
+      if (p.hi <= w.lo + 1) max = Math.min(max, w.lo - p.hi);
+      else if (p.lo >= w.hi - 1) min = Math.max(min, -(p.lo - w.hi));
+      else { min = Math.max(min, 0); max = Math.min(max, 0); } // already interlocked
+    }
+  if (max - min < 1) return null;
+  return [Math.min(0, min), Math.max(0, max)];
 }
 
 // ---- gears ----------------------------------------------------------------------------------------
@@ -768,27 +850,73 @@ function motorInertia(type: "small" | "medium" | "large") {
 export { normName };
 export { placeOnSnap, partSnaps, snapFrame, invert, autoFit, type FitCandidate } from "./place";
 
-/** Game-piece tag in a part label: "... [loose:seed 1]" (parts with the same tag form one piece). */
-export const looseTag = (p: ModelPart): string | null => /\[loose:([^\]]+)\]/.exec(p.label ?? "")?.[1] ?? null;
+/**
+ * Game-piece tag in a part label: "... [loose:seed 1]", "[loose:seed 1@1.5]" (held on until
+ * 1.5 N), "[loose:platform~]" (keeps its own hinges instead of being one solid piece).
+ */
+export const looseTag = (p: ModelPart): string | null => /\[loose:([^\]@]+)/.exec(p.label ?? "")?.[1] ?? null;
+const holdN = (p: ModelPart): number | null => {
+  const m = /\[loose:[^\]@]+@([\d.]+)\]/.exec(p.label ?? "");
+  return m ? Number(m[1]) : null;
+};
 
 /**
  * A mission model for the field. Parts that didn't connect (hoses, clips, decorations without
  * snap data) are glued to what they touch; game pieces (labels tagged `[loose:<piece>]`) only
- * stick to their own piece so they stay free. The heaviest non-game-piece body resting on the
- * mat is held by Dual Lock (unless `fixed` is false).
+ * stick to their own piece so they stay free, and pieces tagged `@<newtons>` are held on to
+ * what they rest against until pulled harder than that. The heaviest non-game-piece body resting
+ * on the mat is held by Dual Lock (unless `fixed` is false).
  */
 export function assembleMissionModel(lib: Library, parts: ModelPart[], o: { name?: string; fixed?: boolean } = {}): { robot: RobotModel; fixedBodies: string[] } {
-  const { robot, bodyOfPart } = assemble(lib, parts, {
+  const { robot, bodyOfPart, toModelMm } = assemble(lib, parts, {
     name: o.name,
     autoPorts: false,
     coarse: true,
     glue: () => true,
     glueTo: (a, b) => looseTag(a) === looseTag(b),
+    // a game piece is one solid object, unless tagged "~" (it has working hinges of its own)
+    rigidGroup: (p) => { const t = looseTag(p); return t && !t.endsWith("~") ? t : null; },
   });
+  // breakable holds: each held piece to the body it touches most
+  const box = (i: number) => {
+    const inf = analyzePart(lib, parts[i].file), m = parts[i].m;
+    const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+    for (const k of corners(inf.min, inf.max)) {
+      const w = [m[0] * k[0] + m[1] * k[1] + m[2] * k[2] + m[3], m[4] * k[0] + m[5] * k[1] + m[6] * k[2] + m[7], m[8] * k[0] + m[9] * k[1] + m[10] * k[2] + m[11]];
+      for (let a = 0; a < 3; a++) { lo[a] = Math.min(lo[a], w[a]); hi[a] = Math.max(hi[a], w[a]); }
+    }
+    return { lo, hi };
+  };
+  const welds: NonNullable<RobotModel["welds"]> = [];
+  const pieces = new Map<string, number[]>();
+  parts.forEach((p, i) => { const t = looseTag(p); if (t && holdN(p) !== null) (pieces.get(t) ?? pieces.set(t, []).get(t)!).push(i); });
+  for (const [, idx] of pieces) {
+    const breakN = holdN(parts[idx[0]])!;
+    const pieceBodies = new Set(idx.map((i) => bodyOfPart[i]));
+    const main = [...pieceBodies].sort((a, b) => idx.filter((i) => bodyOfPart[i] === b).length - idx.filter((i) => bodyOfPart[i] === a).length)[0];
+    const touch = new Map<string, { n: number; lo: number[]; hi: number[] }>();
+    for (const i of idx) {
+      const bi = box(i);
+      parts.forEach((_, j) => {
+        if (pieceBodies.has(bodyOfPart[j]) || looseTag(parts[j])) return;
+        const bj = box(j);
+        const lo = [0, 1, 2].map((a) => Math.max(bi.lo[a], bj.lo[a])), hi = [0, 1, 2].map((a) => Math.min(bi.hi[a], bj.hi[a]));
+        if ([0, 1, 2].some((a) => hi[a] - lo[a] < -4)) return;
+        const t = touch.get(bodyOfPart[j]) ?? { n: 0, lo, hi };
+        t.n++;
+        touch.set(bodyOfPart[j], t);
+      });
+    }
+    const best = [...touch].sort((a, b) => b[1].n - a[1].n)[0];
+    if (!best) continue;
+    const mid: Vec3 = [0, 1, 2].map((a) => (best[1].lo[a] + best[1].hi[a]) / 2) as Vec3;
+    welds.push({ a: main, b: best[0], pointMm: toModelMm(mid), breakN });
+  }
+  if (welds.length) robot.welds = welds;
   if (o.fixed === false) return { robot, fixedBodies: [] };
-  const pieces = new Set(parts.map((p, i) => (looseTag(p) ? bodyOfPart[i] : null)).filter((x): x is string => !!x));
+  const pieceBodySet = new Set(parts.map((p, i) => (looseTag(p) ? bodyOfPart[i] : null)).filter((x): x is string => !!x));
   const lowest = (b: RobotModel["bodies"][number]) => Math.min(...b.shapes.map((sh) => sh.posMm.y - (sh.kind === "box" ? sh.sizeMm.y / 2 : sh.radiusMm)));
   const floor = Math.min(...robot.bodies.map(lowest));
-  const grounded = robot.bodies.filter((b) => !pieces.has(b.id) && lowest(b) < floor + 3).sort((a, b) => b.massKg - a.massKg);
+  const grounded = robot.bodies.filter((b) => !pieceBodySet.has(b.id) && lowest(b) < floor + 3).sort((a, b) => b.massKg - a.massKg);
   return { robot, fixedBodies: grounded.slice(0, 1).map((b) => b.id) };
 }
