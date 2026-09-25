@@ -104,9 +104,11 @@ export function App() {
   /** Fill in the score sheet from the field (only the questions the field settles); returns the total. */
   const answersRef = useRef(answers);
   answersRef.current = answers;
+  const inspectionRef = useRef(false);
   const applyAutoScore = useCallback((snap: FieldSnapshot) => {
     const a = autoScore(snap);
-    const next = { ...answersRef.current, ...a.answers };
+    // equipment inspection from the robot's size check (the team still confirms attachments)
+    const next = { ...answersRef.current, ei: inspectionRef.current, ...a.answers };
     setAuto(a);
     setAnswers(next);
     return { total: score(next).total, n: Object.keys(a.answers).length };
@@ -282,6 +284,7 @@ export function App() {
     const pass = diag <= r && fp.h <= hMax;
     return { pass, why: `${fp.w.toFixed(0)} × ${fp.l.toFixed(0)} mm (diagonal ${diag.toFixed(0)} of ${r} mm launch radius), ${fp.h.toFixed(0)} mm tall (limit ${hMax}) → ${pass ? "fits" : "does not fit"} (attachments not included)` };
   }, [robotModel, season]);
+  inspectionRef.current = inspection.pass;
   const visualsRef = useRef({ lib: null as Library | null, visuals: robotVisuals });
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
