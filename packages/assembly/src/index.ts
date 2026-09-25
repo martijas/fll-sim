@@ -1160,6 +1160,13 @@ export function assembleMissionModel(lib: Library, parts: ModelPart[], o: { name
   const pieceBodySet = new Set(parts.map((p, i) => (looseTag(p) ? bodyOfPart[i] : null)).filter((x): x is string => !!x));
   const lowest = (b: RobotModel["bodies"][number]) => Math.min(...b.shapes.map((sh) => sh.posMm.y - (sh.kind === "box" ? sh.sizeMm.y / 2 : sh.radiusMm)));
   const floor = Math.min(...robot.bodies.map(lowest));
-  const grounded = robot.bodies.filter((b) => !pieceBodySet.has(b.id) && lowest(b) < floor + 3).sort((a, b) => b.massKg - a.massKg);
+  // Dual Lock holds the body that rests on the mat over the largest area (the model's base)
+  const footArea = (b: RobotModel["bodies"][number]) =>
+    b.shapes.reduce((t, sh) => {
+      const bottom = sh.posMm.y - (sh.kind === "box" ? sh.sizeMm.y / 2 : sh.radiusMm);
+      if (bottom > floor + 3) return t;
+      return t + (sh.kind === "box" ? sh.sizeMm.x * sh.sizeMm.z : Math.PI * sh.radiusMm * sh.radiusMm);
+    }, 0);
+  const grounded = robot.bodies.filter((b) => !pieceBodySet.has(b.id) && lowest(b) < floor + 3).sort((a, b) => footArea(b) - footArea(a) || b.massKg - a.massKg);
   return { robot, fixedBodies: grounded.slice(0, 1).map((b) => b.id) };
 }

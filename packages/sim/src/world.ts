@@ -250,7 +250,7 @@ export class Simulation {
     }
     // bodies whose contacts are already off (hinged together, meshing gears)
     const noContact = new Set<string>();
-    for (const j of m.freeJoints) noContact.add([j.a, j.b].sort().join("|"));
+    for (const j of m.freeJoints) if (j.slide) noContact.add([j.a, j.b].sort().join("|"));
     for (const g of m.gears ?? []) noContact.add([g.a, g.b].sort().join("|"));
     const modelGearFriction = takeGearFriction(modelGears, modelFriction);
     // Colliders of one model that already overlap as built (pins through holes, parts nested in
@@ -263,12 +263,42 @@ export class Simulation {
     });
     const hit = (x: ReturnType<typeof shapeBounds>, y: ReturnType<typeof shapeBounds>) =>
       x.max.x - y.min.x > 0.2 && y.max.x - x.min.x > 0.2 && x.max.y - y.min.y > 0.2 && y.max.y - x.min.y > 0.2 && x.max.z - y.min.z > 0.2 && y.max.z - x.min.z > 0.2;
+    // Hinged pairs: colliders side by side along the hinge axis (beams stacked on a pin) can only
+    // rub as the hinge turns: never let them touch. Those sharing a plane of rotation are real
+    // stops (a door against its frame) and keep colliding.
+    const hingeAxis = new Map<string, { u: Vec3; p: Vec3 }>();
+    for (const j of m.freeJoints) if (!j.slide) hingeAxis.set([j.a, j.b].sort().join("|"), { u: j.axis, p: j.anchorMm });
+    // how far a collider comes to the hinge's axis line (mm): pins and hole walls sit right on it
+    const toAxis = (b: ReturnType<typeof shapeBounds>, h: { u: Vec3; p: Vec3 }) => {
+      const c = { x: (b.min.x + b.max.x) / 2 - h.p.x, y: (b.min.y + b.max.y) / 2 - h.p.y, z: (b.min.z + b.max.z) / 2 - h.p.z };
+      const t = c.x * h.u.x + c.y * h.u.y + c.z * h.u.z;
+      const perp = Math.hypot(c.x - h.u.x * t, c.y - h.u.y * t, c.z - h.u.z * t);
+      const half = Math.hypot(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z) / 2;
+      return perp - half;
+    };
+    const near = (x: ReturnType<typeof shapeBounds>, y: ReturnType<typeof shapeBounds>, gap: number) =>
+      x.max.x - y.min.x > -gap && y.max.x - x.min.x > -gap && x.max.y - y.min.y > -gap && y.max.y - x.min.y > -gap && x.max.z - y.min.z > -gap && y.max.z - x.min.z > -gap;
+    const along = (b: ReturnType<typeof shapeBounds>, u: Vec3) => {
+      const c = { x: (b.min.x + b.max.x) / 2, y: (b.min.y + b.max.y) / 2, z: (b.min.z + b.max.z) / 2 };
+      const h = (Math.abs(u.x) * (b.max.x - b.min.x) + Math.abs(u.y) * (b.max.y - b.min.y) + Math.abs(u.z) * (b.max.z - b.min.z)) / 2;
+      const t = c.x * u.x + c.y * u.y + c.z * u.z;
+      return [t - h, t + h];
+    };
     for (let i = 0; i < all.length; i++)
       for (let k = i + 1; k < all.length; k++) {
         const x = all[i], y = all[k];
-        if (x.body === y.body || (fixed.has(m.bodies[x.body].id) && fixed.has(m.bodies[y.body].id)) || !hit(x.bounds, y.bounds)) continue;
-        if (noContact.has([m.bodies[x.body].id, m.bodies[y.body].id].sort().join("|"))) continue;
-        this.excludePair(x.handle, y.handle);
+        if (x.body === y.body || (fixed.has(m.bodies[x.body].id) && fixed.has(m.bodies[y.body].id))) continue;
+        const key = [m.bodies[x.body].id, m.bodies[y.body].id].sort().join("|");
+        if (noContact.has(key)) continue;
+        const h = hingeAxis.get(key);
+        if (h) {
+          const [a0, a1] = along(x.bounds, h.u), [b0, b1] = along(y.bounds, h.u);
+          // (voxel boxes can overshoot a face by ~1.6 mm: stacked beams overlap that much)
+          if (Math.min(a1, b1) - Math.max(a0, b0) < 3) { this.excludePair(x.handle, y.handle); continue; }
+          // around the axis (the pin, its hole, the beams' rounded ends) the joint's friction stands for contact
+          if (toAxis(x.bounds, h) < 8 && toAxis(y.bounds, h) < 8) { this.excludePair(x.handle, y.handle); continue; }
+        }
+        if (hit(x.bounds, y.bounds)) this.excludePair(x.handle, y.handle);
       }
     const moving = [...m.bodies.filter((b) => !fixed.has(b.id)).map((b) => byId.get(b.id)!), ...carriers];
     if (moving.length) {
@@ -309,7 +339,10 @@ export class Simulation {
     const A = byId.get(j.a)!, B = byId.get(j.b)!;
     if (!j.slide) {
       const joint = this.world.createImpulseJoint(RAPIER.JointData.revolute(anchor, anchor, j.axis), A, B, wake) as RAPIER.RevoluteImpulseJoint;
-      joint.setContactsEnabled(false);
+      // Mission models: hinged parts still rest on each other (a door leaning on its frame); the
+      // colliders that overlap as built (pin in hole) are filtered pair by pair instead. The
+      // robot's own bodies never collide with each other anyway.
+      joint.setContactsEnabled(!wake);
       this.addJointFriction(joint, A, B, j, friction);
       return undefined;
     }

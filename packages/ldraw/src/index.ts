@@ -131,6 +131,14 @@ const BUILTIN: Record<string, string> = {
 `,
 };
 
+/**
+ * Connection data the LDCad shadow library is missing, added by FLL Sim (same meta syntax).
+ * 43056 (hinge plate 2 x 4.5 base, M11's door hinge): the anti-studs underneath.
+ */
+const EXTRA_SNAPS: Record<string, string[]> = {
+  "parts/43056.dat": ["!LDCAD SNAP_CYL [gender=F] [caps=one] [secs=S 6 4] [pos=-10 8 -30] [grid=2 4 20 20]"],
+};
+
 export class Library {
   private cache = new Map<string, ParsedFile | null>();
   private localCache = new WeakMap<Map<string, string>, Map<string, ParsedFile>>();
@@ -175,10 +183,9 @@ export class Library {
   }
 
   private shadowSnaps(path: string): string[] {
-    if (!this.shadow) return [];
     if (!this.shadowCache.has(path)) {
-      const text = this.shadow.read(path);
-      this.shadowCache.set(path, text ? parseLines(text).snaps : []);
+      const text = this.shadow?.read(path);
+      this.shadowCache.set(path, [...(text ? parseLines(text).snaps : []), ...(EXTRA_SNAPS[path] ?? [])]);
     }
     return this.shadowCache.get(path)!;
   }
