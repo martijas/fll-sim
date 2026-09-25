@@ -1,3 +1,13 @@
 [
-  { "id": "spike-drivebase", "name": "SPIKE drive base (real parts)", "file": "spike-drivebase.ldr" }
+  {
+    "id": "spike-drivebase",
+    "name": "SPIKE drive base (real parts)",
+    "file": "spike-drivebase.ldr"
+  },
+  {
+    "id": "driving-base-3",
+    "name": "Driving Base 3",
+    "file": "driving-base-3.ldr",
+    "note": "FIRST robot guide: drive C (left) + D (right), accessory motor E, colour sensor B"
+  }
 ]
