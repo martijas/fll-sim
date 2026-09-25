@@ -65,6 +65,11 @@ pnpm dist:linux     # build apps/desktop/release/fll-sim_<ver>_amd64.deb and an 
 sudo apt install ./apps/desktop/release/fll-sim_0.1.0_amd64.deb
 ```
 
+**WSL (Windows):** needs Windows 11 (or 10 with WSLg) so Linux windows can open, plus the
+libraries Electron uses: `sudo apt install libnss3 libgtk-3-0 libgbm1 libasound2 libxss1`. If
+`pnpm dev` ever says *Electron uninstall*, run `pnpm install` again (it downloads Electron) or
+`node -e "require('electron')"` in `apps/desktop`.
+
 Headless runs (CI, batch testing of programs):
 
 ```sh
