@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 // Simulation worker: physics + MicroPython in lockstep, paced against wall-clock time.
 import { PORTS, Simulation, SpikeApi, type Port } from "@fll-sim/sim";
-import { runPython, settle } from "@fll-sim/runtime-python";
+import { SimAbort, runPython, settle } from "@fll-sim/runtime-python";
 import wasmUrl from "@micropython/micropython-webassembly-pyscript/micropython.wasm?url";
 import { CTRL, type Frame, type FromWorker, type ToWorker } from "./protocol";
 
@@ -71,6 +71,11 @@ function onTick() {
   sim.hub.buttonDown[1] = Atomics.load(ctrl, CTRL.BTN_LEFT) ? (sim.hub.buttonDown[1] >= 0 ? sim.hub.buttonDown[1] : sim.timeMs) : -1;
   sim.hub.buttonDown[2] = Atomics.load(ctrl, CTRL.BTN_RIGHT) ? (sim.hub.buttonDown[2] >= 0 ? sim.hub.buttonDown[2] : sim.timeMs) : -1;
   if (sim.timeMs % 4 !== 0) return;
+  // Interrupted (a match goes on): end the program here, without resetting anything
+  if (Atomics.load(ctrl, CTRL.STOP)) {
+    Atomics.store(ctrl, CTRL.STOP, 0);
+    throw new SimAbort();
+  }
   // Pause
   if (Atomics.load(ctrl, CTRL.PAUSE)) {
     emitFrame(true);
@@ -115,9 +120,19 @@ async function handle(m: ToWorker) {
       reanchor();
       const result = await runPython({ api, files, source: m.source, wasmUrl, timeLimitMs: m.timeLimitMs ? sim.timeMs + m.timeLimitMs : undefined, hooks: { stdout: (line) => post({ type: "stdout", line }), onTick, app: (kind, args) => post({ type: "app", kind, args }) } });
       if (!result.stopped) settle(api, 10000, onTick);
+      else {
+        // stopped (interrupted or out of time): the motors brake and the robot comes to rest
+        for (const mb of sim.motors.values()) mb.ctl.stop(sim.timeMs / 1000, 1);
+        sim.stepMs(300);
+      }
       running = false;
       emitFrame(true);
       post({ type: "done", result, snapshot: sim.snapshot() });
+    } else if (m.type === "replaceRobot") {
+      sim.replaceRobot(m.robot, m.pose ?? sim.robotPose());
+      sim.stepMs(150);
+      post({ type: "scene", bodies: sim.scene, bodyIds: sim.bodies.map((b) => b.id) });
+      emitFrame(true);
     } else if (m.type === "snapshot") {
       post({ type: "snapshot", snapshot: sim.snapshot() });
     }

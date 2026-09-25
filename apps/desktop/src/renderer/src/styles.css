@@ -173,3 +173,15 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 .run-row { display: flex; align-items: center; gap: 6px; color: var(--text); white-space: nowrap; overflow: hidden; }
 .run-row .muted { color: var(--muted); margin: 0; overflow: hidden; text-overflow: ellipsis; }
 .swatch { width: 12px; height: 4px; border-radius: 2px; flex: none; }
+
+/* Tools and match phases */
+.tool-picker { position: relative; }
+.tool-picker summary { list-style: none; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; background: var(--panel2); }
+.tool-menu { position: absolute; z-index: 20; top: calc(100% + 4px); right: 0; width: 340px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.tool-row { display: flex; align-items: center; gap: 8px; color: var(--text); }
+.tool-row .ok { color: var(--ok); font-size: 12px; }
+.tool-row .bad { color: var(--err); font-size: 12px; }
+.tool-row button { margin-left: auto; padding: 0 6px; }
+.match-bar { position: absolute; top: 90px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: rgba(21, 23, 28, 0.9); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+.match-bar.out { border-color: var(--err); }
+.match-bar.home { border-color: var(--ok); }

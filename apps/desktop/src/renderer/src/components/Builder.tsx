@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { IDENTITY, type Library, type Mat4, mul, type Snap } from "@fll-sim/ldraw";
+import { IDENTITY, MOUNT_PART, type Library, type Mat4, mul, type Snap } from "@fll-sim/ldraw";
 import { analyzePart, bandPart, assemble, partSnaps, placeOnSnap, serializeModel, parseModel, type ModelPart, type AssemblyReport } from "@fll-sim/assembly";
 import { PORTS, type Port } from "@fll-sim/sim";
 import type { CatalogCategory, CatalogPart } from "../lib/ldraw";
@@ -16,6 +16,8 @@ interface Props {
   parts: ModelPart[];
   onChange(parts: ModelPart[]): void;
   onUseAsRobot(parts: ModelPart[]): void;
+  /** Keep the current build as a tool (it attaches to robots at its mount points). */
+  onUseAsTool(name: string, parts: ModelPart[]): void;
   missionModels: { id: string; name: string; built: boolean }[];
   /** The season's real-part mission models, openable as examples (e.g. to print their instructions). */
   bundledMissions: { id: string; name: string; text: string }[];
@@ -40,7 +42,7 @@ function hexOf(lib: Library, code: number) {
   return "#" + lib.color(code).rgb.map((v) => v.toString(16).padStart(2, "0")).join("");
 }
 
-export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionModels, bundledMissions, onUseAsMissionModel, log }: Props) {
+export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, onUseAsTool, missionModels, bundledMissions, onUseAsMissionModel, log }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const [catId, setCatId] = useState(catalog[0]?.id ?? "");
   const [query, setQuery] = useState("");
@@ -51,6 +53,10 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
   const [band, setBand] = useState<null | "start" | [number, number, number]>(null);
   const bandRef = useRef(band);
   bandRef.current = band;
+  /** Mount point tool: the next click on a part places a mount there. */
+  const [mounting, setMounting] = useState(false);
+  const mountingRef = useRef(mounting);
+  mountingRef.current = mounting;
   const [report, setReport] = useState<AssemblyReport | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
   const [modelName, setModelName] = useState("My robot");
@@ -243,6 +249,20 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
     const pd = (e: PointerEvent) => (down = { x: e.clientX, y: e.clientY });
     const pu = (e: PointerEvent) => {
       if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4 || e.button !== 0) return; // orbit drag
+      if (mountingRef.current) {
+        // a mount point on the clicked spot (on the half-stud grid, so robot and tool line up),
+        // square to the model: a tool attaches with its mount on the robot's of the same name
+        const h = pick(e);
+        if (h.part === null || !h.point) return log("Click on the part where the tool joins (e.g. the pin hole its first pin goes in)", "info");
+        const p = h.point.clone().applyMatrix4(ROOT_INV);
+        const g = (v: number) => Math.round(v / 10) * 10;
+        const existing = partsRef.current.filter((q) => q.file === MOUNT_PART).length;
+        commit([...partsRef.current, { file: MOUNT_PART, color: 4, m: translate(g(p.x), g(p.y), g(p.z)), label: existing ? `mount${existing + 1}` : "front", step: stepRef.current }]);
+        setSelected(partsRef.current.length);
+        setMounting(false);
+        log("Mount point added: name it in the panel on the right. A tool attaches where its mount of the same name lands on this one.", "info");
+        return;
+      }
       const bd = bandRef.current;
       if (bd) {
         // rubber band: two clicks on parts = its two ends
@@ -286,7 +306,7 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
         setGhost(ng);
         updateGhost(lastMouse.current, ng);
       };
-      if (e.key === "Escape") { setGhost(null); setSelected(null); setBand(null); }
+      if (e.key === "Escape") { setGhost(null); setSelected(null); setBand(null); setMounting(false); }
       else if (g && e.key === "Tab") { e.preventDefault(); re({ ...g, snapIdx: (g.snapIdx + (e.shiftKey ? ghostSnaps.length - 1 : 1)) % Math.max(1, ghostSnaps.length) }); }
       else if (g && (e.key === "r" || e.key === "R")) re({ ...g, angle: (g.angle + (e.shiftKey ? -90 : 90)) % 360 });
       else if (g && (e.key === "f" || e.key === "F")) re({ ...g, flip: !g.flip });
@@ -428,6 +448,9 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
           <button className={band ? "active" : ""} onClick={() => { setGhost(null); setBand(band ? null : "start"); }} disabled={!parts.length} title="Hook a rubber band between two parts: click one end, then the other (Esc cancels)">
             {band === null ? "Rubber band" : band === "start" ? "Band: click the 1st end…" : "Band: click the 2nd end…"}
           </button>
+          <button className={mounting ? "active" : ""} onClick={() => { setGhost(null); setBand(null); setMounting(!mounting); }} disabled={!parts.length} title="Mark where a tool attaches (not a real part): put one on the robot and one on the tool, with the same name, at the spot where they join">
+            {mounting ? "Mount: click the spot…" : "Mount point"}
+          </button>
           <span className="step-ctl" title="New parts go into this building-instruction step">
             Step <b>{step}</b>
             <button onClick={() => setStep(Math.max(maxStep, step) + 1)} disabled={!parts.some((p) => (p.step ?? 1) === step)}>+ New step</button>
@@ -435,6 +458,7 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
           <input className="model-name" value={modelName} onChange={(e) => setModelName(e.target.value)} title="Model name (used for instructions and files)" />
           <button onClick={() => exportInstructions(modelName.trim() || "My model")} disabled={!parts.length || !!exporting}>{exporting ?? "Instructions…"}</button>
           <button className="primary" onClick={() => onUseAsRobot(parts)} disabled={!parts.length}>Use as robot ▶</button>
+          <button onClick={() => onUseAsTool(modelName.trim() || "My tool", parts)} disabled={!parts.length} title="Keep this build as a tool: robots with a mount point of the same name can take it (in the home areas during a match)">Use as tool</button>
           <select value="" disabled={!parts.length} onChange={(e) => {
             const v = e.target.value;
             if (!v) return;
@@ -467,7 +491,19 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
               }} />
           ))}
         </div>
-        {sel && selInfo && (
+        {sel && sel.file === MOUNT_PART && (
+          <>
+            <h3>Mount point</h3>
+            <label>Name
+              <input value={sel.label ?? ""} onChange={(e) => commit(parts.map((p, i) => (i === selected ? { ...p, label: e.target.value } : p)))} />
+            </label>
+            <p className="muted">Not a real part. A tool attaches by putting its mount with this name exactly here, facing the same way (the arrow points to the model's front).</p>
+            <div className="sel-buttons">
+              <button onClick={() => { commit(parts.filter((_, i) => i !== selected)); setSelected(null); }}>Delete</button>
+            </div>
+          </>
+        )}
+        {sel && selInfo && sel.file !== MOUNT_PART && (
           <>
             <h3>Selected part</h3>
             <div className="sel-name">{selInfo.title}</div>

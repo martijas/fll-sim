@@ -85,6 +85,18 @@ export class SimController {
     this.boot();
   }
 
+  /** End the running program where the robot is (the field is kept, unlike stop). */
+  interrupt() {
+    Atomics.store(this.ctrl, CTRL.STOP, 1);
+    this.setPaused(false);
+  }
+
+  /** Swap the robot (tools changed, or put back in home) without resetting the field. */
+  replaceRobot(robot: RobotModel, pose?: StartPose) {
+    this.cfg.robot = robot;
+    this.send({ type: "replaceRobot", robot, pose });
+  }
+
   setPaused(p: boolean) {
     Atomics.store(this.ctrl, CTRL.PAUSE, p ? 1 : 0);
     Atomics.notify(this.ctrl, CTRL.WAKE);

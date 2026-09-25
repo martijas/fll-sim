@@ -17,6 +17,7 @@ import { Telemetry } from "./components/Telemetry";
 import { RobotPanel } from "./components/RobotPanel";
 import { CalibrationPanel } from "./components/CalibrationPanel";
 import { ReplayBar, RunsPanel, RUN_COLORS, type RunRecord } from "./components/Runs";
+import { buildLoadout, homeArea, loadBundledTools, loadCustomTools, loadPresetRobots, saveCustomTool, type CatalogEntry } from "./lib/loadout";
 import type { CalResult } from "./lib/calibration";
 import { loadRobotConfig, saveRobotConfig, toDriveBaseOptions, type RobotConfig } from "./lib/robotConfig";
 import { SimController } from "./lib/simController";
@@ -90,7 +91,30 @@ export function App() {
   const [ldraw, setLdraw] = useState<{ lib: Library; catalog: CatalogCategory[] } | null>(null);
   const [buildParts, setBuildParts] = useState<ModelPart[]>([]);
   /** "drivebase" = port-configured default robot; "ldraw" = the model from the builder. */
-  const [robotSource, setRobotSource] = useState<"drivebase" | "ldraw">(() => (localStorage.getItem("fllsim.robotSource") === "ldraw" ? "ldraw" : "drivebase"));
+  /** "drivebase" = port-configured default robot; "ldraw" = the builder's model; "preset:<id>" = a bundled driving base. */
+  const [robotSource, setRobotSource] = useState<string>(() => localStorage.getItem("fllsim.robotSource") ?? "drivebase");
+  const [presetRobots, setPresetRobots] = useState<CatalogEntry[]>([]);
+  const [bundledTools, setBundledTools] = useState<CatalogEntry[]>([]);
+  const [customTools, setCustomTools] = useState<CatalogEntry[]>(loadCustomTools);
+  /** Tools on the robot (ids), put on at their mount points. */
+  const [toolIds, setToolIds] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("fllsim.toolsOn") ?? "[]");
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    loadPresetRobots().then(setPresetRobots).catch(() => {});
+    loadBundledTools().then(setBundledTools).catch(() => {});
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("fllsim.toolsOn", JSON.stringify(toolIds));
+    } catch {
+      /* ignore */
+    }
+  }, [toolIds]);
   const [rightTab, setRightTab] = useState<"console" | "score">("console");
   const [answers, setAnswers] = useState<Answers>(() => {
     try {
@@ -135,7 +159,16 @@ export function App() {
   });
   const [realMissions, setRealMissions] = useState(() => localStorage.getItem("fllsim.realMissions") !== "off");
   /** Sim time (ms) when the current match started, or null. */
-  const [matchStart, setMatchStart] = useState<number | null>(null);
+  /**
+   * A match: the robot is launched from home, and between launches (robot completely in home)
+   * the team may change tools or the program. The clock keeps running between launches.
+   */
+  const [match, setMatch] = useState<{ phase: "running" | "home" | "out" | "over"; usedMs: number; segStart: number; wallAt: number; launches: number } | null>(null);
+  const matchRef = useRef(match);
+  matchRef.current = match;
+  const seasonRef = useRef(season);
+  seasonRef.current = season;
+  const [, setClockTick] = useState(0);
   const field = useRef<FieldViewHandle>(null);
   /** Frames of the run in progress (sampled), earlier runs, and the replay position. */
   const recording = useRef<Frame[]>([]);
@@ -196,16 +229,29 @@ export function App() {
     }
   }, [buildParts, robotSource]);
 
-  const robotModel: RobotModel = useMemo(() => {
-    if (robotSource === "ldraw" && ldraw && buildParts.length) {
-      try {
-        return assemble(ldraw.lib, buildParts, { name: "Built robot", breakable: true }).robot;
-      } catch (e) {
-        console.error(e);
-      }
+  const allTools = useMemo(() => [...bundledTools, ...customTools], [bundledTools, customTools]);
+  const preset = robotSource.startsWith("preset:") ? presetRobots.find((p) => `preset:${p.id}` === robotSource) : undefined;
+  const loadout = useMemo(() => {
+    if (!ldraw) return null;
+    const parts = robotSource === "ldraw" ? buildParts : preset ? parseModel(ldraw.lib, preset.text).parts : null;
+    if (!parts?.length) return null;
+    try {
+      return buildLoadout(ldraw.lib, preset?.name ?? "Built robot", parts, allTools.filter((t) => toolIds.includes(t.id)));
+    } catch (e) {
+      console.error(e);
+      return null;
     }
-    return makeDriveBase(toDriveBaseOptions(robot));
-  }, [robotSource, ldraw, buildParts, robot]);
+  }, [robotSource, ldraw, buildParts, preset, allTools, toolIds]);
+  const robotModel: RobotModel = useMemo(() => loadout?.robot ?? makeDriveBase(toDriveBaseOptions(robot)), [loadout, robot]);
+  const robotModelRef = useRef(robotModel);
+  robotModelRef.current = robotModel;
+  /** The robot the simulator starts with; during a match, tool changes swap the robot in place instead. */
+  const [bootRobot, setBootRobot] = useState<RobotModel>(robotModel);
+  useEffect(() => {
+    const m = matchRef.current;
+    if (m && m.phase !== "over") ctl.current?.replaceRobot(robotModel);
+    else setBootRobot(robotModel);
+  }, [robotModel]);
   useEffect(() => {
     try {
       localStorage.setItem("fllsim.score", JSON.stringify(answers));
@@ -326,13 +372,22 @@ export function App() {
           setRunning(false);
           setPaused(false);
           const scored = calTap.current ? null : applyAutoScore(snap); // (not for calibration runs)
-          setMatchStart((ms) => {
-            if (ms !== null) {
+          const m = matchRef.current;
+          if (m && m.phase === "running") {
+            const usedMs = m.usedMs + (r.simTimeMs - m.segStart);
+            const pose = lastFrame.current?.pose;
+            const home = pose && seasonRef.current ? homeArea(seasonRef.current, robotModelRef.current, pose) : null;
+            if (usedMs >= matchDurMs() - 20) {
+              setMatch({ ...m, usedMs, phase: "over" });
               log(`⏱ Match over — ${scored ? `auto-scored from the field: ${scored.total} points. ` : ""}Check the Score tab for what to fill in by hand.`, "info");
               setRightTab("score");
+            } else {
+              setMatch({ ...m, usedMs, phase: home ? "home" : "out", wallAt: performance.now() });
+              log(home
+                ? "🏠 The robot is back in home: you may change tools, the program or its position, then Launch again (the match clock keeps running)."
+                : "The robot stopped outside home. Bring it home (costs a precision token) to launch again, or end the match.", "info");
             }
-            return null;
-          });
+          }
           if (r.stopped) log(`■ Stopped at ${(r.simTimeMs / 1000).toFixed(2)} s`, "info");
           else if (r.ok) log(`✔ Program finished at ${(r.simTimeMs / 1000).toFixed(2)} s (sim time)`, "info");
           else {
@@ -352,7 +407,7 @@ export function App() {
           log(`Simulator error: ${m}`, "err");
         },
       },
-      { season, mat: mat?.payload ?? null, robot: robotModel, start, fieldModels, footprints, colorCalibration: colorCal },
+      { season, mat: mat?.payload ?? null, robot: bootRobot, start, fieldModels, footprints, colorCalibration: colorCal },
     );
     ctl.current = c;
     // a new robot or field: recorded frames no longer match its bodies
@@ -361,7 +416,7 @@ export function App() {
     c.boot();
     return () => c.dispose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [season, mat, robotModel, fieldModels, footprints, colorCal]);
+  }, [season, mat, bootRobot, fieldModels, footprints, colorCal]);
 
   useEffect(() => {
     consoleEnd.current?.scrollIntoView({ block: "end" });
@@ -450,10 +505,69 @@ export function App() {
     const durationS = season?.match.durationS ?? 150;
     log(match ? `▶ Match started: ${fileName} — ${Math.floor(durationS / 60)}:${String(durationS % 60).padStart(2, "0")} on the clock` : `▶ Running ${fileName}`, "info");
     setRunning(true);
-    setMatchStart(match ? 250 : null); // the field settles for 250 ms before the program starts
+    // (the field settles for 250 ms before the program starts)
+    setMatch(match ? { phase: "running", usedMs: 0, segStart: 250, wallAt: 0, launches: 1 } : null);
+    if (!match && bootRobot !== robotModel) setBootRobot(robotModel);
     c.run(blocks ? blocks.python : source, match ? durationS * 1000 : undefined);
   };
+  /** Launch again during a match, from where the robot is in home. */
+  const launch = () => {
+    const c = ctl.current, m = matchRef.current;
+    if (!c || !m || m.phase !== "home") return;
+    const left = matchLeftMs();
+    if (replay) exitReplay();
+    recording.current = [];
+    setError(null);
+    setMatch({ ...m, phase: "running", usedMs: matchDurMs() - left, segStart: lastFrame.current?.timeMs ?? 0, launches: m.launches + 1 });
+    log(`▶ Launch ${m.launches + 1}: ${fileName} (${fmtClock(left)} left)`, "info");
+    setRunning(true);
+    c.run(blocks ? blocks.python : source, left);
+  };
+  const endMatch = () => {
+    const m = matchRef.current;
+    if (!m) return;
+    if (m.phase === "running") ctl.current?.interrupt();
+    setMatch({ ...m, phase: "over" });
+    ctl.current?.snapshot().then((snap) => {
+      const s = snap ? applyAutoScore(snap) : null;
+      log(`⏱ Match over — ${s ? `auto-scored from the field: ${s.total} points. ` : ""}Check the Score tab for what to fill in by hand.`, "info");
+      setRightTab("score");
+    });
+  };
+  /** Pick the robot up and put it at the start position (in home): free in home, a precision token outside. */
+  const bringHome = () => {
+    const m = matchRef.current;
+    if (!m || (m.phase !== "home" && m.phase !== "out")) return;
+    ctl.current?.replaceRobot(robotModel, start);
+    if (m.phase === "out") {
+      setAnswers((a) => ({ ...a, pt: Math.max(0, Number(a.pt ?? 6) - 1) }));
+      log("Robot interrupted outside home: one precision token lost. It is back at the start position.", "err");
+    }
+    setMatch({ ...m, phase: "home" });
+  };
+  const matchDurMs = () => (seasonRef.current?.match.durationS ?? 150) * 1000;
+  const matchLeftMs = () => {
+    const m = matchRef.current;
+    if (!m) return 0;
+    const cur = m.phase === "running" ? (lastFrame.current?.timeMs ?? m.segStart) - m.segStart : m.phase === "over" ? 0 : performance.now() - m.wallAt;
+    return Math.max(0, matchDurMs() - m.usedMs - cur);
+  };
+  // between launches the clock runs in real time; at 0:00 the match ends
+  useEffect(() => {
+    if (!match || (match.phase !== "home" && match.phase !== "out")) return;
+    const t = setInterval(() => {
+      setClockTick((n) => n + 1);
+      if (matchLeftMs() <= 0) endMatch();
+    }, 250);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match?.phase]);
   const stop = () => {
+    if (matchRef.current?.phase === "running") {
+      // in a match, stopping the robot is an interruption: the field stays as it is
+      ctl.current?.interrupt();
+      return;
+    }
     finishRecording.current();
     ctl.current?.stop();
     setRunning(false);
@@ -671,13 +785,8 @@ export function App() {
             <button className="danger" onClick={stop} title="Stop (Shift+F5)">■ Stop</button>
           )}
           <button onClick={togglePause} disabled={!running}>{paused ? "▶ Resume" : "❚❚ Pause"}</button>
-          {matchStart !== null && frame && (
-            <span className="match-timer" title="Match time remaining">
-              {(() => {
-                const left = Math.max(0, (season.match.durationS * 1000 - (frame.timeMs - matchStart)) / 1000);
-                return `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, "0")}`;
-              })()}
-            </span>
+          {match && (
+            <span className="match-timer" title="Match time remaining">{fmtClock(matchLeftMs())}</span>
           )}
           <button onClick={reset} disabled={running} title="Put the robot back at the start pose">↺ Reset</button>
           <label>
@@ -691,10 +800,20 @@ export function App() {
           <label>X <input type="number" value={start.xMm} step={5} disabled={running} onChange={(e) => applyStart({ ...start, xMm: Number(e.target.value) })} /></label>
           <label>Y <input type="number" value={start.yMm} step={5} disabled={running} onChange={(e) => applyStart({ ...start, yMm: Number(e.target.value) })} /></label>
           <label>Heading <input type="number" value={start.headingDeg} step={5} disabled={running} onChange={(e) => applyStart({ ...start, headingDeg: Number(e.target.value) })} /></label>
-          <select value={robotSource} disabled={running} onChange={(e) => setRobotSource(e.target.value as "drivebase" | "ldraw")} title="Which robot to simulate">
+          <select value={robotSource} disabled={running || !!(match && match.phase !== "over")} onChange={(e) => setRobotSource(e.target.value)} title="Which robot to simulate">
             <option value="drivebase">Robot: standard drive base</option>
+            {presetRobots.map((p) => <option key={p.id} value={`preset:${p.id}`}>Robot: {p.name}</option>)}
             <option value="ldraw" disabled={!buildParts.length}>Robot: my build ({buildParts.length} parts)</option>
           </select>
+          <ToolPicker
+            tools={allTools}
+            on={toolIds}
+            loadout={loadout}
+            allowed={!running && (!match || match.phase === "home" || match.phase === "over")}
+            why={!loadout ? "This robot has no mount points (choose a preset or add mount points in the builder)" : running ? "Not while the robot is running" : match && match.phase === "out" ? "Only when the robot is completely in home" : ""}
+            onChange={setToolIds}
+            onDeleteCustom={(t) => { saveCustomTool(t.name, null); setCustomTools(loadCustomTools()); setToolIds(toolIds.filter((x) => x !== t.id)); }}
+          />
           <button onClick={() => setShowRobot(true)} disabled={running || robotSource !== "drivebase"} title="Motor and sensor ports, wheels">Ports…</button>
           <button onClick={() => setShowCal(true)} disabled={running || robotSource !== "drivebase"} title="Measure your real robot with a few test programs and make the simulated one match it">Calibrate…</button>
           <button onClick={importMat} title="Load a scan/photo of your mat, cropped to its edges">Mat image…</button>
@@ -719,6 +838,15 @@ export function App() {
             setMissionLdr({ ...missionLdr, [id]: serializeModel(p, `${id}.ldr`) });
             log(`Mission model ${id} placed on the field from your build (${p.length} parts). Its heaviest part on the mat is held by Dual Lock.`, "info");
             setTab("sim");
+          }}
+          onUseAsTool={(name, p) => {
+            if (!p.some((q) => q.file === "fllsim-mount.dat")) {
+              log("A tool needs a mount point (the Mount point button): the spot that goes onto the robot's mount of the same name.", "err");
+              return;
+            }
+            saveCustomTool(name, serializeModel(p, `${name}.ldr`));
+            setCustomTools(loadCustomTools());
+            log(`Tool “${name}” saved. Put it on a robot with Tools ▾ (robot mount points with the same name take it).`, "info");
           }}
           onUseAsRobot={(p) => {
             const r = assemble(ldraw.lib, p);
@@ -772,6 +900,25 @@ export function App() {
               {running && (paused ? " · paused" : " · running")}
               {replay && " · replay"}
             </div>
+            {match && match.phase !== "running" && (
+              <div className={`match-bar ${match.phase}`}>
+                {match.phase === "home" && (
+                  <>
+                    <span>🏠 Robot in home — change tools, the program or its position, then launch. Clock running: {fmtClock(matchLeftMs())}</span>
+                    <button className="primary" onClick={launch}>▶ Launch</button>
+                    <button onClick={bringHome} title="Pick the robot up and put it at the start position (allowed in home)">Place at start</button>
+                  </>
+                )}
+                {match.phase === "out" && (
+                  <>
+                    <span>The robot is outside home.</span>
+                    <button className="danger" onClick={bringHome} title="Interrupt: the robot goes back to home and you lose one precision token">Bring it home (−1 precision token)</button>
+                  </>
+                )}
+                {match.phase === "over" && <span>⏱ Match over.</span>}
+                {match.phase !== "over" ? <button onClick={endMatch}>End match</button> : <button onClick={() => setMatch(null)}>Close</button>}
+              </div>
+            )}
             {!running && replayFrames && (
               replay ? (
                 <ReplayBar frames={replayFrames} index={replay.i} playing={replay.playing} onSeek={(i) => setReplay({ i, playing: false })} onPlay={(p) => setReplay({ i: p && replay.i >= replayFrames.length - 1 ? 0 : replay.i, playing: p })} onExit={exitReplay} />
@@ -841,5 +988,42 @@ export function App() {
       {showRobot && <RobotPanel config={robot} onApply={applyRobot} onClose={() => setShowRobot(false)} />}
       {showCal && <CalibrationPanel config={robot} colorCal={colorCal} colorModel={colorModel} runInSim={runForCalibration} onApply={applyCalibration} onClose={() => setShowCal(false)} />}
     </div>
+  );
+}
+
+const fmtClock = (ms: number) => {
+  const s = Math.ceil(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
+
+/** Which tools are on the robot (they go on at the mount points with the same names). */
+function ToolPicker({ tools, on, loadout, allowed, why, onChange, onDeleteCustom }: {
+  tools: CatalogEntry[];
+  on: string[];
+  loadout: { fitted: { id: string; mount: string }[]; unfit: string[]; mounts: string[] } | null;
+  allowed: boolean;
+  why: string;
+  onChange(ids: string[]): void;
+  onDeleteCustom(t: CatalogEntry): void;
+}) {
+  const fitted = new Map(loadout?.fitted.map((f) => [f.id, f.mount]) ?? []);
+  const n = loadout?.fitted.length ?? 0;
+  return (
+    <details className="tool-picker">
+      <summary title={why || "Tools on the robot"}>Tools{n ? ` (${n})` : ""} ▾</summary>
+      <div className="tool-menu">
+        {!loadout && <p className="muted">{why}</p>}
+        {loadout && <p className="muted">Mount points on this robot: {loadout.mounts.join(", ") || "none"}.{why ? ` ${why}.` : ""}</p>}
+        {tools.length === 0 && <p className="muted">No tools yet. Build one in the Build tab, add a mount point, and press “Use as tool”.</p>}
+        {tools.map((t) => (
+          <label key={t.id} className="tool-row" title={t.note}>
+            <input type="checkbox" disabled={!allowed || !loadout} checked={on.includes(t.id)} onChange={(e) => onChange(e.target.checked ? [...on, t.id] : on.filter((x) => x !== t.id))} />
+            <span>{t.name}</span>
+            {on.includes(t.id) && <span className={fitted.has(t.id) ? "ok" : "bad"}>{fitted.has(t.id) ? `on “${fitted.get(t.id)}”` : "doesn't fit this robot"}</span>}
+            {t.id.startsWith("custom:") && <button onClick={(e) => { e.preventDefault(); onDeleteCustom(t); }} title="Delete this tool">✕</button>}
+          </label>
+        ))}
+      </div>
+    </details>
   );
 }

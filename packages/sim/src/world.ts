@@ -108,7 +108,9 @@ const toV = (r: RAPIER.Vector): Vec3 => ({ x: r.x, y: r.y, z: r.z });
 export class Simulation {
   readonly world: RAPIER.World;
   readonly season: SeasonConfig;
-  readonly robot: RobotModel;
+  robot: RobotModel;
+  /** Every rigid body of the robot (including hidden sliding-axle carriers), for replaceRobot. */
+  private robotRigid: RAPIER.RigidBody[] = [];
   readonly hub: HubState;
   readonly motors = new Map<Port, MotorBinding>();
   readonly sensors = new Map<Port, SensorBinding>();
@@ -492,6 +494,7 @@ export class Simulation {
       }
       const body = this.world.createRigidBody(desc);
       byId.set(b.id, body);
+      this.robotRigid.push(body);
       const vols = b.shapes.map(shapeVolume);
       const vt = vols.reduce((s, x) => s + x, 0) || 1;
       b.shapes.forEach((s, i) => {
@@ -515,7 +518,10 @@ export class Simulation {
       joint.setContactsEnabled(false);
       this.motors.set(j.port, { ctl: new MotorController(j.motor), housing, output, axisLocal: j.axisOut, angleDeg: 0 });
     }
-    for (const j of m.freeJoints) this.addHinge(j, byId, this.frictionJoints, true);
+    for (const j of m.freeJoints) {
+      const carrier = this.addHinge(j, byId, this.frictionJoints, true);
+      if (carrier) this.robotRigid.push(carrier);
+    }
     for (const w of m.welds ?? []) this.welds.push(weldConstraint(w, byId));
     for (const r of m.ropes ?? []) this.addRope(r, byId, true);
     for (const b of m.bands ?? []) this.bands.push(band(b, byId));
@@ -621,6 +627,31 @@ export class Simulation {
   }
 
   /** Robot pose in the mat frame (mm, heading deg CCW from north). */
+  /**
+   * Swap the robot for another (e.g. with a different tool on) at `pose`, keeping the field as it
+   * is: between launches of a match, when the robot is in a home area.
+   */
+  replaceRobot(model: RobotModel, pose: StartPose) {
+    const gone = new Set(this.robotRigid.map((b) => b.handle));
+    const out = (b: RAPIER.RigidBody) => gone.has(b.handle);
+    this.frictionJoints = this.frictionJoints.filter((f) => !out(f.a) && !out(f.b));
+    this.gears = this.gears.filter((g) => ![g.a, g.b, g.fa, g.fb].some(out));
+    this.gearFriction = this.gearFriction.filter((r) => !out(r.a) && !out(r.b));
+    this.welds = this.welds.filter((w) => !out(w.a) && !out(w.b));
+    this.bands = this.bands.filter((b) => !out(b.a) && !out(b.b));
+    for (const b of this.robotRigid) this.world.removeRigidBody(b);
+    this.robotRigid = [];
+    for (const list of [this.bodies, this.scene] as { kind: string }[][])
+      for (let i = list.length - 1; i >= 0; i--) if (list[i].kind === "robot") list.splice(i, 1);
+    this.motors.clear();
+    this.sensors.clear();
+    this.robot = model;
+    const { hubBody, hubRot } = this.buildRobot(pose);
+    this.hubBody = hubBody;
+    this.hubRot = hubRot;
+    this.prevHubVel = { x: 0, y: 0, z: 0 };
+  }
+
   robotPose() {
     const b = this.hubBody;
     const p = worldToMat(toV(b.translation()), this.matPlacement);
