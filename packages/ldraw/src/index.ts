@@ -117,6 +117,20 @@ export function parseColors(ldconfig: string): Map<number, LDColor> {
 }
 
 // ---- library -------------------------------------------------------------------------------
+/**
+ * Parts FLL Sim adds to the library. A rubber band: a unit-length thin tube along +X from the
+ * origin, stretched between its two anchors by its placement matrix (X column = anchor to anchor).
+ */
+export const BAND_PART = "fllsim-band.dat";
+const BUILTIN: Record<string, string> = {
+  [BAND_PART]: `0 Rubber Band (FLL Sim)
+0 Name: ${BAND_PART}
+0 Author: FLL Sim
+0 !LDRAW_ORG Unofficial_Part
+1 16 0 0 0 0 1 0 1 0 0 0 0 1 4-4cyli.dat
+`,
+};
+
 export class Library {
   private cache = new Map<string, ParsedFile | null>();
   private localCache = new WeakMap<Map<string, string>, Map<string, ParsedFile>>();
@@ -143,6 +157,11 @@ export class Library {
     }
     if (this.cache.has(n)) return this.cache.get(n)!;
     let found: ParsedFile | null = null;
+    if (BUILTIN[n]) {
+      found = parseLines(BUILTIN[n], n);
+      this.cache.set(n, found);
+      return found;
+    }
     for (const dir of ["parts/", "p/", "models/", ""]) {
       const text = this.source.read(dir + n);
       if (text !== null) {

@@ -1,7 +1,7 @@
 // Per-part physical analysis (cached per file): collision shapes, mass, connection points,
 // and the electronics each SPIKE part carries. All geometry here is LDU in the part's LDraw frame.
 
-import { type Library, type Snap, bounds, flatten, normName } from "@fll-sim/ldraw";
+import { BAND_PART, type Library, type Snap, bounds, flatten, normName } from "@fll-sim/ldraw";
 
 export type Vec3 = [number, number, number];
 
@@ -12,6 +12,15 @@ export type Electronics =
   | { kind: "motor"; type: "small" | "medium" | "large"; rotorSrc: number; axisOut: Vec3; point: Vec3 }
   | { kind: "color" | "distance"; point: Vec3; dir: Vec3 }
   | { kind: "force"; point: Vec3; dir: Vec3 };
+
+/** What a part grips the mat with, from its title. */
+function gripMaterial(t: string): PartInfo["material"] {
+  if (/smooth racing tyre|slick/.test(t)) return "slick";
+  if (/\btyre\b|\btire\b|wheels? .*solid rubber/.test(t)) return "tyre"; // ("… Offset Tread" tyres are tyres)
+  if (/rubber|traction/.test(t)) return "rubber";
+  if (/link tread|chain tread|tread (link|segment)|\btread\b/.test(t)) return "tread"; // plastic track links
+  return "plastic";
+}
 
 /** Friction pins whose LDraw title doesn't say so (dark grey 3L pins with stop bush / centre hole). */
 const FRICTION_PARTS = new Set(["32054", "65304", "87082"]);
@@ -33,6 +42,12 @@ export interface PartInfo {
   connector: boolean;
   friction: boolean;
   rubber: boolean;
+  /** a segment of a string / minifig chain (flexible: becomes a rope, see findRopeGroups) */
+  rope: boolean;
+  /** a rubber band (FLL Sim's built-in part): becomes a spring, see findBands */
+  band: boolean;
+  /** what it grips the mat with */
+  material: "rubber" | "tyre" | "slick" | "tread" | "plastic";
   /** Gear teeth (part frame): pitch circle centre and axis. */
   gear?: GearInfo;
 }
@@ -208,7 +223,8 @@ export function analyzePart(lib: Library, file: string): PartInfo {
   // "Technic Pin with Friction" (black/blue) vs "... without Friction" / plain "Technic Pin"
   // (light grey/tan): the title, not the colour, says which one it is.
   const friction = (/\bwith friction/.test(lower) && !/without friction/.test(lower)) || FRICTION_PARTS.has(normName(f).replace(/\.dat$/, ""));
-  const rubber = /tyre|tire|rubber|tread|traction/.test(lower) || (/wheel/.test(lower) && /tyre/.test(lower));
+  const material = gripMaterial(lower);
+  const rubber = material !== "plastic" && material !== "tread";
 
   let boxes: Box[] = [];
   let rotorBoxes: Box[] | undefined;
@@ -272,7 +288,7 @@ export function analyzePart(lib: Library, file: string): PartInfo {
       cylinder = { axis: ax, r, halfLen: (bb.max[ax] - bb.min[ax]) / 2, c: [0, 1, 2].map((k) => (bb.min[k] + bb.max[k]) / 2) as Vec3 };
     }
   }
-  const info: PartInfo = { file: f, title, min: bb.min, max: bb.max, boxes, rotorBoxes, cylinder, sphere, massKg, snaps: full.snaps, electronics: el, connector, friction, rubber, gear };
+  const info: PartInfo = { file: f, title, min: bb.min, max: bb.max, boxes, rotorBoxes, cylinder, sphere, massKg, snaps: full.snaps, electronics: el, connector, friction, rubber, material, gear, rope: /minifig chain|^string|string (braided|cord)|\brope\b/.test(lower), band: f === BAND_PART };
   m.set(f, info);
   return info;
 }

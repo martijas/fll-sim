@@ -8,11 +8,20 @@
 import type { Quat, Vec3 } from "@fll-sim/units";
 import { MOTOR_SPECS, type MotorType } from "./motor";
 
-export type Material = "rubber" | "plastic" | "steel" | "wood";
-
-/** Friction coefficient against the mat/table (combine rule: multiply with mat = 1.0). */
+export type Material = "rubber" | "tyre" | "slick" | "tread" | "plastic" | "steel" | "wood";
+/**
+ * Friction coefficient against the mat/table (combine rule: multiply with mat = 1.0).
+ * Rough values for a printed vinyl FLL mat; calibrate against a real robot.
+ */
 export const FRICTION: Record<Material, number> = {
+  /** rubber tyres (SPIKE wheels, balloon/offset-tread tyres) */
+  tyre: 1.0,
+  /** smooth racing tyres: a little more grip on a smooth mat */
+  slick: 1.1,
+  /** other rubber (rubber feet, rubber tracks, rubber bands) */
   rubber: 0.9,
+  /** plastic track links (Technic link / chain tread) */
+  tread: 0.4,
   plastic: 0.3,
   steel: 0.12,
   wood: 0.4,
@@ -117,6 +126,12 @@ export interface GearSpec {
   maxTorqueNm?: number;
 }
 
+/** A string or chain tying two bodies: they can't get further apart than its length. */
+export interface RopeSpec { a: string; b: string; anchorAMm: Vec3; anchorBMm: Vec3; lengthMm: number }
+
+/** A rubber band: pulls its two anchors together once stretched beyond its rest length. */
+export interface BandSpec { a: string; b: string; anchorAMm: Vec3; anchorBMm: Vec3; restMm: number; nPerMm: number }
+
 /** A game piece held on by friction (a clip, a bar, a pin): comes off above `breakN`. */
 export interface WeldSpec {
   a: string;
@@ -135,6 +150,10 @@ export interface RobotModel {
   gears?: GearSpec[];
   /** Breakable holds (mission models' game pieces). */
   welds?: WeldSpec[];
+  /** Strings and chains. */
+  ropes?: RopeSpec[];
+  /** Rubber bands. */
+  bands?: BandSpec[];
   sensors: SensorSpec[];
   hub: HubSpec;
   /** Robot footprint (for launch-area inspection), mm. */

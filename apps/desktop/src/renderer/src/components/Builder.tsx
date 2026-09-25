@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { IDENTITY, type Library, type Mat4, mul, type Snap } from "@fll-sim/ldraw";
-import { analyzePart, assemble, partSnaps, placeOnSnap, serializeModel, parseModel, type ModelPart, type AssemblyReport } from "@fll-sim/assembly";
+import { analyzePart, bandPart, assemble, partSnaps, placeOnSnap, serializeModel, parseModel, type ModelPart, type AssemblyReport } from "@fll-sim/assembly";
 import { PORTS, type Port } from "@fll-sim/sim";
 import type { CatalogCategory, CatalogPart } from "../lib/ldraw";
 import { partObject } from "../three/ldrawMesh";
@@ -47,6 +47,10 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
   const [color, setColor] = useState(71);
   const [ghost, setGhost] = useState<Ghost | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
+  /** Rubber band tool: null = off, "start" = pick the first end, or the first end (model frame, LDU). */
+  const [band, setBand] = useState<null | "start" | [number, number, number]>(null);
+  const bandRef = useRef(band);
+  bandRef.current = band;
   const [report, setReport] = useState<AssemblyReport | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
   const [modelName, setModelName] = useState("My robot");
@@ -239,6 +243,21 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
     const pd = (e: PointerEvent) => (down = { x: e.clientX, y: e.clientY });
     const pu = (e: PointerEvent) => {
       if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4 || e.button !== 0) return; // orbit drag
+      const bd = bandRef.current;
+      if (bd) {
+        // rubber band: two clicks on parts = its two ends
+        const h = pick(e);
+        if (h.part === null || !h.point) return log("Click on a part (a pin, axle, beam…) to hook the rubber band on", "info");
+        const p = h.point.clone().applyMatrix4(ROOT_INV);
+        const pt: [number, number, number] = [p.x, p.y, p.z];
+        if (bd === "start") setBand(pt);
+        else {
+          commit([...partsRef.current, { ...bandPart(bd, pt), step: stepRef.current }]);
+          setBand(null);
+          log("Rubber band added (unstretched it is 60 % of this length; label \"rest=50% k=0.08\" changes that)", "info");
+        }
+        return;
+      }
       const g = ghostRef.current;
       if (g) {
         commit([...partsRef.current, { file: g.file, color: g.color, m: g.m, step: stepRef.current }]);
@@ -267,7 +286,7 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
         setGhost(ng);
         updateGhost(lastMouse.current, ng);
       };
-      if (e.key === "Escape") { setGhost(null); setSelected(null); }
+      if (e.key === "Escape") { setGhost(null); setSelected(null); setBand(null); }
       else if (g && e.key === "Tab") { e.preventDefault(); re({ ...g, snapIdx: (g.snapIdx + (e.shiftKey ? ghostSnaps.length - 1 : 1)) % Math.max(1, ghostSnaps.length) }); }
       else if (g && (e.key === "r" || e.key === "R")) re({ ...g, angle: (g.angle + (e.shiftKey ? -90 : 90)) % 360 });
       else if (g && (e.key === "f" || e.key === "F")) re({ ...g, flip: !g.flip });
@@ -406,6 +425,9 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
           </select>
           <button onClick={save} disabled={!parts.length}>Save .ldr…</button>
           <button onClick={check} disabled={!parts.length}>Check connections</button>
+          <button className={band ? "active" : ""} onClick={() => { setGhost(null); setBand(band ? null : "start"); }} disabled={!parts.length} title="Hook a rubber band between two parts: click one end, then the other (Esc cancels)">
+            {band === null ? "Rubber band" : band === "start" ? "Band: click the 1st end…" : "Band: click the 2nd end…"}
+          </button>
           <span className="step-ctl" title="New parts go into this building-instruction step">
             Step <b>{step}</b>
             <button onClick={() => setStep(Math.max(maxStep, step) + 1)} disabled={!parts.some((p) => (p.step ?? 1) === step)}>+ New step</button>

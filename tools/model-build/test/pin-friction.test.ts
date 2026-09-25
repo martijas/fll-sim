@@ -1,6 +1,6 @@
 // Friction pins hold a beam against gravity; frictionless pins let it swing down.
 import { describe, expect, it } from "vitest";
-import { assemble } from "@fll-sim/assembly";
+import { assemble, bandPart } from "@fll-sim/assembly";
 import { makeDriveBase, Simulation, type SeasonConfig } from "@fll-sim/sim";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -12,7 +12,7 @@ const season = JSON.parse(readFileSync(join(repo, "seasons/2026-27/season.json")
 const lib = loadLib();
 
 /** Beam A standing upright, beam B pinned to its top hole and sticking out level in mid-air. */
-async function droop(pin: string, overrideNm?: number): Promise<number> {
+async function droop(pin: string, overrideNm?: number, band = false): Promise<number> {
   const b = new Build(lib, "hinge");
   const a = b.place("32278.dat", 71, orient("+x", "+z", "-y"));
   const hole = b.snaps(a, (s) => s.gender === "F" && s.kind === "round" && Math.abs(s.axis[1]) < 0.1).sort((x, y) => x.pos[1] - y.pos[1])[0];
@@ -22,6 +22,8 @@ async function droop(pin: string, overrideNm?: number): Promise<number> {
     own: (s) => s.gender === "F" && s.kind === "round" && s.pos[2] > 120,
     accept: (m) => Math.abs(pt(m, [0, 0, 140])[1] - pt(m, [0, 0, -140])[1]) < 2, // level
   });
+  // a rubber band from beam B's tip down to beam A, 6 holes below the pin
+  if (band) b.parts.push({ ...bandPart(pt(b.parts[beamB].m, [0, 0, -140]), [hole.pos[0], hole.pos[1] + 120, hole.pos[2]]), step: 1 });
   const { robot, bodyOfPart } = assemble(lib, b.parts, { autoPorts: false });
   expect(robot.freeJoints.length).toBe(1);
   if (overrideNm !== undefined) robot.freeJoints[0].frictionNm = overrideNm;
@@ -40,6 +42,9 @@ describe("Technic pin friction", () => {
     const swung = await droop("3673.dat");
     expect(held).toBeLessThan(1);
     expect(swung).toBeGreaterThan(45);
+  });
+  it("a rubber band pulls a beam down even on a friction pin", async () => {
+    expect(await droop("2780.dat", undefined, true)).toBeGreaterThan(20);
   });
   it("an overloaded friction joint slips (and doesn't spring back)", async () => {
     // the beam needs ~3 mN·m to stay level: a 1 mN·m joint lets it swing down and hang

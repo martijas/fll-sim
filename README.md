@@ -68,6 +68,27 @@ Rebuild the bundled pack with `pnpm --filter @fll-sim/ldraw-pack run build-pack`
 library in `~/.cache/fll-sim/ldraw`, the shadow library in `~/.cache/fll-sim/shadow` and the
 Rebrickable CSV dumps in `~/.cache/fll-sim/rebrickable`).
 
+### How parts behave in the simulator
+
+- **Pins:** friction pins (black, blue, dark grey 3L) hold a beam in place and slip above ~6 mN·m;
+  frictionless pins (light grey, tan) spin freely. Decided by the part number, as LEGO does.
+- **Axles:** an axle in a round hole turns *and* slides until a bush, gear or beam on it meets the
+  hole's beam (or it would leave the hole); a bar in an axle hole turns snugly.
+- **Gears:** meshing gears are found from their tooth counts and spacing (8/12/16/20/24/28/36/40
+  teeth, double bevels, bevels at 90°, worms, turntables) and turn each other at the exact ratio;
+  worms can't be turned back from the gear.
+- **Clips and hinges:** a bar in a clip and click hinges / hinge bricks are stiff hinges that hold
+  their angle.
+- **Coming apart:** on your robot, a small group held on by only 1-2 studs pops off when knocked
+  (~2 N per stud). Mission game pieces are held where they sit until pushed (M02 seeds, M04
+  katydid).
+- **Strings and chains** are ropes (slack or taut) between what they tie; **rubber bands** (Build
+  tab → *Rubber band*, click two parts) pull their ends together; label a band `rest=50% k=0.08`
+  to change its unstretched length or strength.
+- **Grip:** tyres ≈ 1.0, smooth racing tyres 1.1, rubber 0.9, plastic tracks 0.4, plastic 0.3,
+  steel ball casters 0.12 (against the mat). All of these are estimates to calibrate on a real
+  table.
+
 ## Missions and scoring (BIOGLOW)
 
 All 13 BIOGLOW mission books ship as real-LEGO models (`apps/desktop/resources/missions/*.ldr`,

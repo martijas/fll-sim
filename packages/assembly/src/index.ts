@@ -11,8 +11,8 @@
 // Frames: LDraw model frame (LDU, -Y up, front -Z) -> robot frame (mm, +Y up, forward -Z)
 // via (x, y, z) -> (-x, -y, z) * 0.4.
 
-import { type Library, type Mat4, type PlacedPart, type Snap, flatten, mul, normName, splitMpd } from "@fll-sim/ldraw";
-import type { BodySpec, MotorJointSpec, FreeJointSpec, GearSpec, Port, RobotModel, SensorSpec, ShapeSpec } from "@fll-sim/sim";
+import { BAND_PART, type Library, type Mat4, type PlacedPart, type Snap, flatten, mul, normName, splitMpd } from "@fll-sim/ldraw";
+import type { BodySpec, MotorJointSpec, FreeJointSpec, GearSpec, Material, Port, RobotModel, SensorSpec, ShapeSpec } from "@fll-sim/sim";
 import type { Quat } from "@fll-sim/units";
 import { analyzePart, type Box, type PartInfo, type Vec3 } from "./analyze";
 
@@ -366,7 +366,7 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
       if (w) snaps.push(w);
     }
   });
-  const conns = findConnections(snaps);
+  let conns = findConnections(snaps);
 
   // Rigid unions, never merging a motor's housing with its own rotor.
   const dsu = new DSU(nodes.length);
@@ -380,6 +380,17 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     }
     return true;
   };
+  // Strings/chains don't join what they tie: their segments ride along with one end, and the
+  // simulator gets a rope between the two ends.
+  const ropeGroups = findRopeGroups(parts, infos);
+  if (ropeGroups.length) {
+    const isRope = (n: number) => infos[nodes[n].part].rope;
+    conns = conns.filter((c) => !isRope(c.a) && !isRope(c.b));
+    for (const g of ropeGroups) for (const i of g.segments) dsu.union(i, g.tie0);
+  }
+  // Rubber bands: ride along with what their first end is hooked on (a spring pulls the ends).
+  const bandGroups = findBands(parts, infos);
+  for (const b of bandGroups) dsu.union(b.part, b.tie0);
   // Weak stud links (1-2 studs between two parts) wait until the end: a small group held on by
   // them can come off (see `breakable`).
   const studsBetween = new Map<string, number>();
@@ -550,9 +561,12 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     b.massKg += mass;
     const boxes = isMotor ? (n.rotor ? inf.rotorBoxes ?? [] : inf.boxes) : inf.boxes;
     const col = colorHex(lib, p.color);
-    const material = inf.rubber ? "rubber" : "plastic";
+    const material = inf.material;
     const shapes: ShapeSpec[] = [];
-    if (!isMotor && inf.cylinder) {
+    if (inf.rope || inf.band) {
+      // (a string/chain segment or a rubber band: drawn, but it doesn't collide; the rope or
+      // spring does its job)
+    } else if (!isMotor && inf.cylinder) {
       const cy = inf.cylinder;
       const axisPart: Vec3 = [0, 0, 0];
       axisPart[cy.axis] = 1;
@@ -645,6 +659,13 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
   }
 
   const gears = findGears(parts, infos, parts.map((_, i) => bodies[bodyIndex.get(clusterOf[i])!].id), freeJoints, motors, shift);
+  const bodyOfIdx = (i: number) => bodies[bodyIndex.get(clusterOf[i])!].id;
+  const ropes = ropeGroups
+    .filter((g) => bodyOfIdx(g.tie0) !== bodyOfIdx(g.tie1))
+    .map((g) => ({ a: bodyOfIdx(g.tie0), b: bodyOfIdx(g.tie1), anchorAMm: v3(addv(toRobotPoint(g.end0), shift)), anchorBMm: v3(addv(toRobotPoint(g.end1), shift)), lengthMm: g.length * LDU }));
+  const bands = bandGroups
+    .filter((g) => bodyOfIdx(g.tie0) !== bodyOfIdx(g.tie1))
+    .map((g) => ({ a: bodyOfIdx(g.tie0), b: bodyOfIdx(g.tie1), anchorAMm: v3(addv(toRobotPoint(g.end0), shift)), anchorBMm: v3(addv(toRobotPoint(g.end1), shift)), restMm: g.rest * LDU, nPerMm: g.nPerMm }));
   const welds = weakHolds
     .filter((h) => dsu.find(h.a) !== dsu.find(h.b))
     .map((h) => ({ a: bodies[bodyIndex.get(clusterOf[h.a])!].id, b: bodies[bodyIndex.get(clusterOf[h.b])!].id, pointMm: v3(addv(toRobotPoint(h.point), shift)), breakN: h.studs * STUD_CLUTCH_N }));
@@ -679,12 +700,132 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     freeJoints,
     gears,
     ...(welds.length ? { welds } : {}),
+    ...(ropes.length ? { ropes } : {}),
+    ...(bands.length ? { bands } : {}),
     sensors,
     hub: hub ?? { body: bodies[0]?.id ?? "body0", posMm: { x: 0, y: 40, z: 0 }, rot: { x: 0, y: 0, z: 0, w: 1 } },
     footprintMm: { w: fw * 2, l: fl * 2, h: fh },
   };
   const bodyOfPart = parts.map((_, i) => bodies[bodyIndex.get(clusterOf[i])!].id);
   return { robot, report: { bodies: bodies.length, joints: freeJoints.length, motors: motors.length, gears: gears.length, loose, warnings }, bodyOfPart, toModelMm: (p: Vec3) => v3(addv(toRobotPoint(p), shift)) };
+}
+
+/**
+ * Strings and chains: their segments are grouped into ropes; each rope ties the two parts at its
+ * ends (whatever touches the end segments) and is as long as the path along its segments (LDU).
+ */
+interface RopeGroup { segments: number[]; tie0: number; tie1: number; end0: Vec3; end1: Vec3; length: number }
+function findRopeGroups(parts: ModelPart[], infos: PartInfo[]): RopeGroup[] {
+  const centre = (i: number): Vec3 => {
+    const inf = infos[i], m = parts[i].m;
+    const c = [(inf.min[0] + inf.max[0]) / 2, (inf.min[1] + inf.max[1]) / 2, (inf.min[2] + inf.max[2]) / 2];
+    return [m[0] * c[0] + m[1] * c[1] + m[2] * c[2] + m[3], m[4] * c[0] + m[5] * c[1] + m[6] * c[2] + m[7], m[8] * c[0] + m[9] * c[1] + m[10] * c[2] + m[11]];
+  };
+  const box = (i: number) => {
+    const inf = infos[i], m = parts[i].m;
+    const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+    for (const k of corners(inf.min, inf.max)) {
+      const w = [m[0] * k[0] + m[1] * k[1] + m[2] * k[2] + m[3], m[4] * k[0] + m[5] * k[1] + m[6] * k[2] + m[7], m[8] * k[0] + m[9] * k[1] + m[10] * k[2] + m[11]];
+      for (let a = 0; a < 3; a++) { lo[a] = Math.min(lo[a], w[a]); hi[a] = Math.max(hi[a], w[a]); }
+    }
+    return { lo, hi };
+  };
+  const touch = (x: ReturnType<typeof box>, y: ReturnType<typeof box>, tol: number) => [0, 1, 2].every((a) => x.lo[a] <= y.hi[a] + tol && y.lo[a] <= x.hi[a] + tol);
+  const seg = parts.map((_, i) => i).filter((i) => infos[i].rope);
+  if (!seg.length) return [];
+  const boxes = new Map(seg.map((i) => [i, box(i)]));
+  const group = new Map<number, number>(seg.map((i) => [i, i]));
+  const find = (x: number): number => (group.get(x) === x ? x : (group.set(x, find(group.get(x)!)), group.get(x)!));
+  for (const i of seg) for (const j of seg) if (i < j && touch(boxes.get(i)!, boxes.get(j)!, 6)) group.set(find(i), find(j));
+  const groups = new Map<number, number[]>();
+  for (const i of seg) (groups.get(find(i)) ?? groups.set(find(i), []).get(find(i))!).push(i);
+  const out: RopeGroup[] = [];
+  for (const g of groups.values()) {
+    // walk the rope from one end: start at the segment furthest from the group's middle
+    const cs = new Map(g.map((i) => [i, centre(i)]));
+    const mid = g.reduce((acc, i) => addv(acc, scalev(cs.get(i)!, 1 / g.length)), [0, 0, 0] as Vec3);
+    let cur = g.reduce((best, i) => (Math.hypot(...sub(cs.get(i)!, mid)) > Math.hypot(...sub(cs.get(best)!, mid)) ? i : best), g[0]);
+    const path = [cur];
+    const left = new Set(g.filter((i) => i !== cur));
+    let length = 0;
+    while (left.size) {
+      let next = -1, dmin = Infinity;
+      for (const j of left) { const d = Math.hypot(...sub(cs.get(j)!, cs.get(cur)!)); if (d < dmin) { dmin = d; next = j; } }
+      length += dmin;
+      left.delete(next);
+      path.push(next);
+      cur = next;
+    }
+    const tiedTo = (end: number) => {
+      const be = boxes.get(end)!;
+      let best = -1, dmin = Infinity;
+      parts.forEach((_, j) => {
+        if (infos[j].rope || !touch(be, box(j), 6)) return;
+        const d = Math.hypot(...sub(centre(j), cs.get(end)!));
+        if (d < dmin) { dmin = d; best = j; }
+      });
+      return best;
+    };
+    const e0 = path[0], e1 = path[path.length - 1];
+    const tie0 = tiedTo(e0), tie1 = tiedTo(e1);
+    if (tie0 < 0 || tie1 < 0) continue;
+    out.push({ segments: g, tie0, tie1, end0: cs.get(e0)!, end1: cs.get(e1)!, length });
+  }
+  return out;
+}
+
+/** A rubber band part stretched from `a` to `b` (model frame, LDU). */
+export function bandPart(a: Vec3, b: Vec3, label?: string): ModelPart {
+  const x = sub(b, a);
+  const u = norm(x);
+  // any two unit vectors perpendicular to the band, scaled to its thickness (1.5 LDU radius)
+  const helper: Vec3 = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  const y = scalev(norm(cross(u, helper)), 1.5), z = scalev(norm(cross(u, norm(cross(u, helper)))), 1.5);
+  // (keep it right-handed: det > 0)
+  const det = dot(x, cross(y, z));
+  const zz = det < 0 ? scalev(z, -1) : z;
+  return { file: BAND_PART, color: 0, m: new Float64Array([x[0], y[0], zz[0], a[0], x[1], y[1], zz[1], a[1], x[2], y[2], zz[2], a[2]]), label };
+}
+
+/** A rubber band's pull per mm of stretch beyond its rest length (LEGO bands: ~0.02-0.1 N/mm). */
+export const BAND_N_PER_MM = 0.05;
+/** Unless its label says otherwise ("rest=60%"), a band is placed stretched to 1/0.6 of its length. */
+const BAND_REST = 0.6;
+
+/**
+ * Rubber bands (FLL Sim's band part): the ends are the placement's origin and origin + X column;
+ * each end is hooked on the nearest other part there. Label options: "rest=50%" (unstretched
+ * length as a share of the placed length), "k=0.08" (N per mm of stretch).
+ */
+interface BandGroup { part: number; tie0: number; tie1: number; end0: Vec3; end1: Vec3; rest: number; nPerMm: number }
+function findBands(parts: ModelPart[], infos: PartInfo[]): BandGroup[] {
+  const out: BandGroup[] = [];
+  parts.forEach((p, i) => {
+    if (!infos[i].band) return;
+    const m = p.m;
+    const end0: Vec3 = [m[3], m[7], m[11]], end1: Vec3 = [m[3] + m[0], m[7] + m[4], m[11] + m[8]];
+    const hookedOn = (pt: Vec3) => {
+      let best = -1, dmin = 12; // within 12 LDU of the part's box
+      parts.forEach((q, j) => {
+        if (infos[j].band || infos[j].rope) return;
+        const inf = infos[j], mm = q.m;
+        // distance from the point to the part's box, in the part's own frame
+        const d = sub(pt, [mm[3], mm[7], mm[11]]);
+        const local: Vec3 = [mm[0] * d[0] + mm[4] * d[1] + mm[8] * d[2], mm[1] * d[0] + mm[5] * d[1] + mm[9] * d[2], mm[2] * d[0] + mm[6] * d[1] + mm[10] * d[2]];
+        const out3 = [0, 1, 2].map((k) => Math.max(inf.min[k] - local[k], 0, local[k] - inf.max[k]));
+        const dist = Math.hypot(...out3);
+        if (dist < dmin) { dmin = dist; best = j; }
+      });
+      return best;
+    };
+    const tie0 = hookedOn(end0), tie1 = hookedOn(end1);
+    if (tie0 < 0 || tie1 < 0) return;
+    const len = Math.hypot(m[0], m[4], m[8]);
+    const rest = /rest=(\d+(?:\.\d+)?)%/.exec(p.label ?? "");
+    const k = /k=(\d+(?:\.\d+)?)/.exec(p.label ?? "");
+    out.push({ part: i, tie0, tie1, end0, end1, rest: len * (rest ? Number(rest[1]) / 100 : BAND_REST), nPerMm: k ? Number(k[1]) : BAND_N_PER_MM });
+  });
+  return out;
 }
 
 /** How hard (N) one stud's clutch holds before a part pops off (LEGO: roughly 1-3 N). */
@@ -907,7 +1048,7 @@ function quatAligningY(d: Vec3): Quat {
   return { x: ax[0] * s, y: ax[1] * s, z: ax[2] * s, w: Math.cos(ang / 2) };
 }
 
-function boxShape(m: Mat4, bx: Box, R: (m: Mat4, p: Vec3) => Vec3, color: string, material: "rubber" | "plastic", massKg: number): ShapeSpec {
+function boxShape(m: Mat4, bx: Box, R: (m: Mat4, p: Vec3) => Vec3, color: string, material: Material, massKg: number): ShapeSpec {
   const sx = Math.hypot(m[0], m[4], m[8]), sy = Math.hypot(m[1], m[5], m[9]), sz = Math.hypot(m[2], m[6], m[10]);
   return {
     kind: "box",

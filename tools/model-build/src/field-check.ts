@@ -27,6 +27,7 @@ for (const [id, e] of Object.entries(index)) {
   const { robot: model, fixedBodies } = assembleMissionModel(lib, parseModel(lib, readFileSync(join(repo, e.file), "latin1")).parts, { name: id, fixed: e.fixed });
   fieldModels.push({ id, model, pose: e.pose, fixedBodies });
   if (model.welds?.length) console.log(`${id}: holds ${JSON.stringify(model.welds)}`);
+  if (model.ropes?.length) console.log(`${id}: ropes ${JSON.stringify(model.ropes)}`);
   console.log(`${id}: ${model.bodies.length} bodies, ${model.bodies.reduce((s, b) => s + b.shapes.length, 0)} colliders, ${model.freeJoints.length} joints, assemble ${(performance.now() - t0).toFixed(0)} ms`);
 }
 const sim = await Simulation.create({ season, robot: makeDriveBase({}), start: { xMm: 230, yMm: 180, headingDeg: 0 }, fieldModels });

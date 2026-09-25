@@ -3,7 +3,7 @@ import {
   type Quat, type Vec3, add, dot, matToWorld, mmToM, mToMm, quatFromAxisAngle, rotate, worldToMat, wrapDeg, radToDeg, degToRad,
 } from "@fll-sim/units";
 import { HubState } from "./hub";
-import { FRICTION, type FreeJointSpec, type GearSpec, type WeldSpec, type Port, type RobotModel, type SensorType, type ShapeSpec } from "./model";
+import { FRICTION, type BandSpec, type FreeJointSpec, type GearSpec, type RopeSpec, type WeldSpec, type Port, type RobotModel, type SensorType, type ShapeSpec } from "./model";
 import { MotorController } from "./motor";
 import { type MatImage, type SeasonConfig, matPlacement } from "./season";
 import { shapeBounds } from "./shapes";
@@ -83,11 +83,13 @@ export class Simulation {
   readonly motors = new Map<Port, MotorBinding>();
   readonly sensors = new Map<Port, SensorBinding>();
   /** Mission models whose moving parts are still frozen: bodies + bounding circle (m, world). */
-  private frozen: { bodies: RAPIER.RigidBody[]; friction: Simulation["frictionJoints"]; gears: GearConstraint[]; gearFriction: FrictionRow[]; welds: Weld[]; x: number; z: number; rM: number }[] = [];
+  private frozen: { bodies: RAPIER.RigidBody[]; friction: Simulation["frictionJoints"]; gears: GearConstraint[]; gearFriction: FrictionRow[]; welds: Weld[]; bands: Band[]; x: number; z: number; rM: number }[] = [];
   /** Meshing gears (see solveConstraints). */
   private gears: GearConstraint[] = [];
   /** Breakable holds of game pieces (see Weld). */
   private welds: Weld[] = [];
+  /** Rubber bands (see pullBands). */
+  private bands: Band[] = [];
   /** Friction of the hinges gears turn on, solved together with the gears. */
   private gearFriction: FrictionRow[] = [];
   /** Hinges with friction (see addJointFriction). */
@@ -235,6 +237,8 @@ export class Simulation {
       const carrier = this.addHinge(j, byId, modelFriction, false);
       if (carrier) carriers.push(carrier);
     }
+    for (const r of m.ropes ?? []) this.addRope(r, byId, false);
+    const modelBands = (m.bands ?? []).map((b) => band(b, byId));
     for (const g of m.gears ?? []) modelGears.push(gearConstraint(g, byId));
     const modelWelds = (m.welds ?? []).map((w) => weldConstraint(w, byId));
     // meshing teeth interlock: the gear constraint handles them, not collisions (a joint that
@@ -275,7 +279,7 @@ export class Simulation {
       }
       // frozen = fixed (created dynamic first so their mass properties are computed)
       for (const b of moving) b.setBodyType(RAPIER.RigidBodyType.Fixed, false);
-      this.frozen.push({ bodies: moving, friction: modelFriction, gears: modelGears, gearFriction: modelGearFriction, welds: modelWelds, x: origin.x, z: origin.z, rM: mmToM(r) });
+      this.frozen.push({ bodies: moving, friction: modelFriction, gears: modelGears, gearFriction: modelGearFriction, welds: modelWelds, bands: modelBands, x: origin.x, z: origin.z, rM: mmToM(r) });
     }
   }
 
@@ -285,6 +289,7 @@ export class Simulation {
     this.gears.push(...f.gears);
     this.gearFriction.push(...f.gearFriction);
     this.welds.push(...f.welds);
+    this.bands.push(...f.bands);
   }
 
   private unfreeze(b: RAPIER.RigidBody) {
@@ -353,6 +358,13 @@ export class Simulation {
       f.hold = angle + Math.sign(d) * f.slip;
       f.joint.configureMotorPosition(f.hold, f.k, f.k * 0.005);
     }
+  }
+
+  /** A string or chain: the two anchors can't get further apart than its length. */
+  private addRope(r: RopeSpec, byId: Map<string, RAPIER.RigidBody>, wake: boolean) {
+    const mv = (v: Vec3) => ({ x: mmToM(v.x), y: mmToM(v.y), z: mmToM(v.z) });
+    const joint = this.world.createImpulseJoint(RAPIER.JointData.rope(mmToM(r.lengthMm), mv(r.anchorAMm), mv(r.anchorBMm)), byId.get(r.a)!, byId.get(r.b)!, wake);
+    joint.setContactsEnabled(true);
   }
 
   /** Unfreeze all mission models (tests). */
@@ -424,6 +436,8 @@ export class Simulation {
     }
     for (const j of m.freeJoints) this.addHinge(j, byId, this.frictionJoints, true);
     for (const w of m.welds ?? []) this.welds.push(weldConstraint(w, byId));
+    for (const r of m.ropes ?? []) this.addRope(r, byId, true);
+    for (const b of m.bands ?? []) this.bands.push(band(b, byId));
     const robotGears = (m.gears ?? []).map((g) => gearConstraint(g, byId));
     this.gears.push(...robotGears);
     this.gearFriction.push(...takeGearFriction(robotGears, this.frictionJoints));
@@ -456,6 +470,7 @@ export class Simulation {
     }
     if (this.frozen.length && this.timeMs % 5 === 0) this.wakeModels();
     if (this.frictionJoints.length) this.updateFriction();
+    if (this.bands.length) pullBands(this.bands);
     if (this.gears.length || this.welds.length) solveConstraints(this.gears, this.gearFriction, this.welds);
     // (Rapier only runs the contact hooks when an event queue is passed too)
     if (this.excluded.size) this.world.step(this.events, this.hooks);
@@ -628,6 +643,36 @@ export class Simulation {
   stable(): boolean {
     const w = toV(this.hubBody.angvel());
     return Math.hypot(w.x, w.y, w.z) < 0.05 && this.upFace() === 0;
+  }
+}
+
+// ---- rubber bands ---------------------------------------------------------------------------------
+interface Band { a: RAPIER.RigidBody; b: RAPIER.RigidBody; pa: Vec3; pb: Vec3; rest: number; k: number }
+
+function band(s: BandSpec, byId: Map<string, RAPIER.RigidBody>): Band {
+  const mv = (v: Vec3) => ({ x: mmToM(v.x), y: mmToM(v.y), z: mmToM(v.z) });
+  // (bodies share the build frame: the anchors are in both bodies' frames already)
+  return { a: byId.get(s.a)!, b: byId.get(s.b)!, pa: mv(s.anchorAMm), pb: mv(s.anchorBMm), rest: mmToM(s.restMm), k: s.nPerMm * 1000 };
+}
+
+/** Rubber bands pull their anchors together once stretched past their rest length (never push). */
+function pullBands(bands: Band[]) {
+  for (const s of bands) {
+    const live = (b: RAPIER.RigidBody) => b.isDynamic() && !b.isSleeping();
+    if (!live(s.a) && !live(s.b)) continue;
+    const PA = add(toV(s.a.translation()), rotate(toQ(s.a.rotation()), s.pa));
+    const PB = add(toV(s.b.translation()), rotate(toQ(s.b.rotation()), s.pb));
+    const d = { x: PB.x - PA.x, y: PB.y - PA.y, z: PB.z - PA.z };
+    const len = Math.hypot(d.x, d.y, d.z);
+    if (len <= s.rest || len < 1e-9) continue;
+    const u = { x: d.x / len, y: d.y / len, z: d.z / len };
+    // light damping along the band (rubber doesn't bounce forever)
+    const vAt = (b: RAPIER.RigidBody, P: Vec3) => add(toV(b.linvel()), cross3(toV(b.angvel()), { x: P.x - b.worldCom().x, y: P.y - b.worldCom().y, z: P.z - b.worldCom().z }));
+    const vRel = dot({ x: vAt(s.b, PB).x - vAt(s.a, PA).x, y: vAt(s.b, PB).y - vAt(s.a, PA).y, z: vAt(s.b, PB).z - vAt(s.a, PA).z }, u);
+    const f = Math.max(0, s.k * (len - s.rest) + 2 * vRel); // N (damping 2 N per m/s)
+    const imp = { x: u.x * f * DT, y: u.y * f * DT, z: u.z * f * DT };
+    if (s.a.isDynamic()) s.a.applyImpulseAtPoint(imp, PA, true);
+    if (s.b.isDynamic()) s.b.applyImpulseAtPoint({ x: -imp.x, y: -imp.y, z: -imp.z }, PB, true);
   }
 }
 
