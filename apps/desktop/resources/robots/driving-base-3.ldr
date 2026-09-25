@@ -1,0 +1,155 @@
+0 Driving Base 3
+0 Name: Driving_Base_3.ldr
+0 Author: FLL Sim (scripted from the official building instructions)
+0 !LICENSE Model data for simulation use
+
+0 // magenta 11x7 frame
+1 26 0 -30 0 0 0 -1 0 1 0 1 0 0 39794.dat
+0 STEP
+0 // pin (frame front edge)
+1 0 60 -40 -60 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (frame side)
+1 0 100 -40 -20 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (frame front edge)
+1 0 -60 -40 -60 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (frame side)
+1 0 -100 -40 -20 0 1 0 1 0 0 0 0 -1 2780.dat
+0 STEP
+0 // left drive motor (C)
+0 !FLLSIM PORT C
+1 15 80 -70 -40 0 -1 0 1 0 0 0 0 1 54696p01.dat
+0 // pin (frame corner)
+1 0 100 -40 -60 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // right drive motor (D)
+0 !FLLSIM PORT D
+1 15 -80 -70 -40 0 1 0 -1 0 0 0 0 1 54696p01.dat
+0 // pin (frame corner)
+1 0 -100 -40 -60 0 1 0 1 0 0 0 0 -1 2780.dat
+0 STEP
+0 // pin (motor disc)
+1 0 132 -90 -40 1 0 0 0 0 1 0 -1 0 2780.dat
+0 // pin (motor disc)
+1 0 132 -50 -40 1 0 0 0 0 -1 0 1 0 2780.dat
+0 // yellow 3L axle (drive)
+1 14 140 -70 -40 1 0 0 0 1 0 0 0 1 4519.dat
+0 // pin (motor disc)
+1 0 -132 -90 -40 -1 0 0 0 0 1 0 1 0 2780.dat
+0 // pin (motor disc)
+1 0 -132 -50 -40 -1 0 0 0 0 -1 0 -1 0 2780.dat
+0 // yellow 3L axle (drive)
+1 14 -140 -70 -40 -1 0 0 0 -1 0 0 0 1 4519.dat
+0 STEP
+0 // pin (motor top)
+1 0 60 -100 -60 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (motor top)
+1 0 60 -100 100 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (motor top)
+1 0 100 -100 -60 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (motor top)
+1 0 100 -100 100 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (motor top)
+1 0 -60 -100 -60 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (motor top)
+1 0 -60 -100 100 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (motor top)
+1 0 -100 -100 -60 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (motor top)
+1 0 -100 -100 100 0 1 0 1 0 0 0 0 -1 2780.dat
+0 STEP
+0 // hub
+1 15 0 -100 0 -1 0 0 0 1 0 0 0 -1 45601c01.dat
+0 STEP
+0 // leg: grey cross block with 4 pins
+1 71 80 -90 -100 0 1 0 0 0 1 1 0 0 48989.dat
+0 // leg: yellow 3L beam
+1 14 80 -70 -100 0 0 1 0 1 0 -1 0 0 32523.dat
+0 // leg: grey cross block with 4 pins
+1 71 -80 -90 -100 0 1 0 0 0 1 1 0 0 48989.dat
+0 // leg: yellow 3L beam
+1 14 -80 -70 -100 0 0 1 0 1 0 -1 0 0 32523.dat
+0 STEP
+0 // pin (hub rear)
+1 0 -20 -100 100 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (hub rear)
+1 0 20 -100 100 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // magenta 3x3 connector block
+1 26 0 -90 100 0 0 -1 0 1 0 1 0 0 39793.dat
+0 // pin (under 3x3 block)
+1 0 0 -80 80 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (under 3x3 block)
+1 0 0 -80 120 0 1 0 1 0 0 0 0 -1 2780.dat
+0 STEP
+0 // ball castor
+1 322 0 -70 100 1 0 0 0 1 0 0 0 1 39370.dat
+0 // ball castor: white 19 mm ball [loose:castor ball]
+1 15 0 -24 100 1 0 0 0 1 0 0 0 1 52629.dat
+0 STEP
+0 // tan axle pin (castor)
+1 19 20 -90 140 1 0 0 0 0 1 0 -1 0 3749.dat
+0 // yellow cross block (castor)
+1 14 40 -90 140 1 0 0 0 0 -1 0 1 0 6536.dat
+0 STEP
+0 // left 15L beam
+1 0 100 -110 -40 1 0 0 0 1 0 0 0 1 32278.dat
+0 // tan axle pin (cable clip)
+1 19 100 -130 40 0 -1 0 -1 0 0 0 0 -1 3749.dat
+0 // cable clip (cross block)
+1 322 100 -140 40 0 1 0 -1 0 0 0 0 1 6536.dat
+0 STEP
+0 // right 15L beam
+1 0 -100 -110 -40 1 0 0 0 1 0 0 0 1 32278.dat
+0 // tan axle pin (cable clip)
+1 19 -100 -130 40 0 -1 0 -1 0 0 0 0 -1 3749.dat
+0 // cable clip (cross block)
+1 2 -100 -140 40 0 1 0 -1 0 0 0 0 1 6536.dat
+0 STEP
+0 // left wheel
+1 0 144 -70 -40 0 0 1 0 -1 0 1 0 0 39367p01.dat
+0 // right wheel
+1 0 -144 -70 -40 0 0 -1 0 1 0 1 0 0 39367p01.dat
+0 STEP
+0 // white tooth (axle end)
+1 15 162 -70 -40 0 1 0 0 0 1 1 0 0 48267.dat
+0 // white tooth (axle end)
+1 15 -162 -70 -40 0 -1 0 0 0 -1 1 0 0 48267.dat
+0 STEP
+0 // accessory motor (E)
+0 !FLLSIM PORT E
+1 15 60 -130 -160 0 0 -1 0 -1 0 -1 0 0 54696p01.dat
+0 // red 2L notched axle (accessory output)
+1 4 60 -160 -160 0 0 -1 -1 0 0 0 1 0 32062.dat
+0 // 12-tooth double bevel gear (accessory output)
+1 72 60 -170 -160 0 -1 0 0 0 1 -1 0 0 32270.dat
+0 STEP
+0 // accessory: grey cross block with 4 pins
+1 71 40 -130 -120 1 0 0 0 1 0 0 0 1 48989.dat
+0 // accessory: pin (cross block side)
+1 0 30 -150 -120 1 0 0 0 1 0 0 0 1 2780.dat
+0 // accessory: pin (cross block side)
+1 0 30 -110 -120 1 0 0 0 1 0 0 0 1 2780.dat
+0 // accessory: yellow 3L beam
+1 14 20 -130 -120 0 1 0 0 0 1 1 0 0 32523.dat
+0 // accessory: grey cross block with 4 pins
+1 71 80 -130 -120 1 0 0 0 1 0 0 0 1 48989.dat
+0 // accessory: pin (cross block side)
+1 0 70 -150 -120 1 0 0 0 1 0 0 0 1 2780.dat
+0 // accessory: pin (cross block side)
+1 0 70 -110 -120 1 0 0 0 1 0 0 0 1 2780.dat
+0 // accessory: yellow 3L beam
+1 14 60 -130 -120 0 1 0 0 0 1 1 0 0 32523.dat
+0 STEP
+0 // pin (colour sensor)
+1 0 -100 -100 -180 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin (colour sensor)
+1 0 -100 -100 -140 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // colour sensor (B)
+0 !FLLSIM PORT B
+1 0 -100 -90 -160 0 -1 0 0 0 -1 1 0 0 37308.dat
+0 // tan axle pin (sensor cable clip)
+1 19 -100 -130 -80 0 -1 0 -1 0 0 0 0 -1 3749.dat
+0 // sensor cable clip (cross block)
+1 1 -100 -140 -80 0 1 0 -1 0 0 0 0 1 6536.dat
+0 STEP
+0 // accessory
+1 16 60 -130 -190 1 0 0 0 1 0 0 0 1 fllsim-mount.dat
+0 STEP
