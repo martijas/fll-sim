@@ -1,4 +1,4 @@
-import type { ColorCalibration, FieldModel, HubEvent, RobotModel, SceneBody, SeasonConfig, StartPose } from "@fll-sim/sim";
+import type { ColorCalibration, FieldModel, FieldSnapshot, HubEvent, RobotModel, SceneBody, SeasonConfig, StartPose } from "@fll-sim/sim";
 import type { RunResult } from "@fll-sim/runtime-python";
 import { CTRL, type Frame, type FromWorker, type MatPayload, type ToWorker } from "../worker/protocol";
 import SimWorker from "../worker/sim.worker.ts?worker";
@@ -8,7 +8,8 @@ export interface SimCallbacks {
   frame(f: Frame): void;
   stdout(line: string): void;
   hub(events: HubEvent[]): void;
-  done(r: RunResult): void;
+  /** the program ended; `snapshot` = the field then (for automatic scoring) */
+  done(r: RunResult, snapshot: FieldSnapshot): void;
   fatal(msg: string): void;
 }
 
@@ -22,6 +23,7 @@ export class SimController {
   private ctrlBuf = new SharedArrayBuffer(CTRL.SIZE * 4);
   readonly ctrl = new Int32Array(this.ctrlBuf);
   running = false;
+  private snapshotWaiters: ((s: FieldSnapshot | null) => void)[] = [];
 
   constructor(
     private cb: SimCallbacks,
@@ -36,6 +38,7 @@ export class SimController {
 
   boot() {
     this.worker?.terminate();
+    for (const f of this.snapshotWaiters.splice(0)) f(null);
     const w = new SimWorker();
     this.worker = w;
     this.running = false;
@@ -46,7 +49,8 @@ export class SimController {
         case "frame": this.cb.frame(m); break;
         case "stdout": this.cb.stdout(m.line); break;
         case "hub": this.cb.hub(m.events); break;
-        case "done": this.running = false; this.cb.done(m.result); break;
+        case "done": this.running = false; this.cb.done(m.result, m.snapshot); break;
+        case "snapshot": for (const f of this.snapshotWaiters.splice(0)) f(m.snapshot); break;
         case "fatal": this.running = false; this.cb.fatal(m.message); break;
         case "app": this.cb.stdout(`[app] ${m.kind} ${m.args.join(" ")}`); break;
       }
@@ -66,6 +70,15 @@ export class SimController {
     this.setPaused(false);
     this.running = true;
     this.send({ type: "run", source, timeLimitMs });
+  }
+
+  /** The field as it is now (answered once the worker is idle: after the program has ended). */
+  snapshot(): Promise<FieldSnapshot | null> {
+    if (!this.worker) return Promise.resolve(null);
+    return new Promise((r) => {
+      this.snapshotWaiters.push(r);
+      this.send({ type: "snapshot" });
+    });
   }
 
   stop() {

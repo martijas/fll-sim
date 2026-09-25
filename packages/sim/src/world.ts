@@ -6,7 +6,7 @@ import { HubState } from "./hub";
 import { FRICTION, type BandSpec, type FreeJointSpec, type GearSpec, type RopeSpec, type WeldSpec, type Port, type RobotModel, type SensorType, type ShapeSpec } from "./model";
 import { MotorController } from "./motor";
 import { type MatImage, type SeasonConfig, matPlacement } from "./season";
-import { shapeBounds } from "./shapes";
+import { shapeBounds, shapeCorners } from "./shapes";
 import { type ColorCalibration, DEFAULT_CALIBRATION, colorReading, parseHexColor, sampleMat, spotRadiusMm, type RGB } from "./sensors";
 
 let rapierReady: Promise<void> | null = null;
@@ -49,6 +49,36 @@ export interface SimOptions {
 }
 
 /** Static scene description sent once to the renderer. */
+/** A mission model body's state for automatic scoring (see Simulation.snapshot). */
+export interface BodySnapshot {
+  /** "<field model id>:<body id>" */
+  id: string;
+  model: string;
+  /** part labels ("0 // label" lines), e.g. "seed 1 gold ring [loose:seed 1@1]" */
+  labels: string[];
+  parts: number;
+  /** held by Dual Lock */
+  fixed: boolean;
+  /** corners of its colliders, body frame (mm) */
+  pts: [number, number, number][];
+  /** pose now and as set up: position (mm, physics world frame: y up) and rotation quaternion [x, y, z, w] */
+  pose: { p: [number, number, number]; q: [number, number, number, number] };
+  start: { p: [number, number, number]; q: [number, number, number, number] };
+  /** what it is touching now: other bodies' ids, "robot", "mat" or "walls" (only known for moving bodies) */
+  touches: string[];
+  /** bodies it is held to: by a hinge or slide, or by a hold that hasn't broken */
+  attached: string[];
+  /** not woken yet (the robot hasn't come near its model): exactly as set up */
+  frozen: boolean;
+}
+
+export interface FieldSnapshot {
+  timeMs: number;
+  /** mat position on the table: mat frame (x east, y north, mm) = world x - offsetX, -world z - offsetY */
+  mat: { offsetX: number; offsetY: number };
+  bodies: BodySnapshot[];
+}
+
 export interface SceneBody {
   id: string;
   kind: "robot" | "field" | "model";
@@ -114,6 +144,12 @@ export class Simulation {
   private hubAccel: Vec3 = { x: 0, y: 9.81, z: 0 };
   private yawOffsetDeg = 0;
   private idCounter = 1_000_000;
+  /** Owner of each collider (by handle): body id, "robot", "mat" or "walls" (for snapshot contacts). */
+  private colliderOwner = new Map<number, string>();
+  /** Mission model bodies, for snapshot(). */
+  /** Mission model bodies held together by a hinge, slide or (until it breaks) a hold. */
+  private modelLinks: { a: string; b: string; weld?: Weld }[] = [];
+  private modelBodies: { id: string; model: string; labels: string[]; parts: number; fixed: boolean; pts: [number, number, number][]; body: RAPIER.RigidBody; start: BodySnapshot["start"] }[] = [];
   /** Simulation time in ms (integer ticks). */
   timeMs = 0;
 
@@ -168,6 +204,7 @@ export class Simulation {
     };
     const surface = mk(W / 2 + wt, 0.01, H / 2 + wt, W / 2, -0.01, -H / 2, 1.0);
     this.surfaceHandle = surface.handle;
+    this.colliderOwner.set(surface.handle, "mat");
     const walls: [number, number, number, number, number, number][] = [
       [W / 2 + wt, wh / 2, wt / 2, W / 2, wh / 2, wt / 2], // south
       [W / 2 + wt, wh / 2, wt / 2, W / 2, wh / 2, -H - wt / 2], // north
@@ -177,6 +214,7 @@ export class Simulation {
     const wallShapes: ShapeSpec[] = [];
     for (const [hx, hy, hz, x, y, z] of walls) {
       const c = mk(hx, hy, hz, x, y, z, 0.4);
+      this.colliderOwner.set(c.handle, "walls");
       this.colliderColor.set(c.handle, parseHexColor("#2a2a2a"));
       wallShapes.push({ kind: "box", sizeMm: { x: mToMm(hx * 2), y: mToMm(hy * 2), z: mToMm(hz * 2) }, posMm: { x: mToMm(x), y: mToMm(y), z: mToMm(z) }, color: "#3a3a3a" });
     }
@@ -228,8 +266,15 @@ export class Simulation {
           .setCollisionGroups(groups(G_MODEL, 0xffff));
         const c = this.world.createCollider(cd, body);
         this.colliderColor.set(c.handle, parseHexColor(s.color));
+        this.colliderOwner.set(c.handle, prefix + b.id);
       });
       this.bodies.push({ id: prefix + b.id, body, kind });
+      const t0 = body.translation();
+      this.modelBodies.push({
+        id: prefix + b.id, model: prefix.slice(0, -1), labels: b.labels ?? [], parts: b.visuals?.length || 1, fixed: fixed.has(b.id), body,
+        pts: shapes.flatMap((sh) => shapeCorners(sh).map((c): [number, number, number] => [c.x, c.y, c.z])),
+        start: { p: [mToMm(t0.x), mToMm(t0.y), mToMm(t0.z)], q: [rot.x, rot.y, rot.z, rot.w] },
+      });
       this.scene.push({ id: prefix + b.id, kind, shapes: b.shapes });
     }
     const carriers: RAPIER.RigidBody[] = [];
@@ -241,6 +286,8 @@ export class Simulation {
     const modelBands = (m.bands ?? []).map((b) => band(b, byId));
     for (const g of m.gears ?? []) modelGears.push(gearConstraint(g, byId));
     const modelWelds = (m.welds ?? []).map((w) => weldConstraint(w, byId));
+    for (const j of m.freeJoints) this.modelLinks.push({ a: prefix + j.a, b: prefix + j.b });
+    (m.welds ?? []).forEach((w, i) => this.modelLinks.push({ a: prefix + w.a, b: prefix + w.b, weld: modelWelds[i] }));
     // meshing teeth interlock: the gear constraint handles them, not collisions (a joint that
     // constrains nothing, only to switch their contacts off natively)
     const zero = { x: 0, y: 0, z: 0 };
@@ -456,6 +503,7 @@ export class Simulation {
           .setCollisionGroups(groups(G_ROBOT, 0xffff & ~G_ROBOT));
         const c = this.world.createCollider(cd, body);
         this.colliderColor.set(c.handle, parseHexColor(s.color));
+        this.colliderOwner.set(c.handle, "robot");
       });
       this.bodies.push({ id: b.id, body, kind: "robot" });
       this.scene.push({ id: b.id, kind: "robot", shapes: b.shapes });
@@ -534,6 +582,42 @@ export class Simulation {
       a.set([p.x, p.y, p.z, q.x, q.y, q.z, q.w], i * 7);
     });
     return a;
+  }
+
+  /**
+   * State of every mission model body: pose now and as set up, and what it touches (for
+   * automatic scoring). Contacts come from the physics engine, so they are only known for
+   * bodies that can move; frozen (not yet woken) models are exactly as set up.
+   */
+  snapshot(): FieldSnapshot {
+    const bodies = this.modelBodies.map((m): BodySnapshot => {
+      const t = m.body.translation(), q = m.body.rotation();
+      const touches = new Set<string>();
+      if (!m.body.isFixed()) {
+        for (let i = 0; i < m.body.numColliders(); i++) {
+          const c = m.body.collider(i);
+          this.world.contactPairsWith(c, (other) => {
+            const owner = this.colliderOwner.get(other.handle);
+            if (!owner || owner === m.id || touches.has(owner)) return;
+            this.world.contactPair(c, other, (man) => {
+              for (let k = 0; k < man.numContacts(); k++) if (man.contactDist(k) < 0.0005) { touches.add(owner); break; }
+            });
+          });
+        }
+      }
+      return {
+        id: m.id, model: m.model, labels: m.labels, parts: m.parts, fixed: m.fixed, pts: m.pts,
+        pose: { p: [mToMm(t.x), mToMm(t.y), mToMm(t.z)], q: [q.x, q.y, q.z, q.w] }, start: m.start,
+        touches: [...touches],
+        attached: this.modelLinks.filter((l) => !l.weld?.broken && (l.a === m.id || l.b === m.id)).map((l) => (l.a === m.id ? l.b : l.a)),
+        frozen: !m.fixed && m.body.isFixed(),
+      };
+    });
+    // contacts are symmetric: a moving body touching a fixed one counts for both
+    const byId = new Map(bodies.map((b) => [b.id, b]));
+    for (const b of bodies) for (const o of b.touches) { const x = byId.get(o); if (x && !x.touches.includes(b.id)) x.touches.push(b.id); }
+    const mp = this.matPlacement;
+    return { timeMs: this.timeMs, mat: { offsetX: mp.offsetX, offsetY: mp.offsetY }, bodies };
   }
 
   /** Robot pose in the mat frame (mm, heading deg CCW from north). */

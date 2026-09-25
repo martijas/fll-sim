@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DEFAULT_CALIBRATION, heightFactor, makeDriveBase, type ColorCalibration, type FieldModel, type RobotModel, type SeasonConfig, type StartPose, type VisualSpec } from "@fll-sim/sim";
+import { DEFAULT_CALIBRATION, heightFactor, makeDriveBase, type ColorCalibration, type FieldModel, type FieldSnapshot, type RobotModel, type SeasonConfig, type StartPose, type VisualSpec } from "@fll-sim/sim";
 import { ScorePanel } from "./components/ScorePanel";
-import { defaultAnswers, type Answers } from "../../../../../seasons/2026-27/scoring";
+import { defaultAnswers, score, type Answers } from "../../../../../seasons/2026-27/scoring";
+import { autoScore, type AutoScore } from "../../../../../seasons/2026-27/autoscore";
 import type { Library } from "@fll-sim/ldraw";
 import { assemble, assembleMissionModel, parseModel, serializeModel, type ModelPart } from "@fll-sim/assembly";
 import { Builder } from "./components/Builder";
@@ -98,6 +99,18 @@ export function App() {
     }
   });
   const [footprints, setFootprints] = useState(true);
+  /** The last automatic scoring from the simulated field (shown as badges on the sheet). */
+  const [auto, setAuto] = useState<AutoScore | null>(null);
+  /** Fill in the score sheet from the field (only the questions the field settles); returns the total. */
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
+  const applyAutoScore = useCallback((snap: FieldSnapshot) => {
+    const a = autoScore(snap);
+    const next = { ...answersRef.current, ...a.answers };
+    setAuto(a);
+    setAnswers(next);
+    return { total: score(next).total, n: Object.keys(a.answers).length };
+  }, []);
   /** Real-part mission models built by the team: mission model id -> .ldr text. */
   const [missionLdr, setMissionLdr] = useState<Record<string, string>>(() => {
     try {
@@ -291,13 +304,14 @@ export function App() {
           calTap.current?.(l);
         },
         hub: (ev) => playHubEvents(ev, speedRef.current),
-        done: (r) => {
+        done: (r, snap) => {
           calDone.current?.();
           setRunning(false);
           setPaused(false);
+          const scored = calTap.current ? null : applyAutoScore(snap); // (not for calibration runs)
           setMatchStart((ms) => {
             if (ms !== null) {
-              log(`⏱ Match over — fill in the Score tab to see your points.`, "info");
+              log(`⏱ Match over — ${scored ? `auto-scored from the field: ${scored.total} points. ` : ""}Check the Score tab for what to fill in by hand.`, "info");
               setRightTab("score");
             }
             return null;
@@ -718,8 +732,15 @@ export function App() {
             <ScorePanel
               answers={{ ...answers, ei: answers.ei }}
               onChange={setAnswers}
-              onReset={() => setAnswers({ ...defaultAnswers(), ei: inspection.pass })}
+              onReset={() => { setAnswers({ ...defaultAnswers(), ei: inspection.pass }); setAuto(null); }}
               inspection={inspection}
+              auto={auto}
+              onAutoScore={running ? null : async () => {
+                const snap = await ctl.current?.snapshot();
+                if (!snap) return;
+                const r = applyAutoScore(snap);
+                log(`Score sheet filled in from the field: ${r.n} answers, ${r.total} points.`, "info");
+              }}
             />
           )}
         </section>

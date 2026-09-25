@@ -1,4 +1,4 @@
-import type { ColorCalibration, FieldModel, HubEvent, RobotModel, SceneBody, SeasonConfig, StartPose } from "@fll-sim/sim";
+import type { ColorCalibration, FieldModel, FieldSnapshot, HubEvent, RobotModel, SceneBody, SeasonConfig, StartPose } from "@fll-sim/sim";
 import type { RunResult } from "@fll-sim/runtime-python";
 
 /** Int32 slots in the shared control buffer. */
@@ -8,7 +8,9 @@ export interface MatPayload { width: number; height: number; data: ArrayBuffer }
 
 export type ToWorker =
   | { type: "init"; season: SeasonConfig; mat: MatPayload | null; robot: RobotModel; start: StartPose; ctrl: SharedArrayBuffer; fieldModels: FieldModel[]; footprints: boolean; colorCalibration?: ColorCalibration }
-  | { type: "run"; source: string; timeLimitMs?: number };
+  | { type: "run"; source: string; timeLimitMs?: number }
+  /** the mission models' state now (for automatic scoring) */
+  | { type: "snapshot" };
 
 export interface MotorTelemetry { port: string; relPos: number; absPos: number; speed: number; duty: number }
 export interface SensorTelemetry { port: string; type: string; value: string }
@@ -32,5 +34,6 @@ export type FromWorker =
   | { type: "stdout"; line: string }
   | { type: "hub"; events: HubEvent[] }
   | { type: "app"; kind: string; args: string[] }
-  | { type: "done"; result: RunResult }
+  | { type: "done"; result: RunResult; snapshot: FieldSnapshot }
+  | { type: "snapshot"; snapshot: FieldSnapshot }
   | { type: "fatal"; message: string };
