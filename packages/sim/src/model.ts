@@ -94,11 +94,30 @@ export interface HubSpec {
   rot: Quat;
 }
 
+/**
+ * Two meshing gears. The teeth must move together at the contact point:
+ *   (ωa − ωfa)·ja = (ωb − ωfb)·jb
+ * where fa/fb are the bodies the gears turn in (their axle's holder; the gear's own body when it
+ * can't turn) and ja/jb are the gears' lever vectors (axis × pitch radius, or axis × lead/2π for
+ * a worm), mm, in the model frame at build time (they turn with fa/fb).
+ */
+export interface GearSpec {
+  id: string;
+  a: string; fa: string; ja: Vec3;
+  b: string; fb: string; jb: Vec3;
+  /** e.g. "8:24" */
+  label: string;
+  /** torque limit at gear a (N·m), e.g. a slip clutch; default: no limit */
+  maxTorqueNm?: number;
+}
+
 export interface RobotModel {
   name: string;
   bodies: BodySpec[];
   motors: MotorJointSpec[];
   freeJoints: FreeJointSpec[];
+  /** Meshing gears (none for hand-made models). */
+  gears?: GearSpec[];
   sensors: SensorSpec[];
   hub: HubSpec;
   /** Robot footprint (for launch-area inspection), mm. */

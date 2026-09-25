@@ -3,7 +3,7 @@ import {
   type Quat, type Vec3, add, dot, matToWorld, mmToM, mToMm, quatFromAxisAngle, rotate, worldToMat, wrapDeg, radToDeg, degToRad,
 } from "@fll-sim/units";
 import { HubState } from "./hub";
-import { FRICTION, type Port, type RobotModel, type SensorType, type ShapeSpec } from "./model";
+import { FRICTION, type GearSpec, type Port, type RobotModel, type SensorType, type ShapeSpec } from "./model";
 import { MotorController } from "./motor";
 import { type MatImage, type SeasonConfig, matPlacement } from "./season";
 import { shapeBounds } from "./shapes";
@@ -81,11 +81,16 @@ export class Simulation {
   readonly motors = new Map<Port, MotorBinding>();
   readonly sensors = new Map<Port, SensorBinding>();
   /** Mission models whose moving parts are still frozen: bodies + bounding circle (m, world). */
-  private frozen: { bodies: RAPIER.RigidBody[]; friction: Simulation["frictionJoints"]; x: number; z: number; rM: number }[] = [];
+  private frozen: { bodies: RAPIER.RigidBody[]; friction: Simulation["frictionJoints"]; gears: GearConstraint[]; gearFriction: FrictionRow[]; x: number; z: number; rM: number }[] = [];
+  /** Meshing gears (see solveGears). */
+  private gears: GearConstraint[] = [];
+  /** Friction of the hinges gears turn on, solved together with the gears. */
+  private gearFriction: FrictionRow[] = [];
   /** Hinges with friction (see addJointFriction). */
-  private frictionJoints: { joint: RAPIER.RevoluteImpulseJoint; a: RAPIER.RigidBody; b: RAPIER.RigidBody; axis: Vec3; k: number; hold: number; slip: number }[] = [];
+  private frictionJoints: FrictionJoint[] = [];
   /** Collider pairs that never touch (see excludePair). */
   private excluded = new Map<number, Set<number>>();
+  private events = new RAPIER.EventQueue(true);
   private hooks: RAPIER.PhysicsHooks = {
     filterContactPair: (c1, c2) => (this.excluded.get(c1)?.has(c2) ? null : RAPIER.SolverFlags.COMPUTE_IMPULSE),
     filterIntersectionPair: () => true,
@@ -196,7 +201,8 @@ export class Simulation {
     const origin = matToWorld({ x: pose.xMm, y: pose.yMm }, this.matPlacement, 0);
     const rot = quatFromAxisAngle({ x: 0, y: 1, z: 0 }, degToRad(pose.headingDeg));
     const byId = new Map<string, RAPIER.RigidBody>();
-    const modelFriction: typeof this.frictionJoints = []; // active once the model wakes up
+    const modelFriction: FrictionJoint[] = []; // active once the model wakes up
+    const modelGears: GearConstraint[] = [];
     const shapesOf = new Map(m.bodies.map((b) => [b.id, b.shapes]));
     for (const b of m.bodies) {
       // Moving parts start frozen (fixed): the model stays exactly as set up, as friction
@@ -226,6 +232,19 @@ export class Simulation {
       joint.setContactsEnabled(false);
       this.addJointFriction(joint, byId.get(j.a)!, byId.get(j.b)!, j, modelFriction);
     }
+    for (const g of m.gears ?? []) modelGears.push(gearConstraint(g, byId));
+    // meshing teeth interlock: the gear constraint handles them, not collisions (a joint that
+    // constrains nothing, only to switch their contacts off natively)
+    const zero = { x: 0, y: 0, z: 0 };
+    for (const g of m.gears ?? []) {
+      const joint = this.world.createImpulseJoint(RAPIER.JointData.generic(zero, zero, { x: 1, y: 0, z: 0 }, 0 as RAPIER.JointAxesMask), byId.get(g.a)!, byId.get(g.b)!, false);
+      joint.setContactsEnabled(false);
+    }
+    // bodies whose contacts are already off (hinged together, meshing gears)
+    const noContact = new Set<string>();
+    for (const j of m.freeJoints) noContact.add([j.a, j.b].sort().join("|"));
+    for (const g of m.gears ?? []) noContact.add([g.a, g.b].sort().join("|"));
+    const modelGearFriction = takeGearFriction(modelGears, modelFriction);
     // Colliders of one model that already overlap as built (pins through holes, parts nested in
     // each other, voxel slack) must not push each other apart; everything else keeps colliding,
     // so hinged parts still rest on their stops. Filtered per collider pair by a contact hook.
@@ -240,6 +259,7 @@ export class Simulation {
       for (let k = i + 1; k < all.length; k++) {
         const x = all[i], y = all[k];
         if (x.body === y.body || (fixed.has(m.bodies[x.body].id) && fixed.has(m.bodies[y.body].id)) || !hit(x.bounds, y.bounds)) continue;
+        if (noContact.has([m.bodies[x.body].id, m.bodies[y.body].id].sort().join("|"))) continue;
         this.excludePair(x.handle, y.handle);
       }
     const moving = m.bodies.filter((b) => !fixed.has(b.id)).map((b) => byId.get(b.id)!);
@@ -251,13 +271,15 @@ export class Simulation {
       }
       // frozen = fixed (created dynamic first so their mass properties are computed)
       for (const b of moving) b.setBodyType(RAPIER.RigidBodyType.Fixed, false);
-      this.frozen.push({ bodies: moving, friction: modelFriction, x: origin.x, z: origin.z, rM: mmToM(r) });
+      this.frozen.push({ bodies: moving, friction: modelFriction, gears: modelGears, gearFriction: modelGearFriction, x: origin.x, z: origin.z, rM: mmToM(r) });
     }
   }
 
   private wake(f: Simulation["frozen"][number]) {
     for (const b of f.bodies) this.unfreeze(b);
     this.frictionJoints.push(...f.friction);
+    this.gears.push(...f.gears);
+    this.gearFriction.push(...f.gearFriction);
   }
 
   private unfreeze(b: RAPIER.RigidBody) {
@@ -273,23 +295,21 @@ export class Simulation {
    * load the joint stays put; above it, it slips and the hold point follows (see updateFriction).
    */
   private addJointFriction(joint: RAPIER.RevoluteImpulseJoint, a: RAPIER.RigidBody, b: RAPIER.RigidBody, j: { axis: Vec3; friction?: boolean; frictionNm?: number }, list = this.frictionJoints) {
+    // (hinges that gears turn on are handed over to the gear solver: see takeGearFriction)
     const torque = j.frictionNm ?? (j.friction ? 0.006 : 0);
     if (torque <= 0) return;
     const k = torque / FRICTION_HOLD_RAD; // full friction torque at FRICTION_HOLD_RAD deflection
     joint.configureMotorModel(RAPIER.MotorModel.ForceBased); // max force in N·m, not acceleration
     joint.configureMotorPosition(0, k, k * 0.005);
     joint.setMotorMaxForce(torque);
-    list.push({ joint, a, b, axis: j.axis, k, hold: 0, slip: torque / k });
+    list.push({ joint, a, b, axis: j.axis, k, hold: 0, slip: torque / k, torque });
   }
 
   /** Let slipping friction joints keep their new angle instead of springing back. */
   private updateFriction() {
     for (const f of this.frictionJoints) {
       if (f.a.isSleeping() && f.b.isSleeping()) continue;
-      const qa = toQ(f.a.rotation()), qb = toQ(f.b.rotation());
-      // relative rotation of b in a's frame, angle about the joint axis (both share the build frame)
-      const r = { w: qa.w * qb.w + qa.x * qb.x + qa.y * qb.y + qa.z * qb.z, x: qa.w * qb.x - qa.x * qb.w - qa.y * qb.z + qa.z * qb.y, y: qa.w * qb.y + qa.x * qb.z - qa.y * qb.w - qa.z * qb.x, z: qa.w * qb.z - qa.x * qb.y + qa.y * qb.x - qa.z * qb.w };
-      const angle = 2 * Math.atan2(r.x * f.axis.x + r.y * f.axis.y + r.z * f.axis.z, r.w);
+      const angle = hingeAngle(f.a, f.b, f.axis);
       let d = f.hold - angle;
       d = Math.atan2(Math.sin(d), Math.cos(d));
       if (Math.abs(d) <= f.slip) continue;
@@ -372,6 +392,9 @@ export class Simulation {
       // Friction pins hold position against small loads: a velocity motor towards 0.
       this.addJointFriction(joint, byId.get(j.a)!, byId.get(j.b)!, j);
     }
+    const robotGears = (m.gears ?? []).map((g) => gearConstraint(g, byId));
+    this.gears.push(...robotGears);
+    this.gearFriction.push(...takeGearFriction(robotGears, this.frictionJoints));
     for (const s of m.sensors) {
       this.sensors.set(s.port, {
         type: s.type,
@@ -401,8 +424,11 @@ export class Simulation {
     }
     if (this.frozen.length && this.timeMs % 5 === 0) this.wakeModels();
     if (this.frictionJoints.length) this.updateFriction();
-    if (this.excluded.size) this.world.step(undefined, this.hooks);
+    if (this.gears.length) solveGears(this.gears, this.gearFriction);
+    // (Rapier only runs the contact hooks when an event queue is passed too)
+    if (this.excluded.size) this.world.step(this.events, this.hooks);
     else this.world.step();
+    if (this.gears.length) trackGearError(this.gears);
     this.timeMs += 1;
     // IMU specific force (accelerometer): a - g, in world frame.
     const v = toV(this.hubBody.linvel());
@@ -571,6 +597,117 @@ export class Simulation {
     const w = toV(this.hubBody.angvel());
     return Math.hypot(w.x, w.y, w.z) < 0.05 && this.upFace() === 0;
   }
+}
+
+// ---- gears ----------------------------------------------------------------------------------------
+interface FrictionJoint { joint: RAPIER.RevoluteImpulseJoint; a: RAPIER.RigidBody; b: RAPIER.RigidBody; axis: Vec3; k: number; hold: number; slip: number; torque: number }
+/** Hinge friction solved by the gear solver: holds the angle `hold`, slips above `torque`. */
+interface FrictionRow { a: RAPIER.RigidBody; b: RAPIER.RigidBody; axis: Vec3; torque: number; hold: number }
+
+/** Angle of body b relative to a about `axis` (a's frame; both bodies share the build frame). */
+function hingeAngle(a: RAPIER.RigidBody, b: RAPIER.RigidBody, axis: Vec3): number {
+  const qa = toQ(a.rotation()), qb = toQ(b.rotation());
+  const r = { w: qa.w * qb.w + qa.x * qb.x + qa.y * qb.y + qa.z * qb.z, x: qa.w * qb.x - qa.x * qb.w - qa.y * qb.z + qa.z * qb.y, y: qa.w * qb.y + qa.x * qb.z - qa.y * qb.w - qa.z * qb.x, z: qa.w * qb.z - qa.x * qb.y + qa.y * qb.x - qa.z * qb.w };
+  return 2 * Math.atan2(r.x * axis.x + r.y * axis.y + r.z * axis.z, r.w);
+}
+
+/**
+ * The hinges gears turn on: their friction moves from Rapier's joint motor (which would fight
+ * the gear impulses inside the physics step) into the gear solver.
+ */
+function takeGearFriction(gears: GearConstraint[], friction: FrictionJoint[]): FrictionRow[] {
+  const rows: FrictionRow[] = [];
+  const pairs = new Set<string>();
+  const key = (x: RAPIER.RigidBody, y: RAPIER.RigidBody) => [x.handle, y.handle].sort().join("|");
+  for (const g of gears) { pairs.add(key(g.a, g.fa)); pairs.add(key(g.b, g.fb)); }
+  for (let i = friction.length - 1; i >= 0; i--) {
+    const f = friction[i];
+    if (!pairs.has(key(f.a, f.b))) continue;
+    friction.splice(i, 1);
+    f.joint.setMotorMaxForce(0);
+    rows.push({ a: f.a, b: f.b, axis: f.axis, torque: f.torque, hold: 0 });
+  }
+  return rows;
+}
+
+interface GearConstraint {
+  a: RAPIER.RigidBody; fa: RAPIER.RigidBody; ja: Vec3;
+  b: RAPIER.RigidBody; fb: RAPIER.RigidBody; jb: Vec3;
+  /** accumulated tooth mismatch (m), corrected gradually */
+  err: number;
+  /** max impulse per tick at gear a (N·m·s), from a torque limit */
+  maxImp: number;
+}
+
+function gearConstraint(g: GearSpec, byId: Map<string, RAPIER.RigidBody>): GearConstraint {
+  const mv = (v: Vec3) => ({ x: mmToM(v.x), y: mmToM(v.y), z: mmToM(v.z) });
+  const ja = mv(g.ja), ra = Math.hypot(ja.x, ja.y, ja.z) || 1;
+  return { a: byId.get(g.a)!, fa: byId.get(g.fa)!, ja, b: byId.get(g.b)!, fb: byId.get(g.fb)!, jb: mv(g.jb), err: 0, maxImp: g.maxTorqueNm ? (g.maxTorqueNm * DT) / ra : Infinity };
+}
+
+/**
+ * Gear meshes as velocity constraints: the teeth of both gears move at the same speed where they
+ * touch, (ωa − ωfa)·Ja = (ωb − ωfb)·Jb, with J the lever vectors turned with each gear's holder.
+ * Solved with impulses before every physics step (a few passes for gear trains), plus a small
+ * correction of the accumulated tooth mismatch so the gears stay in step.
+ */
+/** After the physics step: how far the teeth drifted apart (corrected over the next ticks). */
+function trackGearError(gears: GearConstraint[]) {
+  for (const g of gears) {
+    if (!g.a.isDynamic() && !g.b.isDynamic()) continue;
+    const Ja = rotate(toQ(g.fa.rotation()), g.ja), Jb = rotate(toQ(g.fb.rotation()), g.jb);
+    const w = (b: RAPIER.RigidBody) => toV(b.angvel());
+    g.err += (dot(w(g.a), Ja) - dot(w(g.fa), Ja) - dot(w(g.b), Jb) + dot(w(g.fb), Jb)) * DT;
+  }
+}
+
+function solveGears(gears: GearConstraint[], friction: FrictionRow[]) {
+  const inv = (b: RAPIER.RigidBody, v: Vec3): Vec3 => {
+    if (!b.isDynamic()) return { x: 0, y: 0, z: 0 };
+    const e = b.effectiveWorldInvInertia().elements; // m11 m12 m13 m22 m23 m33
+    return { x: e[0] * v.x + e[1] * v.y + e[2] * v.z, y: e[1] * v.x + e[3] * v.y + e[4] * v.z, z: e[2] * v.x + e[4] * v.y + e[5] * v.z };
+  };
+  // one row = Σ ω_body · t_body (+ bias) = 0, impulse clamped to ±limit (accumulated per tick)
+  interface Row { terms: [RAPIER.RigidBody, Vec3][]; bias: number; limit: number; acc: number; onSlip?: () => void }
+  const row = (pairs: [RAPIER.RigidBody, Vec3, number][], bias: number, limit: number, onSlip?: () => void): Row => {
+    const m = new Map<RAPIER.RigidBody, Vec3>();
+    for (const [b, v, sgn] of pairs) {
+      const t = m.get(b) ?? { x: 0, y: 0, z: 0 };
+      m.set(b, { x: t.x + v.x * sgn, y: t.y + v.y * sgn, z: t.z + v.z * sgn });
+    }
+    return { terms: [...m], bias, limit, acc: 0, onSlip };
+  };
+  const rows: Row[] = [];
+  for (const g of gears) {
+    if (!g.a.isDynamic() && !g.b.isDynamic()) continue;
+    const Ja = rotate(toQ(g.fa.rotation()), g.ja), Jb = rotate(toQ(g.fb.rotation()), g.jb);
+    const r = row([[g.a, Ja, 1], [g.fa, Ja, -1], [g.b, Jb, -1], [g.fb, Jb, 1]], 0, g.maxImp, () => (g.err = 0));
+    r.bias = (0.2 * g.err) / DT;
+    rows.push(r);
+  }
+  for (const f of friction) {
+    if (!f.a.isDynamic() && !f.b.isDynamic()) continue;
+    const J = rotate(toQ(f.a.rotation()), f.axis);
+    const angle = hingeAngle(f.a, f.b, f.axis);
+    let d = angle - f.hold;
+    d = Math.atan2(Math.sin(d), Math.cos(d));
+    rows.push(row([[f.b, J, 1], [f.a, J, -1]], (0.2 * d) / DT, f.torque * DT, () => (f.hold = angle)));
+  }
+  for (let pass = 0; pass < 8; pass++)
+    for (const r of rows) {
+      let cdot = 0, k = 0;
+      for (const [b, t] of r.terms) {
+        cdot += dot(toV(b.angvel()), t);
+        k += dot(t, inv(b, t));
+      }
+      if (k < 1e-15) continue;
+      let lambda = -(cdot + r.bias) / k;
+      const acc = Math.max(-r.limit, Math.min(r.limit, r.acc + lambda));
+      if (Math.abs(r.acc + lambda) > r.limit && pass === 7) r.onSlip?.();
+      lambda = acc - r.acc;
+      r.acc = acc;
+      for (const [b, t] of r.terms) if (b.isDynamic()) b.applyTorqueImpulse({ x: t.x * lambda, y: t.y * lambda, z: t.z * lambda }, true);
+    }
 }
 
 function colliderDesc(s: ShapeSpec): RAPIER.ColliderDesc {

@@ -33,7 +33,11 @@ if (args.includes("--wake")) sim.unfreezeModels(); // as if the robot were next 
 const before = sim.transforms().slice();
 const ids = sim.bodies.map((b) => b.id);
 const t0 = performance.now();
-sim.stepMs(MS);
+for (let done = 0; done < MS; done += 500) {
+  const c0 = performance.now();
+  sim.stepMs(Math.min(500, MS - done));
+  if (MS > 500) console.log(`  ${done}-${done + 500} ms: ${((performance.now() - c0) / 500).toFixed(2)} ms per step`);
+}
 const dt = performance.now() - t0;
 console.log(`\n${MS} ms simulated in ${dt.toFixed(0)} ms wall (${(dt / MS).toFixed(2)} ms per step)`);
 const after = sim.transforms();

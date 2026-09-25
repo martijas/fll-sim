@@ -33,6 +33,38 @@ export interface PartInfo {
   connector: boolean;
   friction: boolean;
   rubber: boolean;
+  /** Gear teeth (part frame): pitch circle centre and axis. */
+  gear?: GearInfo;
+}
+
+export type GearKind = "spur" | "doubleBevel" | "bevel" | "worm";
+export interface GearInfo { kind: GearKind; teeth: number; c: Vec3; axis: Vec3 }
+
+/**
+ * Gear type and tooth count from the part title ("Technic Gear 24 Tooth", "… 12 Tooth Double
+ * Bevel", "Technic Worm Gear 2L", "Technic Turntable 60 Tooth Top"). The axis is the axle hole's.
+ */
+function gearFor(title: string, snaps: Snap[], min: Vec3, max: Vec3): GearInfo | undefined {
+  const t = title.toLowerCase();
+  if (/rack|stepper|timing|knob|ring|gearbox|box half|bottom/.test(t)) return undefined;
+  let kind: GearKind, teeth: number;
+  if (/worm/.test(t)) { kind = "worm"; teeth = 1; }
+  else {
+    const m = /(?:gear|turntable)\s+(\d+)\s+tooth/.exec(t);
+    if (!m) return undefined;
+    teeth = Number(m[1]);
+    kind = /double bevel|turntable/.test(t) ? "doubleBevel" : /bevel/.test(t) ? "bevel" : "spur";
+  }
+  // axis: an axle/round hole or stud through the middle (turntables: the big centre ring)
+  const centre = snaps.filter((s) => Math.hypot(s.m[3], s.m[11]) < 3 || Math.hypot(s.m[3], s.m[7]) < 3 || Math.hypot(s.m[7], s.m[11]) < 3);
+  const s = centre.find((x) => x.kind === "cyl" && /\bA /.test(x.secs)) ?? centre.find((x) => x.kind === "cyl") ?? centre[0];
+  let axis: Vec3 = [0, 0, 1];
+  if (s) axis = [s.m[1], s.m[5], s.m[9]]; // snap Y = its axis
+  const n = Math.hypot(...axis) || 1;
+  axis = axis.map((v) => v / n) as Vec3;
+  // centre: middle of the part across the axis, at its origin along the axis
+  const c: Vec3 = [0, 1, 2].map((k) => (Math.abs(axis[k]) > 0.9 ? 0 : (min[k] + max[k]) / 2)) as Vec3;
+  return { kind, teeth, c, axis };
 }
 
 // Known masses (kg); others are estimated from voxel volume. Electronics values are estimates
@@ -231,7 +263,16 @@ export function analyzePart(lib: Library, file: string): PartInfo {
   }
 
   const massKg = MASS[f] ?? Math.max(0.0002, solidVol * LDU3_TO_MM3 * ABS_KG_PER_MM3 * FILL);
-  const info: PartInfo = { file: f, title, min: bb.min, max: bb.max, boxes, rotorBoxes, cylinder, sphere, massKg, snaps: full.snaps, electronics: el, connector, friction, rubber };
+  const gear = gearFor(title, full.snaps, bb.min as Vec3, bb.max as Vec3);
+  // gears turn: a round collider (tip radius) instead of boxes whose corners would sweep around
+  if (gear && !cylinder && gear.kind !== "bevel") {
+    const ax = gear.axis.findIndex((v) => Math.abs(v) > 0.9) as 0 | 1 | 2;
+    if (ax >= 0) {
+      const r = gear.kind === "worm" ? Math.max(...[0, 1, 2].filter((k) => k !== ax).map((k) => (bb.max[k] - bb.min[k]) / 2)) : (gear.teeth + 1) * 1.25;
+      cylinder = { axis: ax, r, halfLen: (bb.max[ax] - bb.min[ax]) / 2, c: [0, 1, 2].map((k) => (bb.min[k] + bb.max[k]) / 2) as Vec3 };
+    }
+  }
+  const info: PartInfo = { file: f, title, min: bb.min, max: bb.max, boxes, rotorBoxes, cylinder, sphere, massKg, snaps: full.snaps, electronics: el, connector, friction, rubber, gear };
   m.set(f, info);
   return info;
 }

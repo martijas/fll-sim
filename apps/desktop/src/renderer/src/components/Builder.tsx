@@ -339,7 +339,7 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
     if (!parts.length) return;
     const r = assemble(lib, parts);
     setReport(r.report);
-    log(`Connections: ${r.report.bodies} rigid group(s), ${r.report.joints} hinge(s), ${r.report.motors} motor(s)`, "info");
+    log(`Connections: ${r.report.bodies} rigid group(s), ${r.report.joints} hinge(s), ${r.report.motors} motor(s), ${r.report.gears} gear mesh(es)${r.robot.gears?.length ? ` (${r.robot.gears.map((g) => g.label).join(", ")})` : ""}`, "info");
     for (const w of r.report.warnings) log(`⚠ ${w}`, "err");
   };
 
@@ -428,7 +428,7 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
         <div ref={host} className="build-view" />
         {report && (
           <div className="build-report">
-            {report.bodies} rigid group{report.bodies === 1 ? "" : "s"} · {report.joints} hinge{report.joints === 1 ? "" : "s"} · {report.motors} motor{report.motors === 1 ? "" : "s"}
+            {report.bodies} rigid group{report.bodies === 1 ? "" : "s"} · {report.joints} hinge{report.joints === 1 ? "" : "s"} · {report.motors} motor{report.motors === 1 ? "" : "s"}{report.gears ? ` · ${report.gears} gear mesh${report.gears === 1 ? "" : "es"}` : ""}
             {report.warnings.map((w) => <div key={w} className="warn">⚠ {w}</div>)}
           </div>
         )}

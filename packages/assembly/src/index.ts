@@ -12,7 +12,7 @@
 // via (x, y, z) -> (-x, -y, z) * 0.4.
 
 import { type Library, type Mat4, type PlacedPart, type Snap, flatten, mul, normName, splitMpd } from "@fll-sim/ldraw";
-import type { BodySpec, MotorJointSpec, FreeJointSpec, Port, RobotModel, SensorSpec, ShapeSpec } from "@fll-sim/sim";
+import type { BodySpec, MotorJointSpec, FreeJointSpec, GearSpec, Port, RobotModel, SensorSpec, ShapeSpec } from "@fll-sim/sim";
 import type { Quat } from "@fll-sim/units";
 import { analyzePart, type Box, type PartInfo, type Vec3 } from "./analyze";
 
@@ -295,6 +295,8 @@ export interface AssemblyReport {
   bodies: number;
   joints: number;
   motors: number;
+  /** meshing gear pairs */
+  gears: number;
   loose: number;
   warnings: string[];
 }
@@ -537,6 +539,8 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     freeJoints.push({ id: `hinge${freeJoints.length}`, a: bodies[a].id, b: bodies[b].id, anchorMm: v3(addv(toRobotPoint(c.point), shift)), axis: v3(norm(dirToRobotVec(c.axis))), friction: cs.some((x) => x.friction), frictionNm: cs.filter((x) => x.kind === "revolute").reduce((t, x) => t + x.frictionNm, 0) });
   }
 
+  const gears = findGears(parts, infos, parts.map((_, i) => bodies[bodyIndex.get(clusterOf[i])!].id), freeJoints, motors, shift);
+
   // Loose bodies (not connected to the hub's body by any path).
   const adj = new Map<string, Set<string>>();
   const link = (x: string, y: string) => {
@@ -565,12 +569,95 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     bodies,
     motors,
     freeJoints,
+    gears,
     sensors,
     hub: hub ?? { body: bodies[0]?.id ?? "body0", posMm: { x: 0, y: 40, z: 0 }, rot: { x: 0, y: 0, z: 0, w: 1 } },
     footprintMm: { w: fw * 2, l: fl * 2, h: fh },
   };
   const bodyOfPart = parts.map((_, i) => bodies[bodyIndex.get(clusterOf[i])!].id);
-  return { robot, report: { bodies: bodies.length, joints: freeJoints.length, motors: motors.length, loose, warnings }, bodyOfPart };
+  return { robot, report: { bodies: bodies.length, joints: freeJoints.length, motors: motors.length, gears: gears.length, loose, warnings }, bodyOfPart };
+}
+
+// ---- gears ----------------------------------------------------------------------------------------
+/** Pitch radius of LEGO Technic gears: 1.25 LDU per tooth (8t + 24t axles are 2 studs apart). */
+const PITCH_PER_TOOTH = 1.25;
+/** A LEGO worm advances the gear one tooth per turn: lead / 2π = one tooth's pitch radius step. */
+const WORM_LEAD_PER_RAD = PITCH_PER_TOOTH;
+/** Worm drives can't be back-driven (the gear can't turn the worm): extra friction on the worm. */
+const WORM_SELF_LOCK_NM = 0.02;
+
+/**
+ * Find meshing gear pairs: parallel spur/double-bevel gears whose centre distance matches their
+ * teeth, perpendicular bevels whose axes (nearly) meet, and worms beside a perpendicular gear.
+ */
+function findGears(parts: ModelPart[], infos: PartInfo[], bodyOf: string[], freeJoints: FreeJointSpec[], motors: MotorJointSpec[], shift: Vec3): GearSpec[] {
+  interface G { i: number; kind: string; teeth: number; r: number; c: Vec3; a: Vec3; body: string; frame: string; joint?: FreeJointSpec }
+  const gs: G[] = [];
+  parts.forEach((p, i) => {
+    const g = infos[i].gear;
+    if (!g) return;
+    const c = addv(toRobot(p.m, g.c), shift); // mm, model frame
+    const a = norm(dirToRobot(p.m, g.axis));
+    // the body it turns in: the hinge (or motor) on its axis
+    let frame = bodyOf[i], joint: FreeJointSpec | undefined;
+    const onAxis = (anchor: { x: number; y: number; z: number }, axis: { x: number; y: number; z: number }) => {
+      if (Math.abs(dot(a, [axis.x, axis.y, axis.z])) < 0.99) return false;
+      const d = sub([anchor.x, anchor.y, anchor.z], c);
+      return Math.hypot(...sub(d, scalev(a, dot(d, a)))) < 2;
+    };
+    for (const j of freeJoints) if ((j.a === bodyOf[i] || j.b === bodyOf[i]) && onAxis(j.anchorMm, j.axis)) { frame = j.a === bodyOf[i] ? j.b : j.a; joint = j; break; }
+    for (const m of motors) if (m.output === bodyOf[i] && onAxis(m.anchorMm, m.axisOut)) { frame = m.housing; break; }
+    gs.push({ i, kind: g.kind, teeth: g.teeth, r: g.teeth * PITCH_PER_TOOTH * LDU, c, a, body: bodyOf[i], frame, joint });
+  });
+  const out: GearSpec[] = [];
+  const mm = (ldu: number) => ldu * LDU;
+  for (let x = 0; x < gs.length; x++)
+    for (let y = x + 1; y < gs.length; y++) {
+      let [g1, g2] = [gs[x], gs[y]];
+      if (g1.body === g2.body) continue; // on one rigid body: nothing turns
+      if (g2.kind === "worm") [g1, g2] = [g2, g1];
+      const d = sub(g2.c, g1.c);
+      const along = dot(d, g1.a);
+      const radial = sub(d, scalev(g1.a, along));
+      const dist = Math.hypot(...radial);
+      const par = Math.abs(dot(g1.a, g2.a));
+      let ja: Vec3, jb: Vec3;
+      if (g1.kind === "worm") {
+        if (g2.kind === "worm" || g2.kind === "bevel" || par > 0.05) continue;
+        // gear centre beside the worm, within its length, at pitch radius + worm radius
+        const toWorm = sub(g1.c, g2.c);
+        const perp = sub(toWorm, scalev(g1.a, dot(toWorm, g1.a))); // gear centre -> worm axis line
+        const gap = Math.hypot(...perp);
+        if (Math.abs(gap - (g2.r + mm(10))) > mm(6) || Math.abs(dot(perp, g2.a)) > mm(6) || Math.abs(along) > mm(24)) continue;
+        const u = norm(perp);
+        const t = cross(g2.a, u); // gear tooth motion at the contact
+        jb = scalev(g2.a, g2.r);
+        ja = scalev(g1.a, mm(WORM_LEAD_PER_RAD) * Math.sign(dot(t, g1.a)));
+        if (g1.joint) g1.joint.frictionNm = (g1.joint.frictionNm ?? 0) + WORM_SELF_LOCK_NM;
+      } else if (par > 0.99) {
+        // parallel: spur / double bevel side by side, teeth in the same plane
+        if (g1.kind === "bevel" || g2.kind === "bevel") continue;
+        if (Math.abs(along) > mm(12) || Math.abs(dist - (g1.r + g2.r)) > mm(3)) continue;
+        ja = scalev(g1.a, g1.r);
+        jb = scalev(g1.a, -g2.r); // external mesh: opposite turning
+      } else if (par < 0.05) {
+        // perpendicular bevels: axes meet, each gear's teeth at the other's pitch radius
+        if (g1.kind === "spur" || g2.kind === "spur") continue;
+        const n = cross(g1.a, g2.a);
+        const skew = Math.abs(dot(d, norm(n)));
+        const r1 = Math.hypot(...sub(sub(g2.c, g1.c), scalev(g1.a, dot(sub(g2.c, g1.c), g1.a)))); // g2 centre from g1's axis
+        const r2 = Math.hypot(...sub(sub(g1.c, g2.c), scalev(g2.a, dot(sub(g1.c, g2.c), g2.a))));
+        if (skew > mm(4) || Math.abs(r1 - g1.r) > mm(8) || Math.abs(r2 - g2.r) > mm(8)) continue;
+        // contact on g1's rim towards g2; tooth motion t; each lever is its axis × pitch radius
+        const u = norm(sub(d, scalev(g1.a, along)));
+        const P = addv(g1.c, scalev(u, g1.r));
+        const t = cross(g1.a, u);
+        ja = scalev(g1.a, g1.r);
+        jb = scalev(g2.a, g2.r * Math.sign(dot(cross(sub(P, g2.c), t), g2.a)));
+      } else continue;
+      out.push({ id: `gear${out.length}`, a: g1.body, fa: g1.frame, ja: v3(ja), b: g2.body, fb: g2.frame, jb: v3(jb), label: `${g1.kind === "worm" ? "worm" : g1.teeth}:${g2.teeth}` });
+    }
+  return out;
 }
 
 // ---- frame helpers -------------------------------------------------------------------------------
