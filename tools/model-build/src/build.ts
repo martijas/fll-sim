@@ -321,6 +321,7 @@ export class Build {
         s++;
       }
       if (p.label) out.push(`0 // ${p.label}`);
+      if (p.port) out.push(`0 !FLLSIM PORT ${p.port}`);
       const m = p.m, f = (v: number) => +v.toFixed(4);
       out.push(`1 ${p.color} ${f(m[3])} ${f(m[7])} ${f(m[11])} ${f(m[0])} ${f(m[1])} ${f(m[2])} ${f(m[4])} ${f(m[5])} ${f(m[6])} ${f(m[8])} ${f(m[9])} ${f(m[10])} ${p.file}`);
     }
