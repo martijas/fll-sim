@@ -42,6 +42,8 @@ for (let done = 0; done < MS; done += 500) {
 const dt = performance.now() - t0;
 console.log(`\n${MS} ms simulated in ${dt.toFixed(0)} ms wall (${(dt / MS).toFixed(2)} ms per step)`);
 const after = sim.transforms();
+const awake = sim.bodies.filter((b) => b.kind === "model" && b.body.isDynamic() && !b.body.isSleeping());
+if (awake.length) console.log(`still awake: ${awake.map((b) => `${b.id} (v ${(Math.hypot(b.body.linvel().x, b.body.linvel().y, b.body.linvel().z) * 1000).toFixed(1)} mm/s, w ${Math.hypot(b.body.angvel().x, b.body.angvel().y, b.body.angvel().z).toFixed(2)} rad/s)`).join(", ")}`);
 const welds = (sim as unknown as { welds: { broken: boolean }[] }).welds;
 if (welds.length) console.log(`holds: ${welds.length}, broken ${welds.filter((w) => w.broken).length}`);
 const moved: [string, number, number][] = [];

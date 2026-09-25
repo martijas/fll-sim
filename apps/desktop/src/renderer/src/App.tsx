@@ -125,7 +125,7 @@ export function App() {
   const robotModel: RobotModel = useMemo(() => {
     if (robotSource === "ldraw" && ldraw && buildParts.length) {
       try {
-        return assemble(ldraw.lib, buildParts, { name: "Built robot" }).robot;
+        return assemble(ldraw.lib, buildParts, { name: "Built robot", breakable: true }).robot;
       } catch (e) {
         console.error(e);
       }

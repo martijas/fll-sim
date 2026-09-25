@@ -167,6 +167,8 @@ export interface Connection {
   frictionNm: number;
   /** only an axle turns in a round hole: it can slide along the hole too */
   slides: boolean;
+  /** a stud in an anti-stud (clutch) */
+  stud?: boolean;
   /** engaged length (LDU) */ depth: number;
 }
 
@@ -273,7 +275,7 @@ export function findConnections(snaps: WSnap[]): Connection[] {
       const friction = (m.friction && pinInRound >= 0.9) || (f.friction && roundIn >= 0.9 && !m.stud);
       const frictionNm = f.clip || m.clip ? JOINT_FRICTION.clip : barInAxle >= 0.9 ? JOINT_FRICTION.barInAxleHole : friction ? JOINT_FRICTION.frictionPin : pinInRound >= 0.9 ? JOINT_FRICTION.freePin : JOINT_FRICTION.axleInRoundHole;
       const slides = !rigid && !m.stud && !f.stud && !m.clip && !f.clip && pinInRound < 0.9 && barInAxle < 0.9 && roundIn >= 0.9;
-      out.push({ a: m.node, b: f.node, kind: rigid ? "rigid" : "revolute", point: mid, axis: f.a, friction, frictionNm, slides, depth: m.stud || f.stud ? overlap : axleInAxle + roundIn });
+      out.push({ a: m.node, b: f.node, kind: rigid ? "rigid" : "revolute", point: mid, axis: f.a, friction, frictionNm, slides, stud: m.stud || f.stud, depth: m.stud || f.stud ? overlap : axleInAxle + roundIn });
     }
   }
   return out;
@@ -313,6 +315,11 @@ export interface AssembleOptions {
   glue?: (part: ModelPart, index: number) => boolean;
   /** Whether glued part `part` may stick to `target` (default: any). */
   glueTo?: (part: ModelPart, target: ModelPart) => boolean;
+  /**
+   * Small groups (≤ 4 parts) held on by only 1-2 studs can be knocked off: they stay separate
+   * bodies with a breakable hold (STUD_CLUTCH_N per stud) instead of joining the rest.
+   */
+  breakable?: boolean;
   /** Parts with the same key become one rigid body (e.g. a game piece), whatever connects them. */
   rigidGroup?: (part: ModelPart) => string | null;
   /** Fewer, bigger colliders: mostly solid parts become a single box (for large field models). */
@@ -373,7 +380,13 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     }
     return true;
   };
-  for (const c of conns) if (c.kind === "rigid" && canUnion(c.a, c.b)) dsu.union(c.a, c.b);
+  // Weak stud links (1-2 studs between two parts) wait until the end: a small group held on by
+  // them can come off (see `breakable`).
+  const studsBetween = new Map<string, number>();
+  const pairKey = (a: number, b: number) => (a < b ? `${a},${b}` : `${b},${a}`);
+  for (const c of conns) if (c.stud) studsBetween.set(pairKey(c.a, c.b), (studsBetween.get(pairKey(c.a, c.b)) ?? 0) + 1);
+  const weak = (c: Connection) => !!o.breakable && !!c.stud && (studsBetween.get(pairKey(c.a, c.b)) ?? 0) <= 2;
+  for (const c of conns) if (c.kind === "rigid" && !weak(c) && canUnion(c.a, c.b)) dsu.union(c.a, c.b);
 
   // Connectors (pins/axles): merge into the neighbour they're held most firmly by.
   for (let i = 0; i < parts.length; i++) {
@@ -397,7 +410,7 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     let changed = false;
     for (const [k, cs] of pairs) {
       const [a, b] = k.split(",").map(Number);
-      if (cs.some((c) => c.kind === "rigid") || distinctAxes(cs) >= 2) {
+      if (cs.some((c) => c.kind === "rigid" && !weak(c)) || distinctAxes(cs.filter((c) => !weak(c))) >= 2) {
         if (canUnion(a, b)) {
           dsu.union(a, b);
           changed = true;
@@ -447,6 +460,51 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
         }
       }
       if (!changed) break;
+    }
+  }
+
+  // Weak stud links: a small group (≤ 4 parts) held on by ≤ 2 studs stays its own body with a
+  // breakable hold; everything else is joined as usual.
+  const weakHolds: { a: number; b: number; point: Vec3; studs: number }[] = [];
+  if (o.breakable) {
+    const size = new Map<number, number>();
+    parts.forEach((_, i) => size.set(dsu.find(i), (size.get(dsu.find(i)) ?? 0) + 1));
+    const links = new Map<string, { a: number; b: number; pts: Vec3[] }>();
+    for (const c of conns) {
+      if (c.kind !== "rigid" || !weak(c)) continue;
+      const ra = dsu.find(c.a), rb = dsu.find(c.b);
+      if (ra === rb) continue;
+      const k = pairKey(ra, rb);
+      const l = links.get(k) ?? { a: c.a, b: c.b, pts: [] };
+      l.pts.push(c.point);
+      links.set(k, l);
+    }
+    // a group is detachable when it's small and its only grip on the rest is ≤ 2 studs to one neighbour
+    const grip = new Map<number, { studs: number; neighbours: Set<number> }>();
+    for (const l of links.values()) {
+      const ra = dsu.find(l.a), rb = dsu.find(l.b);
+      for (const [x, y] of [[ra, rb], [rb, ra]]) {
+        const g = grip.get(x) ?? { studs: 0, neighbours: new Set<number>() };
+        g.studs += l.pts.length;
+        g.neighbours.add(y);
+        grip.set(x, g);
+      }
+    }
+    const detachable = (r: number) => {
+      const g = grip.get(r);
+      return !!g && (size.get(r) ?? 1) <= 4 && g.studs <= 2 && g.neighbours.size === 1;
+    };
+    const held: typeof links extends Map<string, infer V> ? V[] : never = [];
+    for (const l of links.values()) {
+      const ra = dsu.find(l.a), rb = dsu.find(l.b);
+      const da = detachable(ra), db = detachable(rb);
+      // (two equally small bits holding only each other: one piece)
+      if (da !== db || (da && db && (size.get(ra) ?? 1) !== (size.get(rb) ?? 1))) held.push(l);
+      else if (canUnion(l.a, l.b)) dsu.union(l.a, l.b);
+    }
+    for (const l of held) {
+      const p = l.pts.reduce((acc, x) => addv(acc, scalev(x, 1 / l.pts.length)), [0, 0, 0] as Vec3);
+      weakHolds.push({ a: l.a, b: l.b, point: p, studs: l.pts.length });
     }
   }
 
@@ -587,6 +645,9 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
   }
 
   const gears = findGears(parts, infos, parts.map((_, i) => bodies[bodyIndex.get(clusterOf[i])!].id), freeJoints, motors, shift);
+  const welds = weakHolds
+    .filter((h) => dsu.find(h.a) !== dsu.find(h.b))
+    .map((h) => ({ a: bodies[bodyIndex.get(clusterOf[h.a])!].id, b: bodies[bodyIndex.get(clusterOf[h.b])!].id, pointMm: v3(addv(toRobotPoint(h.point), shift)), breakN: h.studs * STUD_CLUTCH_N }));
 
   // Loose bodies (not connected to the hub's body by any path).
   const adj = new Map<string, Set<string>>();
@@ -617,6 +678,7 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     motors,
     freeJoints,
     gears,
+    ...(welds.length ? { welds } : {}),
     sensors,
     hub: hub ?? { body: bodies[0]?.id ?? "body0", posMm: { x: 0, y: 40, z: 0 }, rot: { x: 0, y: 0, z: 0, w: 1 } },
     footprintMm: { w: fw * 2, l: fl * 2, h: fh },
@@ -624,6 +686,9 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
   const bodyOfPart = parts.map((_, i) => bodies[bodyIndex.get(clusterOf[i])!].id);
   return { robot, report: { bodies: bodies.length, joints: freeJoints.length, motors: motors.length, gears: gears.length, loose, warnings }, bodyOfPart, toModelMm: (p: Vec3) => v3(addv(toRobotPoint(p), shift)) };
 }
+
+/** How hard (N) one stud's clutch holds before a part pops off (LEGO: roughly 1-3 N). */
+const STUD_CLUTCH_N = 2;
 
 // ---- sliding axles --------------------------------------------------------------------------------
 /** An axle slides easily in a round hole (a loose one falls through a beam under its own weight). */
@@ -898,6 +963,7 @@ export function assembleMissionModel(lib: Library, parts: ModelPart[], o: { name
     name: o.name,
     autoPorts: false,
     coarse: true,
+    // (mission models are built sturdy: only their game pieces come off, see the holds below)
     glue: () => true,
     glueTo: (a, b) => looseTag(a) === looseTag(b),
     // a game piece is one solid object, unless tagged "~" (it has working hinges of its own)
@@ -938,7 +1004,7 @@ export function assembleMissionModel(lib: Library, parts: ModelPart[], o: { name
     const mid: Vec3 = [0, 1, 2].map((a) => (best[1].lo[a] + best[1].hi[a]) / 2) as Vec3;
     welds.push({ a: main, b: best[0], pointMm: toModelMm(mid), breakN });
   }
-  if (welds.length) robot.welds = welds;
+  if (welds.length) robot.welds = [...(robot.welds ?? []), ...welds];
   if (o.fixed === false) return { robot, fixedBodies: [] };
   const pieceBodySet = new Set(parts.map((p, i) => (looseTag(p) ? bodyOfPart[i] : null)).filter((x): x is string => !!x));
   const lowest = (b: RobotModel["bodies"][number]) => Math.min(...b.shapes.map((sh) => sh.posMm.y - (sh.kind === "box" ? sh.sizeMm.y / 2 : sh.radiusMm)));

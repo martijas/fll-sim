@@ -423,6 +423,7 @@ export class Simulation {
       this.motors.set(j.port, { ctl: new MotorController(j.motor), housing, output, axisLocal: j.axisOut, angleDeg: 0 });
     }
     for (const j of m.freeJoints) this.addHinge(j, byId, this.frictionJoints, true);
+    for (const w of m.welds ?? []) this.welds.push(weldConstraint(w, byId));
     const robotGears = (m.gears ?? []).map((g) => gearConstraint(g, byId));
     this.gears.push(...robotGears);
     this.gearFriction.push(...takeGearFriction(robotGears, this.frictionJoints));
@@ -748,6 +749,20 @@ function solveConstraints(gears: GearConstraint[], friction: FrictionRow[], weld
     return { terms: [...m].map(([b, ang]) => ({ b, ang })), bias, limit, acc: 0, onSlip };
   };
   const rows: Row[] = [];
+  // Held pieces: their gravity is applied here (Rapier's is off for them) so that the hold can
+  // cancel it within the same step and the piece really comes to rest.
+  const weighed = new Set<RAPIER.RigidBody>();
+  for (const w of welds) {
+    if (w.broken) {
+      if (w.a.gravityScale() === 0) w.a.setGravityScale(1, true);
+      continue;
+    }
+    if (!w.a.isDynamic()) continue;
+    if (w.a.gravityScale() !== 0) w.a.setGravityScale(0, false);
+    if (w.a.isSleeping() || weighed.has(w.a)) continue;
+    weighed.add(w.a);
+    w.a.applyImpulse({ x: 0, y: -9.81 * w.a.mass() * DT, z: 0 }, false);
+  }
   for (const g of gears) {
     if (!g.a.isDynamic() && !g.b.isDynamic()) continue;
     const Ja = rotate(toQ(g.fa.rotation()), g.ja), Jb = rotate(toQ(g.fb.rotation()), g.jb);
@@ -763,6 +778,8 @@ function solveConstraints(gears: GearConstraint[], friction: FrictionRow[], weld
   }
   for (const w of welds) {
     if (w.broken || (!w.a.isDynamic() && !w.b.isDynamic())) continue;
+    // at rest: nothing to hold (and pushing would keep them awake)
+    if ((w.a.isSleeping() || !w.a.isDynamic()) && (w.b.isSleeping() || !w.b.isDynamic())) continue;
     const qa = toQ(w.a.rotation()), qb = toQ(w.b.rotation());
     const ta = toV(w.a.translation()), tb = toV(w.b.translation());
     const PA = add(ta, rotate(qa, w.pa), 1), PB = add(tb, rotate(qb, w.pb), 1);
@@ -798,14 +815,20 @@ function solveConstraints(gears: GearConstraint[], friction: FrictionRow[], weld
       if (Math.abs(r.acc + lambda) > r.limit && pass === 7) r.onSlip?.();
       lambda = acc - r.acc;
       r.acc = acc;
+      // (tiny corrections don't wake a body that has come to rest)
+      const wake = Math.abs(lambda) > 1e-6;
       for (const t of r.terms) {
         if (!t.b.isDynamic()) continue;
-        t.b.applyTorqueImpulse({ x: t.ang.x * lambda, y: t.ang.y * lambda, z: t.ang.z * lambda }, true);
-        if (t.lin) t.b.applyImpulse({ x: t.lin.x * lambda, y: t.lin.y * lambda, z: t.lin.z * lambda }, true);
+        t.b.applyTorqueImpulse({ x: t.ang.x * lambda, y: t.ang.y * lambda, z: t.ang.z * lambda }, wake);
+        if (t.lin) t.b.applyImpulse({ x: t.lin.x * lambda, y: t.lin.y * lambda, z: t.lin.z * lambda }, wake);
       }
     }
   // a hold that had to push with all it has gives way
-  for (const r of rows) if (r.group && !r.group.broken && Math.abs(r.acc) >= r.limit * 0.999) r.group.broken = true;
+  for (const r of rows)
+    if (r.group && !r.group.broken && Math.abs(r.acc) >= r.limit * 0.999) {
+      r.group.broken = true;
+      r.group.a.setGravityScale(1, true);
+    }
 }
 
 const qmul = (a: Quat, b: Quat): Quat => ({ w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z, x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y, y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x, z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w });
