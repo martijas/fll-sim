@@ -17,6 +17,7 @@ import { Telemetry } from "./components/Telemetry";
 import { RobotPanel } from "./components/RobotPanel";
 import { CalibrationPanel } from "./components/CalibrationPanel";
 import { ReplayBar, RunsPanel, RUN_COLORS, type RunRecord } from "./components/Runs";
+import { matPdfToPng } from "./lib/matPdf";
 import { buildLoadout, homeArea, loadBundledTools, loadCustomTools, loadPresetRobots, saveCustomTool, type CatalogEntry } from "./lib/loadout";
 import type { CalResult } from "./lib/calibration";
 import { loadRobotConfig, saveRobotConfig, toDriveBaseOptions, type RobotConfig } from "./lib/robotConfig";
@@ -734,11 +735,25 @@ export function App() {
   };
 
   const importMat = async () => {
-    const f = await window.fllsim.openFile([{ name: "Mat image (to scale)", extensions: ["png", "jpg", "jpeg", "webp"] }]);
+    const f = await window.fllsim.openFile([{ name: "Mat print file (PDF) or image", extensions: ["pdf", "png", "jpg", "jpeg", "webp"] }]);
     if (!f) return;
-    setMat(await loadMatImage(f.data));
-    await window.fllsim.saveUserMat(season!.id, f.data);
-    log(`Mat image ${f.name} loaded and saved for next time — it is stretched to ${season!.mat.sizeMm.w} × ${season!.mat.sizeMm.h} mm.`, "info");
+    let bytes = f.data;
+    if (f.name.toLowerCase().endsWith(".pdf")) {
+      log(`Reading ${f.name}…`, "info");
+      try {
+        const r = await matPdfToPng(f.data);
+        bytes = r.png;
+        const want = season!.mat.sizeMm.w / season!.mat.sizeMm.h;
+        if (Math.abs(r.aspect / want - 1) > 0.05)
+          log(`⚠ The PDF's artwork is ${r.aspect.toFixed(2)}:1 but the mat is ${want.toFixed(2)}:1 — is this the full mat print file? It will be stretched to fit.`, "err");
+      } catch (e) {
+        log(`Could not read ${f.name}: ${e}`, "err");
+        return;
+      }
+    }
+    setMat(await loadMatImage(bytes));
+    await window.fllsim.saveUserMat(season!.id, bytes);
+    log(`Mat ${f.name} loaded and saved for next time — it is stretched to ${season!.mat.sizeMm.w} × ${season!.mat.sizeMm.h} mm.`, "info");
   };
 
   // Keyboard shortcuts: F5 run, Shift+F5 stop, Ctrl+S save, Ctrl+O open.
@@ -816,7 +831,7 @@ export function App() {
           />
           <button onClick={() => setShowRobot(true)} disabled={running || robotSource !== "drivebase"} title="Motor and sensor ports, wheels">Ports…</button>
           <button onClick={() => setShowCal(true)} disabled={running || robotSource !== "drivebase"} title="Measure your real robot with a few test programs and make the simulated one match it">Calibrate…</button>
-          <button onClick={importMat} title="Load a scan/photo of your mat, cropped to its edges">Mat image…</button>
+          <button onClick={importMat} title="Load the official mat print file (PDF), or a scan/photo of your mat cropped to its edges">Mat…</button>
         </div>
       </header>
       {tab === "build" && ldraw && (

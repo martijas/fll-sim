@@ -8,6 +8,8 @@ const isDev = !!process.env.ELECTRON_RENDERER_URL;
 // The simulation worker shares a SharedArrayBuffer with the UI (pause, speed, hub buttons).
 // The app only ever loads its own bundled content, so enabling it globally is safe.
 app.commandLine.appendSwitch("enable-features", "SharedArrayBuffer");
+// Smoke tests keep their own profile (storage, saved mat), never the team's.
+if (process.env.FLLSIM_SMOKE) app.setPath("userData", join(app.getPath("temp"), "fllsim-smoke-profile"));
 const here = import.meta.dirname;
 
 /** Repository root when running from source; packaged resources dir in production. */
