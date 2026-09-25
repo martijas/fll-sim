@@ -217,7 +217,8 @@ export class Library {
   /** Is this file a "part" (leaf for the builder), rather than a model/subfile? */
   isPart(name: string): boolean {
     const n = normName(name);
-    return !n.startsWith("s/") && this.source.read("parts/" + n) !== null;
+    // (FLL Sim's own parts — rubber bands, mount points — are parts too)
+    return !n.startsWith("s/") && (n in BUILTIN || this.source.read("parts/" + n) !== null);
   }
 }
 
