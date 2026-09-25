@@ -117,7 +117,9 @@ async function handle(m: ToWorker) {
       if (!result.stopped) settle(api, 10000, onTick);
       running = false;
       emitFrame(true);
-      post({ type: "done", result });
+      post({ type: "done", result, snapshot: sim.snapshot() });
+    } else if (m.type === "snapshot") {
+      post({ type: "snapshot", snapshot: sim.snapshot() });
     }
   } catch (e) {
     running = false;

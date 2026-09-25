@@ -52,6 +52,8 @@ export interface BodySpec {
   extraInertia?: { axis: Vec3; kgm2: number };
   /** LDraw parts to render for this body (else the collision shapes are drawn). */
   visuals?: VisualSpec[];
+  /** Labels of the parts in this body ("0 // label" lines of the .ldr), e.g. to find game pieces. */
+  labels?: string[];
 }
 
 export interface MotorJointSpec {

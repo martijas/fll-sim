@@ -603,6 +603,7 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
         vis.push({ file: l.file, color: l.color === 16 ? p.color : l.color, m: visualMatrix(mul(p.m, l.m), shift) });
       });
     } else vis.push({ file: p.file, color: p.color, m: visualMatrix(p.m, shift) });
+    if (p.label && !(b.labels ??= []).includes(p.label)) b.labels.push(p.label);
     if (isMotor && n.rotor) rotorOfBody.set(bodyIndex.get(clusterOf[ni])!, { axis: dirToRobot(p.m, el.axisOut), inertia: motorInertia(el.type) });
   });
   for (const [bi, r] of rotorOfBody) bodies[bi].extraInertia = { axis: { x: r.axis[0], y: r.axis[1], z: r.axis[2] }, kgm2: r.inertia };

@@ -122,6 +122,9 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 .score-auto { font-size: 12px; padding: 2px 8px; }
 .score-auto.ok { color: var(--ok); }
 .score-auto.bad { color: #ffb36b; }
+.score-badge { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 3px; font-size: 10px; line-height: 15px; cursor: help; vertical-align: 1px; }
+.score-badge.auto { background: #1f4d34; color: #8fe0b0; }
+.score-badge.hand { background: #3a3a3a; color: #bbb; }
 .small { font-size: 11px; }
 .match-timer { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent); min-width: 48px; }
 .step-ctl { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
