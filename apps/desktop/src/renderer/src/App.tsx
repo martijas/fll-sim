@@ -19,6 +19,7 @@ import { CalibrationPanel } from "./components/CalibrationPanel";
 import type { CalResult } from "./lib/calibration";
 import { loadRobotConfig, saveRobotConfig, toDriveBaseOptions, type RobotConfig } from "./lib/robotConfig";
 import { SimController } from "./lib/simController";
+import { KEYSTONE_ID, keystoneModel } from "./lib/keystone";
 import { loadBundledMissions, loadDefaultMat, loadMatImage, loadSeason, poseOnDock, type BundledMission, type DockName, type DockSite, type LoadedMat } from "./lib/assets";
 import { playHubEvents } from "./lib/audio";
 import { DEFAULT_PROGRAM, starterBlocks } from "./lib/samples";
@@ -221,6 +222,14 @@ export function App() {
     const plain = Object.keys(bundled).filter((id) => !bundled[id].dock);
     const ids = new Set([...(realMissions ? [...plain, ...onDock.keys()] : []), ...Object.keys(missionLdr)]);
     for (const id of ids) {
+      if (id === KEYSTONE_ID) {
+        try {
+          out.push(keystoneModel(ldraw.lib, missionLdr[id]));
+        } catch (e) {
+          console.error("keystone species:", e);
+        }
+        continue;
+      }
       const spec = season.missionModels.find((m) => m.id === id);
       const docked = onDock.get(id);
       const text = missionLdr[id] ?? docked?.model.text ?? bundled[id]?.text;
@@ -626,17 +635,19 @@ export function App() {
           parts={buildParts}
           onChange={setBuildParts}
           log={log}
-          missionModels={missionNames.map((m) => ({ ...m, built: !!missionLdr[m.id] }))}
+          missionModels={[{ id: KEYSTONE_ID, name: "M13 keystone species (yours: starts in the launch area)" }, ...missionNames].map((m) => ({ ...m, built: !!missionLdr[m.id] }))}
           bundledMissions={missionNames.filter((m) => bundled[m.id]).map((m) => ({ ...m, text: bundled[m.id].text }))}
           onUseAsMissionModel={(id, p) => {
             if (!p.length) {
               const { [id]: _removed, ...rest } = missionLdr;
               setMissionLdr(rest);
-              log(`Mission model ${id} reset to ${bundled[id] ? "the standard model" : "its stand-in block"}`, "info");
+              log(id === KEYSTONE_ID ? "Keystone species removed from the field" : `Mission model ${id} reset to ${bundled[id] ? "the standard model" : "its stand-in block"}`, "info");
               return;
             }
             setMissionLdr({ ...missionLdr, [id]: serializeModel(p, `${id}.ldr`) });
-            log(`Mission model ${id} placed on the field from your build (${p.length} parts). Its heaviest part on the mat is held by Dual Lock.`, "info");
+            log(id === KEYSTONE_ID
+              ? `Keystone species (${p.length} parts) placed in the left launch area. It is a loose piece: deliver it to the M13 restoration platform.`
+              : `Mission model ${id} placed on the field from your build (${p.length} parts). Its heaviest part on the mat is held by Dual Lock.`, "info");
             setTab("sim");
           }}
           onUseAsRobot={(p) => {

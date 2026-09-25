@@ -92,11 +92,11 @@
     "book": "m10",
     "parts": 34,
     "pose": {
-      "xMm": 1021,
-      "yMm": 745,
-      "headingDeg": 305
+      "xMm": 1074,
+      "yMm": 734,
+      "headingDeg": 218
     },
-    "fitMeanMm": 1.51
+    "fitMeanMm": 3.41
   },
   "m11": {
     "file": "apps/desktop/resources/missions/m11.ldr",
