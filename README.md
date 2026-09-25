@@ -15,7 +15,7 @@ Current season pack: **2026-27 BIOGLOW**.
 | ![Instruction booklet: cover, parts list and numbered steps](docs/images/instructions.png) | ![Score tab with the robot's automatic equipment inspection](docs/images/score.png) |
 
 *(Screenshots show a plain mat: FIRST's mat artwork is copyrighted and isn't part of this
-repository. Load your own copy with **Mat image…**; see "Season materials and the mat".)*
+repository. Load your own copy with **Mat…**; see "Season materials and the mat".)*
 
 ## Status
 
@@ -26,10 +26,10 @@ repository. Load your own copy with **Mat image…**; see "Season materials and 
 | M2 Drive base — Rapier physics, SPIKE motor model (profiles, PID, stop modes, stall) | ✅ |
 | M3 Python — real MicroPython (WASM) in lockstep with sim time, SPIKE 3 API | ✅ |
 | M4 Sensors — colour (samples the mat), distance, IMU; telemetry panel | 🟡 force sensor + calibration UI pending |
-| M5 Word Blocks + `.llsp3` | 🟡 Word Blocks `.llsp3` compile + run (FIRST's BIOGLOW guided mission runs); visual blocks editor pending |
+| M5 Word Blocks + `.llsp3` | ✅ visual Word Blocks editor (SPIKE App blocks), `.llsp3` open/save in the SPIKE App's format, Python view |
 | M6 LEGO builder (LDraw parts, snapping, connectivity) | 🟡 real-part builder, connection → physics (rigid groups, hinges, motor axles), real-parts SPIKE drive base; gears and part thumbnails pending |
 | M7 BIOGLOW mission models + scoring | 🟡 official scoresheet + auto total (incl. Challenge Update 01), 2:30 match mode, auto equipment inspection, all 13 mission books built from real LEGO parts and placed on their mat marks (see below); exact orientation of M08/09 still to confirm on a real table |
-| M8 Real-robot calibration, replay, polish | ⏳ |
+| M8 Real-robot calibration, replay, polish | 🟡 calibration kit, replay + run comparison, automatic scoring, matches with launches from home, preset driving bases and tools; real-robot measurements pending |
 
 See `PLAN.md` for the full design.
 
@@ -81,10 +81,16 @@ pnpm sim run resources/2026-27-bioglow/code/guided-mission-bioglow-11.llsp3 \
 
 ## Word Blocks
 
-Word Blocks `.llsp3` projects from the SPIKE App open directly: they are compiled to Python
-(shown read-only in the editor, "View as Python") and run on the same simulated hub, so timing
-and physics are identical to Python programs. Edit blocks in the SPIKE App and re-open, or use
-**Convert to Python** to continue in Python.
+Programs can be written in Word Blocks, as in the SPIKE App: the editor has the same categories,
+blocks and wording (motors, movement, light, sound, events, control, sensors, operators,
+variables and My Blocks). **New… → Word Blocks project** starts one; SPIKE App `.llsp3` files open
+directly and **Save** writes them back in the SPIKE App's own format, so the same file goes to the
+real hub. Blocks the simulator doesn't model (music, weather, …) are kept unchanged.
+
+The blocks run as Python on the same simulated hub (**Python view** shows what they run as, so
+timing and physics are identical to Python programs). If a block raises an error (e.g. a motor
+block on a port with a sensor), that block is selected in the editor. The program you were
+working on is there again when the app restarts. **Convert to Python** continues in Python.
 
 ## Building robots with real LEGO parts
 
@@ -143,6 +149,24 @@ Rebrickable CSV dumps in `~/.cache/fll-sim/rebrickable`).
 The comparison also shows the difference in top speed, acceleration, coasting and straight-line
 drift, which tells you what else to adjust.
 
+## Robots, tools and matches
+
+The robot menu has the standard drive base (ports set with **Ports…**), the preset driving
+bases from FIRST's robot guides, and your own build from the Build tab. **Tools ▾** puts modular
+tools on the robot: a tool goes on at a **mount point** with the same name as one of its own, so
+it always attaches the same way. Mount points aren't real parts — in the Build tab, **Mount
+point** marks one (name it in the side panel) on a robot and on a tool, at the spot where they
+join; **Use as tool** keeps the current build as a tool.
+
+**⏱ Match** plays a match by the rulebook: after each launch the robot may only be handled when
+it is completely in a home area — then you can change tools, the program or its position and
+**Launch** again, with the field as the robot left it. If it stops outside home, bringing it back
+costs a precision token. **■ Stop** during a match interrupts the robot instead of resetting the
+field, and the 2:30 clock keeps running between launches.
+
+After a run, **⟲ Replay last run** scrubs through it (robot, field and telemetry), and earlier
+runs stay on the mat as dashed paths (**Runs** panel) to compare with.
+
 ## Missions and scoring (BIOGLOW)
 
 All 13 BIOGLOW mission books ship as real-LEGO models (`apps/desktop/resources/missions/*.ldr`,
@@ -160,8 +184,11 @@ On the field:
 **Mission models: LEGO / blocks** switches to simple blocks (faster). Your own build replaces a
 model via **Use as mission model…** in the Build tab (**Reset … to default** restores it). The
 Build tab's **Examples…** menu opens every mission model, e.g. to print its instructions.
-**⏱ Match** runs your program for 2:30 and stops it; the **Score** tab is the official scoresheet
-with the total calculated as you answer.
+The **Score** tab is the official scoresheet with the total calculated as you answer. At the end
+of a match (and with **Auto-score from field**) it fills in what it can judge from the simulated
+field — marked *auto* — and leaves the rest (things decided by pictures in the rulebook, your
+keystone species' trees, precision tokens) for you to answer. Your keystone species (M13) is a
+build of your own: **Use as mission model… → M13 keystone species** in the Build tab.
 
 ### Building instructions
 
@@ -196,8 +223,8 @@ python3 tools/mat-import/compose_color_mat.py --rulebook resources/2026-27-biogl
   --wireframe resources/2026-27-bioglow/derived/mat-wireframe.png --out resources/2026-27-bioglow/derived/mat-color.png
 ```
 
-In the app, **Mat image…** loads a scan/photo of your printed mat (cropped exactly to the mat edges);
-it is remembered per season. The colour sensor reads this image, so a colour-accurate scan gives
+In the app, **Mat…** loads FIRST's mat print file (PDF; the white margin is trimmed) or a
+scan/photo of your printed mat (cropped exactly to the mat edges); it is remembered per season. The colour sensor reads this image, so a colour-accurate scan gives
 the most realistic line-following.
 
 ## The simulated robot
