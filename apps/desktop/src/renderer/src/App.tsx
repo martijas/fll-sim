@@ -16,6 +16,7 @@ import { HubPanel } from "./components/HubPanel";
 import { Telemetry } from "./components/Telemetry";
 import { RobotPanel } from "./components/RobotPanel";
 import { CalibrationPanel } from "./components/CalibrationPanel";
+import { ReplayBar, RunsPanel, RUN_COLORS, type RunRecord } from "./components/Runs";
 import type { CalResult } from "./lib/calibration";
 import { loadRobotConfig, saveRobotConfig, toDriveBaseOptions, type RobotConfig } from "./lib/robotConfig";
 import { SimController } from "./lib/simController";
@@ -136,6 +137,13 @@ export function App() {
   /** Sim time (ms) when the current match started, or null. */
   const [matchStart, setMatchStart] = useState<number | null>(null);
   const field = useRef<FieldViewHandle>(null);
+  /** Frames of the run in progress (sampled), earlier runs, and the replay position. */
+  const recording = useRef<Frame[]>([]);
+  const sceneVersion = useRef(0);
+  const [runs, setRuns] = useState<RunRecord[]>([]);
+  const [replay, setReplay] = useState<{ i: number; playing: boolean } | null>(null);
+  const replayRef = useRef(replay);
+  replayRef.current = replay;
   const ctl = useRef<SimController | null>(null);
   const consoleEnd = useRef<HTMLDivElement>(null);
   const speedRef = useRef(1);
@@ -298,6 +306,11 @@ export function App() {
         scene: (bodies, ids) => field.current?.setScene(bodies, ids, visualsRef.current.lib, visualsRef.current.visuals),
         frame: (f) => {
           lastFrame.current = f;
+          if (f.running) {
+            const r = recording.current;
+            if (!r.length || f.timeMs - r[r.length - 1].timeMs >= 40) r.push(f);
+          }
+          if (replayRef.current) return; // the field shows the replay
           field.current?.setTransforms(f.transforms);
           if (f.running) field.current?.addTrail(f.pose.xMm, f.pose.yMm);
           setFrame(f);
@@ -308,6 +321,7 @@ export function App() {
         },
         hub: (ev) => playHubEvents(ev, speedRef.current),
         done: (r, snap) => {
+          if (!calTap.current) finishRecording.current();
           calDone.current?.();
           setRunning(false);
           setPaused(false);
@@ -341,6 +355,9 @@ export function App() {
       { season, mat: mat?.payload ?? null, robot: robotModel, start, fieldModels, footprints, colorCalibration: colorCal },
     );
     ctl.current = c;
+    // a new robot or field: recorded frames no longer match its bodies
+    sceneVersion.current++;
+    setReplay(null);
     c.boot();
     return () => c.dispose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -361,9 +378,71 @@ export function App() {
     return () => clearTimeout(t);
   }, [blocksProject, source, fileName]);
 
+  /** Keep the run just finished: its path for comparing, its frames for replay. */
+  const finishRecording = useRef(() => {});
+  finishRecording.current = () => {
+    const frames = recording.current;
+    recording.current = [];
+    if (frames.length < 2) return;
+    setRuns((rs) => {
+      const id = (rs[0]?.id ?? 0) + 1;
+      const rec: RunRecord = {
+        id,
+        label: `Run ${id} · ${fileName.replace(/\.llsp3$/, "")}`,
+        color: RUN_COLORS[(id - 1) % RUN_COLORS.length],
+        pts: frames.map((f) => f.pose),
+        durationS: (frames[frames.length - 1].timeMs - frames[0].timeMs) / 1000,
+        visible: false,
+        frames,
+        scene: sceneVersion.current,
+      };
+      // the previous run becomes a ghost path (shown), and only the newest keeps its frames
+      return [rec, ...rs.map((r, i) => ({ ...r, frames: undefined, visible: i === 0 ? true : r.visible }))].slice(0, 8);
+    });
+  };
+  useEffect(() => {
+    field.current?.setGhosts(runs.slice(1).filter((r) => r.visible).map((r) => ({ id: String(r.id), color: r.color, pts: r.pts })));
+  }, [runs]);
+  const replayFrames = runs[0]?.frames && runs[0].scene === sceneVersion.current ? runs[0].frames : null;
+  // show the replay frame
+  useEffect(() => {
+    if (!replay || !replayFrames) return;
+    const f = replayFrames[Math.min(replay.i, replayFrames.length - 1)];
+    field.current?.setTransforms(f.transforms);
+    setFrame(f);
+  }, [replay, replayFrames]);
+  // play back in sim time at the chosen speed (by the clock, so slow frames are skipped, not lagged)
+  const replayPlaying = !!replay?.playing;
+  useEffect(() => {
+    if (!replayPlaying || !replayFrames) return;
+    const i0 = replayRef.current?.i ?? 0;
+    const tSim0 = replayFrames[i0].timeMs, tWall0 = performance.now();
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      const t = tSim0 + (performance.now() - tWall0) * Math.min(speedRef.current, 8);
+      let i = replayRef.current?.i ?? i0;
+      while (i < replayFrames.length - 1 && replayFrames[i + 1].timeMs <= t) i++;
+      const done = i >= replayFrames.length - 1;
+      if (i !== replayRef.current?.i || done) setReplay({ i, playing: !done });
+      if (!done) timer = setTimeout(tick, 30);
+    };
+    timer = setTimeout(tick, 30);
+    return () => clearTimeout(timer);
+  }, [replayPlaying, replayFrames]);
+  const exitReplay = () => {
+    setReplay(null);
+    const f = lastFrame.current;
+    if (f) {
+      field.current?.setTransforms(f.transforms);
+      setFrame(f);
+    }
+  };
+
   const run = (match = false) => {
     const c = ctl.current;
     if (!c) return;
+    if (replay) exitReplay();
+    recording.current = [];
     setError(null);
     field.current?.clearTrail();
     if (frame && frame.timeMs > 300) c.setStart(start); // fresh robot (and field) for every run
@@ -375,12 +454,14 @@ export function App() {
     c.run(blocks ? blocks.python : source, match ? durationS * 1000 : undefined);
   };
   const stop = () => {
+    finishRecording.current();
     ctl.current?.stop();
     setRunning(false);
     setPaused(false);
     log("■ Stopped", "info");
   };
   const reset = () => {
+    if (replay) exitReplay();
     field.current?.clearTrail();
     ctl.current?.setStart(start);
     setRunning(false);
@@ -689,7 +770,16 @@ export function App() {
             <div className="status">
               {frame ? `t = ${(frame.timeMs / 1000).toFixed(2)} s · (${frame.pose.xMm.toFixed(0)}, ${frame.pose.yMm.toFixed(0)}) mm · ${frame.pose.headingDeg.toFixed(1)}°` : "starting…"}
               {running && (paused ? " · paused" : " · running")}
+              {replay && " · replay"}
             </div>
+            {!running && replayFrames && (
+              replay ? (
+                <ReplayBar frames={replayFrames} index={replay.i} playing={replay.playing} onSeek={(i) => setReplay({ i, playing: false })} onPlay={(p) => setReplay({ i: p && replay.i >= replayFrames.length - 1 ? 0 : replay.i, playing: p })} onExit={exitReplay} />
+              ) : (
+                <div className="replay-bar"><button onClick={() => setReplay({ i: 0, playing: true })} title="Watch the last run again, or scrub through it">⟲ Replay last run</button></div>
+              )
+            )}
+            {!running && <RunsPanel runs={runs} onToggle={(id) => setRuns(runs.map((r) => (r.id === id ? { ...r, visible: !r.visible } : r)))} onClear={() => { exitReplay(); setRuns([]); }} />}
           </div>
           <div className="bottom">
             <HubPanel pixels={frame?.pixels ?? new Array(25).fill(0)} lights={frame?.lights ?? {}} onButton={(w, d) => ctl.current?.setButton(w, d)} />

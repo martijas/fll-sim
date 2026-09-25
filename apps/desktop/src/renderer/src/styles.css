@@ -161,3 +161,15 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 .proc-part.label input { width: 120px; }
 .proc-part button { padding: 1px 6px; }
 .proc-kind { font-size: 11px; color: #fff; }
+
+/* Replay and earlier runs */
+.replay-bar { position: absolute; left: 50%; transform: translateX(-50%); bottom: 48px; display: flex; gap: 8px; align-items: center; background: rgba(21, 23, 28, 0.85); padding: 5px 10px; border-radius: 8px; }
+.replay-bar input[type="range"] { width: 240px; }
+.replay-bar button { white-space: nowrap; }
+.replay-time { font-variant-numeric: tabular-nums; min-width: 60px; }
+.runs-panel { position: absolute; right: 10px; bottom: 10px; max-width: calc(100% - 330px); background: rgba(21, 23, 28, 0.85); border-radius: 8px; padding: 6px 10px; display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+.runs-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.runs-head button { padding: 1px 8px; font-size: 11px; }
+.run-row { display: flex; align-items: center; gap: 6px; color: var(--text); white-space: nowrap; overflow: hidden; }
+.run-row .muted { color: var(--muted); margin: 0; overflow: hidden; text-overflow: ellipsis; }
+.swatch { width: 12px; height: 4px; border-radius: 2px; flex: none; }

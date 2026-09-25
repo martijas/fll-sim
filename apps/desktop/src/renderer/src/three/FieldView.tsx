@@ -13,6 +13,8 @@ export interface FieldViewHandle {
   addTrail(xMm: number, yMm: number): void;
   clearTrail(): void;
   setCamera(mode: CameraMode): void;
+  /** Paths of earlier runs, drawn dashed in their colours with an arrow at the end. */
+  setGhosts(ghosts: { id: string; color: string; pts: { xMm: number; yMm: number; headingDeg: number }[] }[]): void;
 }
 
 interface Props {
@@ -81,6 +83,7 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     dynamic: THREE.Group;
     trail: THREE.Line;
     trailPts: number[];
+    ghosts: THREE.Group;
     mode: CameraMode;
     matMesh: THREE.Mesh;
   } | null>(null);
@@ -150,7 +153,10 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     trail.frustumCulled = false;
     scene.add(trail);
 
-    st.current = { renderer, scene, camera, controls, bodies: [], dynamic, trail, trailPts: [], mode: "orbit", matMesh };
+    const ghosts = new THREE.Group();
+    scene.add(ghosts);
+
+    st.current = { renderer, scene, camera, controls, bodies: [], dynamic, trail, trailPts: [], ghosts, mode: "orbit", matMesh };
     setCam("orbit");
 
     const ro = new ResizeObserver(() => {
@@ -274,6 +280,32 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       s.trail.geometry = new THREE.BufferGeometry();
     },
     setCamera: setCam,
+    setGhosts(list) {
+      const s = st.current!;
+      for (const c of [...s.ghosts.children]) {
+        s.ghosts.remove(c);
+        c.traverse((o) => {
+          const m = o as THREE.Mesh;
+          m.geometry?.dispose();
+          (m.material as THREE.Material | undefined)?.dispose();
+        });
+      }
+      for (const g of list) {
+        if (g.pts.length < 2) continue;
+        const pts = g.pts.map((p) => toWorld(p.xMm, p.yMm).setY(0.0025));
+        const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({ color: g.color, dashSize: 0.012, gapSize: 0.008 }));
+        line.computeLineDistances();
+        line.frustumCulled = false;
+        s.ghosts.add(line);
+        // where (and which way) the robot ended up
+        const end = g.pts[g.pts.length - 1];
+        const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.05, 3), new THREE.MeshBasicMaterial({ color: g.color }));
+        arrow.position.copy(toWorld(end.xMm, end.yMm).setY(0.004));
+        arrow.rotation.set(-Math.PI / 2, 0, 0); // cone tip along -z = heading 0 (mat north)
+        arrow.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), (end.headingDeg * Math.PI) / 180);
+        s.ghosts.add(arrow);
+      }
+    },
   }));
 
   return <div ref={host} className="field-view" />;
