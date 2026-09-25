@@ -60,7 +60,13 @@ const MAP: Record<string, Target[]> = {
   "m06-07": [{ id: "m06-07", search: 60 }],
   "m08-09": [{ id: "m08-09", search: 60, outline: ["root"], rot: [0, 25], loose: ["research platform~"] }],
   // (field setup guide: the snail stands against the north wall, the spider in the middle)
-  m10: [{ id: "m10a", labels: ["snail"] }, { id: "m10b", labels: ["spider"], outline: ["green 3x5 L", "lime 2L"] }],
+  m10: [{ id: "m10a", labels: ["snail"] }, {
+      id: "m10b", labels: ["spider"], outline: ["green 3x5 L", "lime 2L"],
+      // the base's footprint is almost square, so it fits its two Dual Lock marks at four headings;
+      // the web's bottom beam runs NE from the base to the corner mark near (1095, 780), as in the
+      // field setup photo (the farm dock's grey grid on the near left)
+      hint: [1070, 733], search: 6, rot: [218, 2],
+    }],
   m11: [{ id: "m11", search: 50 }],
   m12: [{ id: "m12", exclude: ["post", "tie"], search: 50 }, { id: "m12-post", labels: ["post", "tie"], search: 40 }],
   // Missions 13-15 are interchangeable: teams choose which model goes on which dock (farm, city,

@@ -237,8 +237,20 @@ export function autoScore(s: Snapshot): AutoScore {
     else manual("m12b", "the support tie is next to the post: check that it is around it");
   } else missing(["m12b"], "Forest Elder post");
 
-  // M13 Keystone Species: the team's own model isn't in the simulator
-  manual("m13", "your keystone species isn't simulated: check it by hand");
+  // M13 Keystone Species: the team's own model (added in the Builder) on the restoration platform
+  // (the insert of the M13 model), and the young trees raised. Only "not on the platform" is
+  // certain: whether the trees count as raised is left to the team.
+  const species = s.bodies.filter((b) => b.labels.some((l) => loose(l) === "keystone"));
+  const m13 = modelOf(s, /^tree trunk/);
+  const deck = m13.filter((b) => has(b, /^insert (5x11 panel|7x11 frame)/));
+  if (!m13.length) missing(["m13"], "Keystone Species");
+  else if (!species.length) manual("m13", "add your keystone species in the Builder (Use as mission model… → M13 keystone species) to have it judged");
+  else {
+    const onDeck = species.some((b) => b.touches.some((t) => deck.some((d) => d.id === t)));
+    const grounded = species.some((b) => onMat(b));
+    if (!onDeck || grounded) set("m13", false, !onDeck ? "your keystone species isn't on the restoration platform" : "your keystone species is touching the mat");
+    else manual("m13", "your keystone species is on the restoration platform: check that the young trees are raised");
+  }
 
   // M14 Seeds of Renewal: the M02 and M09 seeds
   const station = modelOf(s, /^rod swing/);
