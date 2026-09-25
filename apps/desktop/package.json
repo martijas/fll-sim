@@ -14,7 +14,8 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "dist:linux": "electron-vite build && electron-builder --linux deb AppImage"
+    "dist:linux": "electron-vite build && electron-builder --linux deb AppImage",
+    "postinstall": "node -e \"require('electron')\""
   },
   "devDependencies": {
     "@dimforge/rapier3d-compat": "0.20.0",

@@ -2,6 +2,12 @@ packages:
   - "apps/*"
   - "packages/*"
   - "tools/*"
+# Packages whose install scripts must run (Electron downloads its binary in one). pnpm 11+ reads
+# allowBuilds; pnpm 9/10 read onlyBuiltDependencies. Without them, `pnpm dev` fails with
+# "Electron uninstall".
+onlyBuiltDependencies:
+  - electron
+  - esbuild
 allowBuilds:
   electron: true
   electron-winstaller: false
