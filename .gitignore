@@ -10,3 +10,4 @@ coverage/
 # LEGO Education API reference text (copyrighted) — keep locally
 docs.txt
 docs_wordblock.txt
+.claude/worktrees/

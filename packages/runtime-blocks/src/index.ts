@@ -443,3 +443,4 @@ function pyDict(o: Record<string, unknown>): string {
 export function compileBlocks(project: ScratchProject): CompileResult {
   return new Compiler(project).compile();
 }
+export { projectToXml, xmlToProject, emptyProject, programTarget } from "./xml";

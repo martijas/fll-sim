@@ -149,7 +149,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("file:save", async (_e, suggested: string, data: Uint8Array, filters: Electron.FileFilter[], path?: string) => {
-    let target = path;
+    let target = path ?? process.env.FLLSIM_SMOKE_SAVE_FILE;
     if (!target) {
       const r = await dialog.showSaveDialog({ defaultPath: suggested, filters });
       if (r.canceled || !r.filePath) return null;

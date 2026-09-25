@@ -6,8 +6,9 @@ import type { Library } from "@fll-sim/ldraw";
 import { assemble, assembleMissionModel, parseModel, serializeModel, type ModelPart } from "@fll-sim/assembly";
 import { Builder } from "./components/Builder";
 import { loadLibrary, type CatalogCategory } from "./lib/ldraw";
-import { readLlsp3, writePythonLlsp3, type Llsp3Project } from "@fll-sim/llsp3";
-import { compileBlocks, type CompileResult } from "@fll-sim/runtime-blocks";
+import { readLlsp3, writeBlocksLlsp3, writePythonLlsp3, type Llsp3Project, type ScratchProject } from "@fll-sim/llsp3";
+import { compileBlocks } from "@fll-sim/runtime-blocks";
+import { BlocksEditor, type BlocksEditorHandle } from "./components/BlocksEditor";
 import { FieldView, type CameraMode, type FieldViewHandle } from "./three/FieldView";
 import { CodeEditor } from "./components/CodeEditor";
 import { HubPanel } from "./components/HubPanel";
@@ -19,7 +20,7 @@ import { loadRobotConfig, saveRobotConfig, toDriveBaseOptions, type RobotConfig 
 import { SimController } from "./lib/simController";
 import { loadBundledMissions, loadDefaultMat, loadMatImage, loadSeason, poseOnDock, type BundledMission, type DockName, type DockSite, type LoadedMat } from "./lib/assets";
 import { playHubEvents } from "./lib/audio";
-import { DEFAULT_PROGRAM } from "./lib/samples";
+import { DEFAULT_PROGRAM, starterBlocks } from "./lib/samples";
 import type { Frame } from "./worker/protocol";
 
 const SEASON_ID = "2026-27";
@@ -34,12 +35,23 @@ const DOCK_MODELS = [
   { id: "m15", name: "M15 Biocentric Architecture" },
 ];
 
+/** The program being edited, restored on the next start. */
+interface Session { kind: "python" | "blocks"; fileName: string; source?: string; project?: ScratchProject }
+function loadSession(): Session | null {
+  try {
+    return JSON.parse(localStorage.getItem("fllsim.session") ?? "null");
+  } catch {
+    return null;
+  }
+}
+
 export function App() {
   const [season, setSeason] = useState<SeasonConfig | null>(null);
   const [mat, setMat] = useState<LoadedMat | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
-  const [source, setSource] = useState(DEFAULT_PROGRAM);
-  const [fileName, setFileName] = useState<string>("Untitled.llsp3");
+  const session = useMemo(loadSession, []);
+  const [source, setSource] = useState(session?.kind === "python" && session.source ? session.source : DEFAULT_PROGRAM);
+  const [fileName, setFileName] = useState<string>(session?.fileName ?? "Untitled.llsp3");
   const [filePath, setFilePath] = useState<string | undefined>();
   const [project, setProject] = useState<Llsp3Project | undefined>();
   const [lines, setLines] = useState<ConsoleLine[]>([]);
@@ -64,8 +76,14 @@ export function App() {
   const calTap = useRef<((line: string) => void) | null>(null);
   const calDone = useRef<(() => void) | null>(null);
   const lastFrame = useRef<Frame | null>(null);
-  /** Set when a Word Blocks project is open: the editor shows its compiled Python read-only. */
-  const [blocks, setBlocks] = useState<CompileResult | null>(null);
+  /** The Word Blocks program when a blocks project is open (the team's usual way of coding). */
+  const [blocksProject, setBlocksProject] = useState<ScratchProject | null>(() => (session ? (session.kind === "blocks" ? session.project ?? null : null) : starterBlocks(loadRobotConfig())));
+  /** Changes when another blocks project is loaded into the editor. */
+  const [blocksKey, setBlocksKey] = useState("start");
+  /** Blocks projects: show the blocks, or the Python they run as (read-only). */
+  const [codeView, setCodeView] = useState<"blocks" | "python">("blocks");
+  const blocks = useMemo(() => (blocksProject ? compileBlocks(blocksProject) : null), [blocksProject]);
+  const blocksEditor = useRef<BlocksEditorHandle>(null);
   const [tab, setTab] = useState<"sim" | "build">("sim");
   const [ldraw, setLdraw] = useState<{ lib: Library; catalog: CatalogCategory[] } | null>(null);
   const [buildParts, setBuildParts] = useState<ModelPart[]>([]);
@@ -252,6 +270,8 @@ export function App() {
     return { pass, why: `${fp.w.toFixed(0)} × ${fp.l.toFixed(0)} mm (diagonal ${diag.toFixed(0)} of ${r} mm launch radius), ${fp.h.toFixed(0)} mm tall (limit ${hMax}) → ${pass ? "fits" : "does not fit"} (attachments not included)` };
   }, [robotModel, season]);
   const visualsRef = useRef({ lib: null as Library | null, visuals: robotVisuals });
+  const blocksRef = useRef(blocks);
+  blocksRef.current = blocks;
   visualsRef.current = { lib: ldraw?.lib ?? null, visuals: robotVisuals };
 
   // (Re)create the simulation controller when season/mat are ready.
@@ -287,6 +307,13 @@ export function App() {
           else {
             log(`✖ ${r.errorType ?? "Error"}`, "err");
             setError({ line: r.errorLine, text: r.error ?? "" });
+            if (/ENODEV/.test(r.error ?? "")) log("Hint: that port has nothing plugged in, or the wrong kind of device (e.g. a sensor where the block expects a motor). Check the port letters in your program and the robot's Ports….", "info");
+            const bid = r.errorLine ? blocksRef.current?.lineToBlock[r.errorLine] : undefined;
+            if (bid) {
+              log("The block that caused it is selected in the editor.", "info");
+              setCodeView("blocks");
+              setTimeout(() => blocksEditor.current?.showBlock(bid), 50);
+            }
           }
         },
         fatal: (m) => {
@@ -305,6 +332,17 @@ export function App() {
   useEffect(() => {
     consoleEnd.current?.scrollIntoView({ block: "end" });
   }, [lines]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        const s: Session = blocksProject ? { kind: "blocks", fileName, project: blocksProject } : { kind: "python", fileName, source };
+        localStorage.setItem("fllsim.session", JSON.stringify(s));
+      } catch {
+        /* ignore */
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [blocksProject, source, fileName]);
 
   const run = (match = false) => {
     const c = ctl.current;
@@ -317,7 +355,7 @@ export function App() {
     log(match ? `▶ Match started: ${fileName} — ${Math.floor(durationS / 60)}:${String(durationS % 60).padStart(2, "0")} on the clock` : `▶ Running ${fileName}`, "info");
     setRunning(true);
     setMatchStart(match ? 250 : null); // the field settles for 250 ms before the program starts
-    c.run(source, match ? durationS * 1000 : undefined);
+    c.run(blocks ? blocks.python : source, match ? durationS * 1000 : undefined);
   };
   const stop = () => {
     ctl.current?.stop();
@@ -355,7 +393,7 @@ export function App() {
     if (!f) return;
     try {
       if (f.name.endsWith(".py")) {
-        setBlocks(null);
+        setBlocksProject(null);
         setSource(new TextDecoder().decode(f.data));
         setProject(undefined);
         setFileName(f.name.replace(/\.py$/, ".llsp3"));
@@ -364,17 +402,18 @@ export function App() {
         const p = readLlsp3(f.data);
         if (p.kind === "word-blocks") {
           const c = compileBlocks(p.project);
-          setBlocks(c);
+          setBlocksProject(p.project);
+          setBlocksKey(`${f.path}:${Date.now()}`);
+          setCodeView("blocks");
           setProject(p);
-          setSource(c.python);
           setFileName(f.name);
           setFilePath(f.path);
           setError(null);
-          log(`Opened Word Blocks project ${f.name} (shown as the Python it runs as)`, "info");
+          log(`Opened Word Blocks project ${f.name}`, "info");
           for (const w of c.warnings) log(`⚠ ${w}`, "err");
           return;
         }
-        setBlocks(null);
+        setBlocksProject(null);
         setProject(p);
         setSource(p.source);
         setFileName(f.name);
@@ -387,12 +426,8 @@ export function App() {
     }
   };
   const saveFile = async (as = false) => {
-    if (blocks) {
-      log("Word Blocks projects are read-only here — edit them in the SPIKE App, or use “Convert to Python”.", "err");
-      return;
-    }
     const name = fileName.replace(/\.llsp3$/, "");
-    const data = writePythonLlsp3(source, name, project);
+    const data = blocksProject ? writeBlocksLlsp3(blocksProject, name, project) : writePythonLlsp3(source, name, project);
     const r = await window.fllsim.saveFile(fileName, data, [{ name: "SPIKE project", extensions: ["llsp3"] }], as ? undefined : filePath);
     if (r) {
       setFileName(r.name);
@@ -462,8 +497,24 @@ export function App() {
     field.current?.clearTrail();
     log(`Robot: ${c.name} — drive ${c.leftPort}+${c.rightPort}, colour ${c.colorPorts.join(",") || "none"}, distance ${c.distancePort || "none"}, motors ${c.attachmentPorts.join(",") || "none"}`, "info");
   };
+  const newFile = (kind: "blocks" | "python") => {
+    setProject(undefined);
+    setFilePath(undefined);
+    setFileName("Untitled.llsp3");
+    setError(null);
+    if (kind === "blocks") {
+      setBlocksProject(starterBlocks(robot));
+      setBlocksKey(`new:${Date.now()}`);
+      setCodeView("blocks");
+    } else {
+      setBlocksProject(null);
+      setSource(DEFAULT_PROGRAM);
+    }
+    log(`New ${kind === "blocks" ? "Word Blocks" : "Python"} project`, "info");
+  };
   const convertToPython = () => {
-    setBlocks(null);
+    if (blocks) setSource(blocks.python);
+    setBlocksProject(null);
     setProject(undefined);
     setFileName(fileName.replace(/\.llsp3$/, "") + " (Python).llsp3");
     setFilePath(undefined);
@@ -502,6 +553,11 @@ export function App() {
           <button className={tab === "build" ? "on" : ""} onClick={() => setTab("build")} disabled={!ldraw}>Build</button>
         </div>
         <div className="group">
+          <select value="" onChange={(e) => { if (e.target.value) newFile(e.target.value as "blocks" | "python"); }} title="Start a new program">
+            <option value="">New…</option>
+            <option value="blocks">Word Blocks project</option>
+            <option value="python">Python project</option>
+          </select>
           <button onClick={openFile} title="Open .llsp3 / .py (Ctrl+O)">Open</button>
           <button onClick={() => saveFile(false)} title="Save as .llsp3 (Ctrl+S)">Save</button>
           <button onClick={() => saveFile(true)}>Save as…</button>
@@ -575,7 +631,7 @@ export function App() {
           }}
         />
       )}
-      <main className="main" style={{ display: tab === "sim" ? undefined : "none" }}>
+      <main className={`main${blocks && codeView === "blocks" ? " blocks-mode" : ""}`} style={{ display: tab === "sim" ? undefined : "none" }}>
         <section className="left">
           <div className="field-wrap">
             <FieldView ref={field} season={season} matCanvas={mat?.canvas ?? null} />
@@ -624,14 +680,31 @@ export function App() {
           </div>
         </section>
         <section className="right">
-          {blocks && (
-            <div className="banner">
-              <span>🧩 Word Blocks project — showing the Python it runs as (read-only).</span>
+          {blocks && blocksProject && (
+            <div className="banner blocks-bar">
+              <span className="tabs">
+                <button className={codeView === "blocks" ? "on" : ""} onClick={() => setCodeView("blocks")}>🧩 Blocks</button>
+                <button className={codeView === "python" ? "on" : ""} onClick={() => setCodeView("python")} title="The Python the simulator runs for these blocks (read-only)">Python view</button>
+              </span>
               {blocks.warnings.map((w) => <span key={w} className="warn">⚠ {w}</span>)}
-              <button onClick={convertToPython}>Convert to Python</button>
+              {codeView === "python" && <button onClick={convertToPython} title="Continue in Python (the blocks file is not changed)">Convert to Python</button>}
             </div>
           )}
-          <CodeEditor value={source} onChange={setSource} readOnly={!!blocks} errorLine={error?.line ?? null} errorText={error?.text ?? null} />
+          {blocksProject && (
+            <div className="blocks-wrap" style={{ display: codeView === "blocks" ? undefined : "none" }}>
+              <BlocksEditor
+                ref={blocksEditor}
+                project={blocksProject}
+                projectKey={blocksKey}
+                onChange={(p) => { setBlocksProject(p); setError(null); }}
+                onUnknown={(ops) => { if (ops.length) log(`These blocks are not simulated and are kept unchanged: ${ops.join(", ")}`, "err"); }}
+                onError={(m) => log(`Some blocks could not be shown in the editor (${m}). The program still runs as it was; please report this with the file.`, "err")}
+              />
+            </div>
+          )}
+          {(!blocksProject || codeView === "python") && (
+            <CodeEditor value={blocks ? blocks.python : source} onChange={setSource} readOnly={!!blocks} errorLine={error?.line ?? null} errorText={error?.text ?? null} />
+          )}
           <div className="right-tabs">
             <button className={rightTab === "console" ? "on" : ""} onClick={() => setRightTab("console")}>Console</button>
             <button className={rightTab === "score" ? "on" : ""} onClick={() => setRightTab("score")}>Score</button>

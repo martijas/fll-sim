@@ -37,6 +37,7 @@
     "monaco-editor": "0.57.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "scratch-blocks": "2.1.19",
     "three": "0.186.1",
     "vite": "7.3.6"
   },

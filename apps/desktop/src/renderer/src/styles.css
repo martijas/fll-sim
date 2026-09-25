@@ -35,7 +35,8 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 .left { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--border); }
 .field-wrap { position: relative; flex: 1; min-height: 0; }
 .field-view { position: absolute; inset: 0; }
-.cam-buttons { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; }
+.cam-buttons { position: absolute; top: 10px; right: 10px; left: 10px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; pointer-events: none; }
+.cam-buttons > * { pointer-events: auto; }
 .cam-buttons button { background: rgba(29, 32, 39, 0.85); }
 .status { position: absolute; left: 10px; bottom: 10px; background: rgba(21, 23, 28, 0.8); padding: 4px 10px; border-radius: 6px; font-variant-numeric: tabular-nums; }
 
@@ -142,3 +143,18 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 .cal-table td, .cal-table th { padding: 3px 8px; border-bottom: 1px solid #333; text-align: left; }
 .cal-notes { font-size: 13px; padding-left: 18px; }
 .modal-buttons.left { justify-content: flex-start; }
+
+/* Word Blocks editor */
+.main.blocks-mode { grid-template-columns: minmax(0, 1fr) minmax(560px, 1.3fr); }
+.main.blocks-mode .console { height: 26%; }
+.blocks-bar { background: var(--panel); border-bottom: 1px solid var(--border); color: var(--text); }
+.blocks-wrap { flex: 1; min-height: 0; position: relative; }
+.blocks-editor, .blocks-host { position: absolute; inset: 0; }
+.modal.small { width: 380px; }
+.modal .cal-field input:not([type]) { flex: 1; }
+.proc-parts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; padding: 12px; background: #ff6680; border-radius: 10px; }
+.proc-part { display: flex; align-items: center; gap: 4px; background: rgba(255, 255, 255, 0.18); border-radius: 8px; padding: 4px 6px; }
+.proc-part.s input, .proc-part.b input { background: #fff; color: #333; border-radius: 12px; width: 110px; }
+.proc-part.label input { width: 120px; }
+.proc-part button { padding: 1px 6px; }
+.proc-kind { font-size: 11px; color: #fff; }

@@ -12,7 +12,9 @@
     "sim": "pnpm --filter @fll-sim/sim-cli exec tsx src/cli.ts"
   },
   "devDependencies": {
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^22.0.0",
+    "jsdom": "26.1.0",
     "typescript": "^5.9.0",
     "vite": "7.3.6",
     "vitest": "^3.2.0"
