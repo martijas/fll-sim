@@ -1,289 +1,275 @@
 // Mission 05 Reaching Roots (bag 7), scripted from the official building instructions
-// (text-based book + picture book). LDraw frame: -Y up, -Z = front (towards the builder), +X = right.
-import { IDENTITY, type Library, type Mat4 } from "@fll-sim/ldraw";
-import { Build, all, at, axisIs, dir, dump, near, orient, pt, rot, type SnapInfo } from "../src/build";
+// (text-based book + picture book, 34 steps). LDraw frame: -Y up, -Z = front (towards the
+// builder), +X = right.
+//
+// Layout (world, LDU): two light grey 5x7 frames stand upright front-to-back at x = ±40 (bottom at
+// y = 0, front beam at z = -40); a 3x3 block joins their front beams; the two brown 7x3 bent
+// liftarms (the trunk) sit on the inner faces of the front beams at x = ±20. The trunk extension
+// (step 8) hinges on a white axle/pin in the trunks' corner holes (y = -210, z = -40) and the root
+// arm (steps 24-32) hinges on a 4L axle at the tip of the extension. In the field setup guide photo
+// (match start) the extension has fallen forward over the front detail, its 3L arm hanging down,
+// and the root arm lies back towards the tree with the lever standing up.
+import { IDENTITY, mul, type Library, type Mat4 } from "@fll-sim/ldraw";
+import { Build, all, at, axisIs, near, orient, rot, type SnapInfo } from "../src/build";
 
-const LBG = 71, DBG = 72, BLACK = 0, BLUE = 1, BROWN = 70, GREEN = 2, RED = 4, TAN = 19, WHITE = 15, NOUGAT = 84, PINK = 5, YELLOW = 14;
-const PIN = "61332.dat", PIN3 = "42924.dat", AXPIN = "43093.dat", AXPIN3 = "65249.dat", AXPIN3F = "11214.dat", PIN3FREE = "39888.dat";
-const round = (s: SnapInfo) => s.kind === "round";
-const hole = (s: SnapInfo) => s.gender === "F";
+const LBG = 71, DBG = 72, BLACK = 0, BLUE = 1, BROWN = 70, GREEN = 2, BGREEN = 10, RED = 4, TAN = 19, WHITE = 15, NOUGAT = 84, YELLOW = 14, CORAL = 353;
+const PIN = "61332.dat", PIN3 = "42924.dat", AXPIN = "43093.dat", AXPIN3 = "65249.dat", AXPIN3F = "11214.dat", PIN3FREE = "39888.dat", STUDPIN = "65826.dat";
 const x = (m: Mat4) => m[3], y = (m: Mat4) => m[7], z = (m: Mat4) => m[11];
+const hole = (s: SnapInfo) => s.gender === "F";
+type V3 = [number, number, number];
+
+/** Matrix from the images of the local X, Y, Z axes and the origin. */
+const frame = (ax: V3, ay: V3, az: V3, o: V3): Mat4 => new Float64Array([ax[0], ay[0], az[0], o[0], ax[1], ay[1], az[1], o[1], ax[2], ay[2], az[2], o[2]]);
+const tr = (t: V3): Mat4 => at(t[0], t[1], t[2]);
+const apply = (m: Mat4, p: V3): V3 => [m[0] * p[0] + m[1] * p[1] + m[2] * p[2] + m[3], m[4] * p[0] + m[5] * p[1] + m[6] * p[2] + m[7], m[8] * p[0] + m[9] * p[1] + m[10] * p[2] + m[11]];
+/** Snap whose axis line passes through p (within tol), at most `along` away along the axis. */
+const onAxis = (p: V3, tol = 1.5, along = 15) => (s: SnapInfo) => {
+  const v = [p[0] - s.pos[0], p[1] - s.pos[1], p[2] - s.pos[2]];
+  const t = v[0] * s.axis[0] + v[1] * s.axis[1] + v[2] * s.axis[2];
+  return Math.abs(t) <= along && Math.hypot(v[0] - t * s.axis[0], v[1] - t * s.axis[1], v[2] - t * s.axis[2]) <= tol;
+};
+const near3 = (a: V3, b: V3, tol = 1.5) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) <= tol;
+
+/** A part placed relative to a local frame (a sub-assembly), placed in the model later. */
+interface Local { file: string; color: number; m: Mat4; label: string; min: number }
+
+// ---- pose of the two hinged sub-assemblies (degrees) --------------------------------------
+// theta: trunk extension about the white axle/pin, angle of its 7L arm from straight up towards
+//        the back (+Z); negative = fallen forward (book: about +25, resting on the axle joiner).
+// psi:   root arm about the 4L axle, angle of its green 7L beams below the horizontal towards
+//        the back.
+// phi:   lever (5L liftarm on the free tan pin), clockwise from upright seen from the root arm's
+//        front (towards the back of the tree once mounted).
+// Default = the match-start pose of the field setup guide photo (found with a collision search,
+// see poseSearch below).
+const POSE = { theta: -117, psi: 19, phi: -19 };
 
 export function build(lib: Library) {
+  const env = (k: string, d: number) => (process.env[k] !== undefined ? Number(process.env[k]) : d);
+  return make(lib, { theta: env("M05_THETA", POSE.theta), psi: env("M05_PSI", POSE.psi), phi: env("M05_PHI", POSE.phi) });
+}
+
+export function make(lib: Library, pose: { theta: number; psi: number; phi: number }) {
   const b = new Build(lib, "M05 Reaching Roots");
+  /** Pin-like part attached into a given hole with its centre at a given point. */
+  const pinAt = (file: string, color: number, to: number | number[], holePos: V3, centre: V3, label?: string, extra?: (m: Mat4) => boolean) =>
+    b.attach(file, color, { to, where: onAxis(holePos), accept: (m) => near3([x(m), y(m), z(m)], centre) && (!extra || extra(m)), offsets: [-30, -20, -10, 0, 10, 20, 30], label });
 
-  // ---- Group 1 -------------------------------------------------------------------------
-  // 1.1 Right 5x7 hollow frame, upright, running front-back.
-  const f1 = b.place("64179.dat", LBG, orient("+z", "-x", "-y", [40, -70, 0]), "right hollow frame");
-  // 1.2 pin into the middle hole on the top side of the bottom beam, sticking up
-  const upPinR = b.attach(PIN, BLACK, { to: f1, where: all(axisIs("-y"), near([40, -10, 0], 5)), accept: (m) => y(m) < -12, label: "pin up (bottom beam)" });
+  // ---- Group 1: steps 1-6 ---------------------------------------------------------------
+  // 1.1 right 5x7 hollow frame, upright, running front-back (7L liftarms upright)
+  const FR = orient("+z", "-x", "-y", [40, -70, 0]);
+  const f1 = b.place("64179.dat", LBG, FR, "right hollow frame");
+  // 1.2 pin from the top into the middle hole on the top side of the bottom beam
+  const upPinR = pinAt(PIN, BLACK, f1, [40, -10, 0], [40, -20, 0], "pin up (right frame)");
   b.step();
-  // 2 pins into the bottom two holes on the left face of the front beam, sticking out left
-  const p2 = [-10, -50].map((yy) => b.attach(PIN, BLACK, { to: f1, where: all(axisIs("x"), near([40, yy, -40], 3)), accept: (m) => x(m) < 38 }));
+  // 2 two pins from the left into the bottom two holes on the left of the front beam
+  const p2 = [-10, -50].map((yy) => pinAt(PIN, BLACK, f1, [40, yy, -40], [30, yy, -40]));
   b.step();
-  // 3 dark grey 3x3 block onto those two pins (its two side holes)
-  if (process.env.M05_STOP === "3") {
-    for (const i of p2) dump(b, i);
-  }
-  // (by its two side holes — the in-plane holes at x = ±21 in the part — not the face holes)
-  const blk = b.attach("39793.dat", DBG, { to: p2, minConnections: 2, own: (s) => Math.abs(Math.abs(s.pos[0]) - 21) < 1, accept: (m) => x(m) < 30, label: "3x3 block" });
+  // 3 dark grey 3x3 block, upright facing front, its two right side holes onto those pins
+  const blk = b.put("39793.dat", DBG, orient("+x", "+z", "-y", [0, -30, -40]), 2, "3x3 block (front)");
   b.step();
-  // 4 two pins into the two holes on the left side of the block
-  if (process.env.M05_STOP === "3") { dump(b, blk); return b; }
-  const blkHoles = b.snaps(blk, (s) => hole(s) && axisIs("x")(s) && s.pos[0] < b.bounds(blk).min[0] + 12 && s.secs.startsWith("R 6 16"));
-  if (blkHoles.length !== 2) throw new Error(`step 4: expected 2 left holes on the block, found ${blkHoles.length}`);
-  const p4 = blkHoles.map((h) => b.attach(PIN, BLACK, { to: blk, where: near(h.pos, 1), accept: (m) => x(m) < h.pos[0] }));
+  // 4 two pins from the left into the block's two left side holes
+  const p4 = [-10, -50].map((yy) => pinAt(PIN, BLACK, blk, [-21, yy, -40], [-30, yy, -40]));
   b.step();
-
-  // 5 bent liftarm with an axle/pin in its front axle hole and a pin two holes up, then its two
-  //   pins into the top two holes on the left face of the frame's front beam.
-  const s5 = new Build(lib, "trunk side");
-  const bent = s5.place("32271.dat", BROWN, IDENTITY);
-  // (pins pushed in from the +y face: with the arm upright and the 3L arm pointing back, they face right)
-  s5.attach(AXPIN, BLUE, { to: bent, where: (s) => s.kind === "axle" && Math.abs(s.pos[2]) < 12, accept: (m) => y(m) < -5 });
-  s5.attach(PIN, BLACK, { to: bent, where: near([0, 0, 40], 3), accept: (m) => y(m) < -5 });
-  const trunkR = b.attachGroup(s5, {
-    to: f1,
-    where: all(axisIs("x"), (s) => s.pos[1] < -80 && Math.abs(s.pos[2] + 40) < 3),
-    minConnections: 2,
-    // 7L arm rising upwards (corner hole high above the pins), 3L arm at the top pointing away
-    // from the builder (+z)
-    accept: (T) => {
-      // flush against the frame's left face (liftarm centre 20 LDU left of the frame's centre plane at x = 40)
-      const ok = Math.abs(x(T) - 20) < 4 && pt(T, [0, 0, 120])[1] < -170 && pt(T, [32, 0, 144])[2] > pt(T, [0, 0, 120])[2] + 10;
-      if (process.env.M05_DBG) console.log("acc", x(T).toFixed(0), pt(T, [0, 0, 120]).map(Math.round), pt(T, [32, 0, 144]).map(Math.round), ok);
-      return ok;
-    },
-    label: "right trunk bent liftarm",
-  });
+  // 5 right trunk: 7x3 bent liftarm upright on the inner face of the frame's front beam, the 3L
+  //   arm at the top pointing back; blue axle/pin in its bottom axle hole, pin two holes up, both
+  //   into the top two left holes of the front beam.
+  const TR = orient("+z", "-x", "-y", [20, -90, -40]); // local z = up the 7L, local x = back
+  const trunkR = b.place("32271.dat", BROWN, TR, "right trunk bent liftarm");
+  pinAt(AXPIN, BLUE, [trunkR, f1], [20, -90, -40], [30, -90, -40], "right trunk axle/pin");
+  pinAt(PIN, BLACK, [trunkR, f1], [20, -130, -40], [30, -130, -40], "right trunk pin");
   b.step();
-  // 6 3L pin (1L liftarm on it) into the 4th hole from the bottom of the bent liftarm, sticking left
-  const bentR = trunkR[0];
-  const holes = b.snaps(bentR, (s) => hole(s) && s.kind === "round").sort((a, c) => c.pos[1] - a.pos[1]);
-  const h4 = holes[2]; // bottom axle hole + 3 round holes up = the 4th hole
-  const p6 = b.attach(PIN3, BLUE, { to: bentR, where: near(h4.pos, 1), accept: (m) => x(m) < h4.pos[0] - 15, offsets: [-20, -10, 0, 10, 20], label: "3L pin" });
-  b.attach("18654.dat", BROWN, { to: p6, accept: (m) => x(m) < h4.pos[0] - 15, label: "1L liftarm on 3L pin" });
+  // 6 blue 3L pin (stop ring on the left) with a 1L liftarm in the middle, its right end in the
+  //   4th hole from the bottom of the bent liftarm
+  const pin6 = pinAt(PIN3, BLUE, trunkR, [20, -150, -40], [0, -150, -40], "trunk 3L pin", (m) => m[0] > 0.5); // stop ring (at local -x) on the left
+  b.put("18654.dat", BROWN, at(0, -150, -40, rot("z", 90)), 1, "1L liftarm (trunk)");
   b.step();
 
-  // 7 green 2L liftarm with a red 2L axle (1L out to the left) and an axle/pin in its pin hole,
-  //   a 3L axle joiner on that, another axle/pin in the joiner; the red axle goes into the top
-  //   axle hole of the bent liftarm so the joiner hangs below it.
-  const s7 = new Build(lib, "root joint");
-  const l2 = s7.place("60483.dat", GREEN, IDENTITY);
-  s7.attach("32062.dat", RED, { to: l2, where: (s) => s.kind === "axle", accept: (m) => y(m) < -5, offsets: [-30, -20, -10, 0, 10, 20, 30] });
-  const ap7 = s7.attach(AXPIN, BLUE, { to: l2, where: (s) => s.kind === "round" && hole(s), own: (s) => true, accept: (m) => y(m) < -8 });
-  const j7 = s7.attach("42195.dat", NOUGAT, { to: ap7, accept: (m) => y(m) < -25 });
-  s7.attach(AXPIN, BLUE, { to: j7, accept: (m) => y(m) < -40 });
-  const topAxle = b.snaps(bentR, (s) => s.kind === "axle" && hole(s)).sort((a, c) => a.pos[1] - c.pos[1])[0];
-  const g7 = b.attachGroup(s7, {
-    to: bentR,
-    where: near(topAxle.pos, 1),
-    ownPart: [1], // the red axle goes into the bent liftarm
-    accept: (T) => pt(T, [0, 0, 0])[0] < topAxle.pos[0] - 5, // assembly on the left of the liftarm
-    prefer: (T) => pt(T, [0, 0, 20])[1] * 0.01, // joiner hanging below
-    label: "root joint",
-  });
+  // ---- Group 2: steps 7-13 --------------------------------------------------------------
+  // 7 green 2L liftarm on a red 2L axle in the top axle hole of the right trunk, on its outer
+  //   side, hanging back-down at right angles to the 3L arm; axle/pin + 3L axle joiner +
+  //   axle/pin from its pin hole run left under the 3L arm (to the left trunk's green 2L).
+  //   In the trunk frame: 3L arm direction (0.8,0,0.6), the green 2L runs along (0.6,0,-0.8).
+  const greenM = (side: 1 | -1, T: Mat4) => mul(T, frame([-0.8, 0, -0.6], [0, 1, 0], [0.6, 0, -0.8], [32, -20 * side, 144]));
+  const along = (T: Mat4, ly: number, lz = 20): V3 => apply(T, [32 + 0.6 * lz, ly, 144 - 0.8 * lz]);
+  const gR = b.put("60483.dat", GREEN, greenM(1, TR), 0, "green 2L liftarm (right)");
+  const topR = apply(TR, [32, 0, 144]);
+  pinAt("32062.dat", RED, [trunkR, gR], topR, apply(TR, [32, -10, 144]), "red 2L axle (right)");
+  const apR = pinAt(AXPIN, BLUE, gR, along(TR, -20), along(TR, -10), "joint axle/pin (right)");
+  const joiner = b.attach("42195.dat", NOUGAT, { to: apR, accept: (m) => near3([x(m), y(m), z(m)], along(TR, 20)), label: "3L axle joiner (trunk)" });
+  const apL = b.attach(AXPIN, BLUE, { to: joiner, accept: (m) => near3([x(m), y(m), z(m)], along(TR, 50)), label: "joint axle/pin (left)" });
   b.step();
 
-  // 8 trunk extension: 5L liftarm, stud pin + flower plate, two pins, a second bent liftarm and
-  //   a white 3L axle/pin; the axle/pin's pin goes into the corner hole of the main bent liftarm.
-  const s8 = new Build(lib, "trunk extension");
-  const l5 = s8.place("32316.dat", BROWN, IDENTITY);
-  const l5holes = s8.snaps(l5, (s) => hole(s) && axisIs("y")(s)).sort((a, c) => a.pos[2] - c.pos[2]);
-  s8.attach("65826.dat", RED, { to: l5, where: near(l5holes[l5holes.length - 1].pos, 1), accept: (m) => y(m) < -3, label: "pin with stud" });
-  for (const h of [l5holes[0], l5holes[l5holes.length - 2]]) s8.attach(PIN, BLACK, { to: l5, where: near(h.pos, 1), accept: (m) => y(m) > 3 });
-  const bent2 = s8.attach("32271.dat", BROWN, { to: [2, 3], minConnections: 2, accept: (m) => y(m) > 5, label: "upper bent liftarm" });
-  // axle side through the bent liftarm (1L out on the far side), pin side towards the 5L's layer
-  // (65249: pin at the part's -X end, axle towards +X)
-  s8.attach(AXPIN3, WHITE, { to: bent2, where: (s) => s.kind === "axle", minConnections: 1, accept: (m) => pt(m, [-25, 0, 0])[1] < pt(m, [25, 0, 0])[1], label: "white 3L axle/pin" });
-  const corner = b.snaps(bentR, (s) => hole(s) && s.kind === "round").sort((a, c) => a.pos[1] - c.pos[1])[0];
-  if (process.env.M05_STOP === "8") {
-    s8.parts.forEach((_, i) => dump(s8, i));
-    dump(b, bentR);
-    return b;
-  }
-  const wLocal = s8.parts[s8.parts.length - 1].m;
-  b.attachGroup(s8, {
-    to: bentR,
-    where: near(corner.pos, 3),
-    ownPart: [s8.parts.length - 1],
-    // hinged on the white axle/pin: swing it back until it rests on the axle joiner
-    angles: Array.from({ length: 24 }, (_, i) => i * 15),
-    maxOverlap: 40, // it rests against the axle joiner
-    minConnections: 1,
-    // the white axle/pin's pin is in the corner hole and the rest of the extension is on the left
-    accept: (T) => pt(T, [wLocal[3], wLocal[7], wLocal[11]])[0] < corner.pos[0] - 5 && pt(T, [0, 0, 0])[0] < corner.pos[0] - 5,
-    prefer: (T) => pt(T, [0, 0, 40])[2] * 0.01 - pt(T, [0, 0, 40])[1] * 0.005,
-    label: "trunk extension",
-    debug: !!process.env.M05_DBG,
-  });
+  // 8 trunk extension, built in the frame of its bent liftarm ("UB": local z = along the 7L
+  //   from the front axle hole, local x = side of the 3L arm, local y = world +X):
+  //   5L liftarm on its right with a red stud pin + coral flower plate in the back hole, two
+  //   pins joining it to the bent liftarm's 4th hole and corner hole, white 3L axle/pin through
+  //   the front axle hole (1L out on the left, pin on the right).
+  const ext: Local[] = [
+    { file: "32271.dat", color: BROWN, m: IDENTITY, label: "upper bent liftarm", min: 0 },
+    { file: "32316.dat", color: BROWN, m: frame([1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 20, 100]), label: "trunk extension 5L", min: 0 },
+  ];
+  // pins from the left of the 5L into the bent liftarm (centre at the joint face y = 10)
+  for (const zz of [60, 120]) ext.push({ file: PIN, color: BLACK, m: frame([0, 1, 0], [-1, 0, 0], [0, 0, 1], [0, 10, zz]), label: "trunk extension pin", min: 2 });
+  // extension frame in the world: hinge = the right trunk's corner hole (x = 0 between the trunks)
+  const hinge: V3 = [0, -210, -40];
+  const th = (pose.theta * Math.PI) / 180;
+  const d: V3 = [0, -Math.cos(th), Math.sin(th)], e: V3 = [0, -Math.sin(th), -Math.cos(th)];
+  const E = frame(e, [1, 0, 0], d, hinge);
+  const extIdx: number[] = [];
+  for (const p of ext) extIdx.push(b.put(p.file, p.color, mul(E, p.m), p.min, p.label));
+  // red 1L pin with a stud in the back hole of the 5L, stud on the right; coral flower plate on it
+  const bp5 = apply(E, [0, 20, 140]);
+  const sp = b.attach(STUDPIN, RED, { to: extIdx[1], where: near(bp5, 12), accept: (m) => m[0] > 0.99, label: "red stud pin (extension)" });
+  b.attach("24866.dat", CORAL, { to: sp, where: (s) => s.kind === "stud" && s.gender === "M", label: "coral flower plate" });
+  // white 3L axle/pin (pin at its own -X end): axle through the front axle hole of the bent
+  // liftarm with 1L out on the left, pin on the right -> into the right trunk's corner hole
+  b.put(AXPIN3, WHITE, mul(E, frame([0, -1, 0], [1, 0, 0], [0, 0, 1], [0, 0, 0])), 2, "white 3L axle/pin (extension hinge)");
   b.step();
 
-  // 9 left bent liftarm (axle/pin at the front axle hole, pin two holes up) slides onto the white
-  //   axle/pin sticking out on the left and pins into the left of the trunk.
-  const whiteAx = b.parts.length - 1;
-  if (process.env.M05_STOP === "9") {
-    for (const i of [whiteAx, p6, whiteAx - 1, whiteAx - 4]) dump(b, i);
-    return b;
-  }
-  // The left bent liftarm is the right one moved 40 LDU to the left (both bend backwards: the
-  // instructions build the two sides the same way), its pins pushed in from the left face.
-  const mR = b.parts[bentR].m;
-  const mL = new Float64Array(mR);
-  mL[3] -= 40;
-  const bentLi = b.put("32271.dat", BROWN, mL, 1, "left trunk bent liftarm"); // held by the white axle/pin + 3L pin
-  const pinsOf = (li: number) => {
-    const ax = b.snaps(li, (s) => s.kind === "axle" && hole(s)).sort((a, c) => c.pos[1] - a.pos[1])[0]; // bottom axle hole
-    const h3 = b.snaps(li, (s) => hole(s) && s.kind === "round").sort((a, c) => c.pos[1] - a.pos[1]).find((s) => Math.abs(s.pos[1] - (ax.pos[1] - 40)) < 3)!;
-    return { ax, h3 };
-  };
-  const { ax: axL, h3: h3L } = pinsOf(bentLi);
-  const lp1 = b.attach(AXPIN, BLUE, { to: bentLi, where: near(axL.pos, 1), own: () => true, accept: (m) => x(m) < axL.pos[0] - 5, label: "left trunk axle/pin" });
-  const lp2 = b.attach(PIN, BLACK, { to: bentLi, where: near(h3L.pos, 1), accept: (m) => x(m) < h3L.pos[0] - 5, label: "left trunk pin" });
-  const leftTrunk = [bentLi, lp1, lp2];
-  const bentL = leftTrunk[0];
+  // 9 left trunk bent liftarm (same pose as the right one, 40 LDU to the left): corner hole on the
+  //   white axle, 4th hole on the 3L pin; axle/pin + pin sticking out left for the left frame
+  const TL = orient("+z", "-x", "-y", [-20, -90, -40]);
+  const trunkL = b.put("32271.dat", BROWN, TL, 2, "left trunk bent liftarm");
+  const tlAx = pinAt(AXPIN, BLUE, trunkL, [-20, -90, -40], [-30, -90, -40], "left trunk axle/pin");
+  const tlPin = pinAt(PIN, BLACK, trunkL, [-20, -130, -40], [-30, -130, -40], "left trunk pin");
+  b.step();
+  // 10 red 2L axle from the left into the top axle hole, green 2L liftarm on it (outer side),
+  //    its pin hole on the joint axle/pin
+  const gL = b.put("60483.dat", GREEN, greenM(-1, TL), 1, "green 2L liftarm (left)");
+  pinAt("32062.dat", RED, [trunkL, gL], apply(TL, [32, 0, 144]), apply(TL, [32, 10, 144]), "red 2L axle (left)");
+  b.step();
+  // 11 left 5x7 frame onto the four pins on the left; pin up in its bottom beam
+  const f2 = b.put("64179.dat", LBG, orient("+z", "-x", "-y", [-40, -70, 0]), 4, "left hollow frame");
+  const upPinL = pinAt(PIN, BLACK, f2, [-40, -10, 0], [-40, -20, 0], "pin up (left frame)");
+  b.step();
+  // 12 stabiliser: flat 3x3 block (rounded ends front/back) with pins up in its left and right
+  //    holes, 5L liftarm on those pins; the 5L's end holes go onto the frames' pins
+  const blk2 = b.put("39793.dat", DBG, at(0, -10, 0), 0, "3x3 block (stabiliser)");
+  const sp1 = [-20, 20].map((xx) => pinAt(PIN, BLACK, blk2, [xx, -10, 0], [xx, -20, 0]));
+  b.put("32316.dat", BROWN, orient("-z", "+y", "+x", [0, -30, 0]), 4, "5L stabiliser");
+  void sp1; void upPinR; void upPinL;
+  b.step();
+  // 13 red 1L pins with a stud, studs to the front: three front holes of the right frame, the
+  //    bottom front hole of the left frame, top and bottom holes of the front block's cross
+  const studPin = (part: number, p: V3) =>
+    b.attach(STUDPIN, RED, { to: part, where: all(hole, axisIs("z"), near(p, 3)), accept: (m) => m[8] < -0.99 && Math.abs(z(m) + 50) < 1, label: "stud pin (front)" });
+  const studs = [...[-30, -70, -110].map((yy) => studPin(f1, [40, yy, -40])), studPin(f2, [-40, -30, -40]), ...[-50, -10].map((yy) => studPin(blk, [0, yy, -40]))];
   b.step();
 
-  // 10 red 2L axle in the top axle hole of the left bent liftarm, green 2L liftarm on it
-  const topL = b.snaps(bentL, (s) => s.kind === "axle" && hole(s)).sort((a, c) => a.pos[1] - c.pos[1])[0];
-  const ax10 = b.attach("32062.dat", RED, { to: bentL, where: near(topL.pos, 1), accept: (m) => x(m) < topL.pos[0] - 5 });
-  b.attach("60483.dat", GREEN, { to: [ax10, bentL], accept: (m) => x(m) < topL.pos[0] - 5, prefer: (m) => -pt(m, [0, 0, 20])[1] * 0.01, label: "green 2L liftarm (left)" });
+  // ---- Group 3: steps 14-23, front detail, built lying flat on a green 3x3 plate ------------
+  //    (its own frame: studs up = -y, front = -z; stud-grid parts placed exactly)
+  const dd = new Build(lib, "front detail");
+  dd.place("11212.dat", GREEN, IDENTITY, "3x3 plate"); // top at y = 0, studs at x,z in {-20,0,20}
+  dd.put("3298.dat", BROWN, at(10, -24, 20), 4, "2x3 slope"); // 14.2 right two columns, slope at the front
+  dd.step();
+  dd.put("3002.dat", BROWN, at(-40, -24, 10), 2, "2x3 brick"); // 15 backs even, left two columns overhang
+  dd.step();
+  dd.put("3021.dat", BROWN, at(-50, 0, 0, rot("y", 90)), 4, "2x3 plate under the overhang"); // 16
+  dd.step();
+  dd.put("3004.dat", BROWN, at(-50, -48, 20), 2, "1x2 brick"); // 17 back row, left sides even
+  dd.step();
+  dd.put("3573.dat", BROWN, at(-10, -88, 20, rot("y", 90)), 1, "curved slope"); // 18 on the 1x2's right stud
+  dd.step();
+  // 19 green 1x2 slopes, tall side at the back: centred on the front row (right of the leftmost
+  //    column, which the arch takes), and on the brick behind it
+  dd.put("85984.dat", GREEN, at(-30, 0, -20), 2, "1x2 slope (front)");
+  dd.put("85984.dat", GREEN, at(-30, -24, 0), 2, "1x2 slope");
+  dd.step();
+  // 20 brown 1x5x4 inverted half arch on the leftmost column, tall end at the back (its stepped
+  //    bottom sits on the 1x2 brick, the 2x3 brick and the 2x3 plate), front two studs overhanging
+  dd.put("30099.dat", BROWN, at(-60, -96, 20, rot("y", 90)), 3, "1x5x4 inverted arch");
+  dd.step();
+  // 21 brown 1x3 plate under the two overhanging studs (sticks out one more to the front)
+  dd.put("3623.dat", BROWN, at(-60, 0, -60, rot("y", 90)), 2, "1x3 plate");
+  dd.step();
+  // 22.1 green 1x2 curved slope: front stud on the plate's front stud, back on the arch's low stud
+  dd.put("11477.dat", GREEN, at(-60, 0, -70), 1, "1x2 curved slope");
+  // 22.2 brown 1x1 slope on the arch's top stud, tall side at the back
+  dd.put("54200.dat", BROWN, at(-60, -96, 20), 1, "1x1 slope");
+  dd.step();
+  b.step();
+  // 23 the detail goes onto the six studs on the front of the tree, anti-studs to the back, the
+  //    arch upright on the right; left, right and bottom sides even with the tree
+  const detail = b.attachGroup(dd, { to: studs, where: (s) => s.gender === "M", rotation: orient("-x", "+z", "+y"), minConnections: 5, maxOverlap: 25 /* plates touching the frames */, accept: (T) => Math.abs(x(T) + 20) < 1 && Math.abs(y(T) + 30) < 1, label: "front detail" });
   b.step();
 
-  // 11 left 5x7 frame onto the four pins on the left side; pin up in its bottom beam
-  const leftPins = [...p4, leftTrunk[1], leftTrunk[2]];
-  if (process.env.M05_STOP === "11") {
-    for (const i of leftPins) dump(b, i);
-    return b;
-  }
-  const minX = Math.min(...leftPins.map((i) => b.bounds(i).min[0]));
-  // standing upright parallel to the right frame (its flat normal = the part's Y axis along world X)
-  const f2 = b.attach("64179.dat", LBG, { to: leftPins, minConnections: 3, // 80 LDU from the right frame: the 5L stabiliser (step 12) spans both frames' bottom pins
-    accept: (m) => Math.abs(x(m) - (x(b.parts[f1].m) - 80)) < 1 && Math.abs(m[1]) > 0.99 && Math.abs(m[6]) > 0.99 && Math.abs(z(m) - z(b.parts[f1].m)) < 5, label: "left hollow frame", debug: !!process.env.M05_DBG });
-  // middle hole on the top side of the bottom beam (like step 1.2)
-  const f2m = b.parts[f2].m;
-  const f2bottom = b.snaps(f2, all(hole, axisIs("y"), near([x(f2m), -10, z(f2m)], 3)))[0];
-  const upPinL = b.attach(PIN, BLACK, { to: f2, where: near(f2bottom.pos, 1), accept: (m) => y(m) < f2bottom.pos[1] - 2 });
-  b.step();
-
-  // 12 stabiliser: 3x3 block lying flat with pins at left/right, 5L liftarm on top, pressed onto the
-  //    two pins sticking up from the bottom beams of the frames.
-  if (process.env.M05_STOP === "12") {
-    for (const i of [f1, f2, upPinR, upPinL, blk, bentR, bentL, ...p4]) console.log(i, b.parts[i].file, b.parts[i].label ?? "", b.bounds(i).min.map(Math.round), b.bounds(i).max.map(Math.round));
-    return b;
-  }
-  // (the 3x3 block with its two pins sits inside, under the 5L; attach the 5L to the frame pins first)
-  const stab = b.attach("32316.dat", BROWN, { to: [upPinR, upPinL], minConnections: 2, label: "5L stabiliser" });
-  // two pins in the 5L's 2nd and 4th holes sticking down, the flat 3x3 block hung on them
-  const sm = b.parts[stab].m;
-  const stabPins = [-20, 20].map((dx) => {
-    const h = b.snaps(stab, all(hole, axisIs("y"), near([x(sm) + dx, y(sm), z(sm)], 3)))[0];
-    return b.attach(PIN, BLACK, { to: stab, where: near(h.pos, 1), accept: (m) => y(m) > y(sm) + 5 });
-  });
-  b.attach("39793.dat", DBG, { to: stabPins, minConnections: 2, own: (s) => axisIs("y")(s), accept: (m) => y(m) > y(sm) + 10, label: "3x3 block under the stabiliser" });
-  b.step();
-
-  // 13 red 1L pins with a stud, studs facing the front: the three front holes of the right frame,
-  //    the bottom front hole of the left frame, the top and bottom of the front block's cross.
-  const studPin = (part: number, p: [number, number, number]) =>
-    b.attach("65826.dat", RED, { to: part, where: all(hole, axisIs("z"), near(p, 3)), accept: (m) => pt(m, [8, 0, 0])[2] < p[2] - 5, label: "stud pin" });
-  const f1m = b.parts[f1].m, bm = b.parts[blk].m;
-  for (const yy of [-30, -70, -110]) studPin(f1, [x(f1m), yy, -40]);
-  studPin(f2, [x(f2m), -30, -40]);
-  for (const yy of [-50, -10]) studPin(blk, [x(bm), yy, z(bm)]);
-  b.step();
-
-  // 14-22 front detail, built lying flat on a green 3x3 plate (studs up = -y, front = -z).
-  //    Stud-grid parts are placed exactly (origin = top surface centre) and verified to connect.
-  const d = new Build(lib, "front detail");
-  d.place("11212.dat", GREEN, IDENTITY, "3x3 plate"); // top at y = 0, studs at x,z in {-20,0,20}
-  // 14.2 2x3 slope (2 wide, 3 deep, slope at the front) on the right two columns
-  d.put("3298.dat", BROWN, at(10, -24, 20), 4, "2x3 slope");
-  // 15 2x3 brick, 3 wide, on the left column + 2 overhanging columns, back rows z = 0, 20
-  d.put("3002.dat", BROWN, at(-40, -24, 10), 2, "2x3 brick");
-  // 16 2x3 plate, 3 deep, under the overhang (x = -60, -40), front row sticking out at z = -20
-  d.put("3021.dat", BROWN, at(-50, 0, 0, rot("y", 90)), 4, "2x3 plate under the overhang");
-  // 17 1x2 brick on the back row of the 2x3 brick, left sides even
-  d.put("3004.dat", BROWN, at(-50, -48, 20), 2, "1x2 brick");
-  // 18 1x4x2 curved slope: its stud end on the right stud of the 1x2 brick, running to the right
-  d.put("3573.dat", BROWN, at(-10, -88, 20, rot("y", 90)), 1, "curved slope");
-  // 19 green 1x2 slopes, tall side at the back: on the 2x3 plate's front row and the brick's front row
-  d.put("85984.dat", GREEN, at(-50, 0, -20), 2, "1x2 slope (front)");
-  d.put("85984.dat", GREEN, at(-50, -24, 0), 2, "1x2 slope");
-  b.step();
-  // 23 the detail goes onto the six studs on the front of the tree, anti-studs at the back
-  const pinsWithStuds = b.parts.map((p, i) => (p.file === "65826.dat" ? i : -1)).filter((i) => i >= 0);
-  // rotated so the anti-studs face back (+z) and the arch (the plate's left column) is on the right
-  b.attachGroup(d, { to: pinsWithStuds, where: (s) => s.gender === "M", rotation: orient("-x", "+z", "+y"), minConnections: 2, maxOverlap: 6, label: "front detail" });
-  // (steps 20-22 — inverted arch, 1x3 plate, 1x2 curved slope, 1x1 slope — are decorative; not modelled)
-  b.step();
-
-  // 24-32 root arm, built flat: 7L liftarm with holes along its own Y ("front" of this build = -y,
-  //       left = -z, right = +z).
-  const r = new Build(lib, "root arm");
-  const g1 = r.place("32524.dat", GREEN, IDENTITY, "green 7L (back)");
-  const holeAt = (bb: Build, part: number, zz: number) => bb.snaps(part, all(hole, near([0, 0, zz], 2)))[0];
-  // 24.2 blue 3L pins from the front into the rightmost and 4th-from-left holes, 2L sticking out front
-  const bp = [60, 0].map((zz) => r.attach(PIN3, BLUE, { to: g1, where: near(holeAt(r, g1, zz).pos, 1), accept: (m) => y(m) < -12, label: "blue 3L pin" }));
-  // 25 brown 1L liftarm on each, pushed back against the 7L
-  for (const pi of bp) r.attach("18654.dat", BROWN, { to: pi, accept: (m) => y(m) < -15 && y(m) > -25, label: "1L liftarm" });
-  // 26 5L lever: tan free 3L pin (leftmost hole, 1L out each side), dark grey 3L axle/pin
-  //    (rightmost), black pin next to it; stood up with the axle/pin at the top and hinged on the
-  //    tan pin in the 7L's 3rd hole from the right, resting on the right 3L pin.
-  const s26 = new Build(lib, "lever");
-  const l5b = s26.place("32316.dat", BROWN, IDENTITY);
-  const l5h = (zz: number) => s26.snaps(l5b, all(hole, near([0, 0, zz], 2)))[0];
-  const tan = s26.attach(PIN3FREE, TAN, { to: l5b, where: near(l5h(-40).pos, 1), accept: (m) => Math.abs(y(m)) < 3, label: "tan free 3L pin" });
-  s26.attach(AXPIN3F, DBG, { to: l5b, where: near(l5h(40).pos, 1), accept: (m) => Math.abs(y(m)) < 3, label: "dark grey 3L axle/pin" });
-  s26.attach(PIN, BLACK, { to: l5b, where: near(l5h(20).pos, 1), accept: (m) => y(m) < -5, label: "black pin" });
-  const lever = r.attachGroup(s26, {
-    to: g1,
-    where: near(holeAt(r, g1, 20).pos, 1),
-    ownPart: [tan],
-    angles: Array.from({ length: 36 }, (_, i) => i * 10),
-    accept: (T) => y(T) < -12 && y(T) > -28,
-    maxOverlap: 10,
-    prefer: (T) => -Math.abs(pt(T, [0, 0, 40])[2] - 60) * 0.05, // leaning over to rest on the right 3L pin
-    label: "lever",
-  });
-  r.step();
+  // ---- Group 4: steps 24-32, root arm, built flat in its own frame "R" ---------------------
+  //    (R: X = right along the 7L beams, Y = down, Z = back; 7L beams' holes face front/back)
+  const r: Local[] = [];
+  const beam = (zz: number): Mat4 => orient("+y", "+z", "+x", [0, 0, zz]);
+  r.push({ file: "32524.dat", color: GREEN, m: beam(0), label: "green 7L (root arm, back)", min: 0 }); // 24.1
+  // 24.2 blue 3L pins from the front into the rightmost and 4th-from-left holes, 2L out to the
+  //      front; 25 a 1L liftarm pushed back onto each
+  for (const xx of [60, 0]) r.push({ file: PIN3, color: BLUE, m: frame([0, 0, -1], [1, 0, 0], [0, -1, 0], [xx, 0, -20]), label: "root arm 3L pin", min: 1 });
+  for (const xx of [60, 0]) r.push({ file: "18654.dat", color: BROWN, m: at(xx, 0, -20, rot("x", 90)), label: "1L liftarm (root arm)", min: 1 });
+  // 26 lever: 5L liftarm upright on a free tan 3L pin in the 7L's 3rd hole from the right, a dark
+  //    grey 3L axle/pin (axle to the back) in its top hole and a black pin in the hole below
+  const lev: Local[] = [
+    { file: "32316.dat", color: BROWN, m: orient("+x", "+z", "-y", [20, -40, -20]), label: "lever 5L", min: 0 },
+    { file: PIN3FREE, color: TAN, m: frame([0, 0, -1], [1, 0, 0], [0, -1, 0], [20, 0, -20]), label: "tan free 3L pin (lever pivot)", min: 1 },
+    { file: AXPIN3F, color: DBG, m: frame([0, 0, 1], [1, 0, 0], [0, 1, 0], [20, -80, -20]), label: "dark grey 3L axle/pin", min: 1 },
+    { file: PIN, color: BLACK, m: frame([0, 0, 1], [1, 0, 0], [0, 1, 0], [20, -60, -30]), label: "lever pin", min: 1 },
+  ];
   // 27 second green 7L onto the three pins on the front
-  r.attach("32524.dat", GREEN, { to: [...bp, lever[tan]], minConnections: 2, accept: (m) => y(m) < -35, label: "green 7L (front)" });
-  r.step();
+  const g2: Local = { file: "32524.dat", color: GREEN, m: beam(-40), label: "green 7L (root arm, front)", min: 2 };
+  // 28 red 3L axle joiner on the axle at the back of the lever top, yellow 3L axle in it;
+  // 29 red bush + red ball on the yellow axle (the lever handle)
+  lev.push({ file: "42195.dat", color: RED, m: at(20, -80, 20), label: "lever handle joiner", min: 1 });
+  lev.push({ file: "4519.dat", color: YELLOW, m: frame([0, 0, 1], [0, 1, 0], [-1, 0, 0], [20, -80, 60]), label: "yellow 3L axle", min: 1 });
+  lev.push({ file: "3713.dat", color: RED, m: at(20, -80, 60), label: "red bush", min: 1 });
+  // (index 7: the ball is attached by search in step 29 below, this entry documents its pose)
+  lev.push({ file: "32474.dat", color: RED, m: frame([1, 0, 0], [0, 0, -1], [0, 1, 0], [20, -80, 70 + 9.3]), label: "lever handle ball", min: 1 });
+  // 30 bright green cross block on the two front pins, its axle bushing on the lever's left side
+  lev.push({ file: "32291.dat", color: BGREEN, m: orient("-y", "+x", "+z", [0, -70, -40]), label: "cross block", min: 2 });
+  // 31 red 2L axle into the bushing from the lever-top end, brown macaroni tube on it, other hole
+  //    pointing away from the lever; red 2L axle in that; 32 brown 1x1 cone + brown claw on top
+  lev.push({ file: "32062.dat", color: RED, m: frame([0, -1, 0], [1, 0, 0], [0, 0, 1], [0, -90, -40]), label: "red 2L axle (claw)", min: 1 });
+  lev.push({ file: "25214.dat", color: BROWN, m: orient("-y", "+z", "-x", [0, -120, -40]), label: "macaroni tube", min: 1 });
+  lev.push({ file: "32062.dat", color: RED, m: frame([1, 0, 0], [0, 1, 0], [0, 0, 1], [-30, -120, -40]), label: "red 2L axle (cone)", min: 1 });
+  lev.push({ file: "59900.dat", color: BROWN, m: orient("+z", "+x", "+y", [-54, -120, -40]), label: "1x1 cone", min: 1 });
+  lev.push({ file: "87747.dat", color: BROWN, m: orient("-z", "+x", "-y", [-58, -120, -40]), label: "claw", min: 0 });
 
-  // 33 the root arm hangs on the tree's top hole: a black 4L axle through the front holes of both 7L
-  //    liftarms and the top axle hole of the upper bent liftarm (the arm swings on it).
-  const upperBent = b.parts.findIndex((p) => p.label === "upper bent liftarm");
-  const topHole = b.snaps(upperBent, (s) => s.kind === "axle" && hole(s)).sort((a, c) => a.pos[1] - c.pos[1])[0];
-  // the 7L beams sandwich the bent liftarm (one each side), the axle sticking out 1L on the left:
-  // centre 10 LDU left of the bent liftarm's centre
-  const ubx = (b.bounds(upperBent).min[0] + b.bounds(upperBent).max[0]) / 2;
-  const axle4 = b.attach("3705.dat", BLACK, { to: upperBent, where: near(topHole.pos, 1), accept: (m) => Math.abs(x(m) - (ubx - 10)) < 3, label: "4L axle (root arm hinge)" });
-  b.attachGroup(r, {
-    to: axle4,
-    ownPart: [0, r.parts.length - 1],
-    minConnections: 2,
-    angles: Array.from({ length: 24 }, (_, i) => i * 15),
-    maxOverlap: 10,
-    prefer: (T) => -pt(T, [0, 0, 0])[1] * 0.005, // hanging arm, lever at the top
-    // sandwich: the two 7L beams on either side of the bent liftarm
-    accept: (T) => {
-      const front = r.parts[r.parts.length - 1].m;
-      const xs = [pt(T, [0, 0, 0])[0], pt(T, [front[3], front[7], front[11]])[0]].sort((a, c) => a - c);
-      return Math.abs(xs[0] - (ubx - 20)) < 3 && Math.abs(xs[1] - (ubx + 20)) < 3;
-    },
-    label: "root arm",
-  });
-  b.step();
-  // 34 red 3L axle joiner, red 2L axle and red ball on the free end of the 4L axle (the handle)
-  if (process.env.M05_STOP === "34") {
-    for (const i of [upperBent, axle4, ...b.parts.map((p, i) => (p.label === "root arm" || p.label?.startsWith("green 7L") ? i : -1)).filter((i) => i >= 0).slice(0, 3)]) console.log(i, b.parts[i].file, b.parts[i].label, b.bounds(i).min.map(Math.round), b.bounds(i).max.map(Math.round));
-    return b;
-  }
-  const j34 = b.attach("42195.dat", RED, { to: axle4, accept: (m) => x(m) < b.bounds(axle4).min[0] + 15, label: "handle joiner" });
-  const ax34 = b.attach("32062.dat", RED, { to: j34, accept: (m) => x(m) < b.bounds(j34).min[0] + 5, label: "handle axle" });
-  b.attach("32474.dat", RED, { to: ax34, accept: (m) => x(m) < b.bounds(ax34).min[0] + 5, label: "handle ball" });
-  b.step();
-
+  // 33 the root arm: its front holes (R x = -60) around the top axle hole of the extension's bent
+  //    liftarm, green 7Ls on either side of it; a black 4L axle from the left through them
+  //    (1L out on the left). R's Z runs towards world -X (the lever handle points left).
+  const tip = apply(E, [32, 0, 144]);
+  const ps = (pose.psi * Math.PI) / 180;
+  const f: V3 = [0, Math.sin(ps), Math.cos(ps)];
+  const RY: V3 = [0, f[2], -f[1]];
+  const R0: V3 = [tip[0] + 60 * f[0] - 20, tip[1] + 60 * f[1], tip[2] + 60 * f[2]];
+  const RW = frame(f, RY, [-1, 0, 0], R0);
+  const LV = mul(mul(tr([20, 0, 0]), rot("z", pose.phi)), tr([-20, 0, 0]));
+  // the root arm is built in the book's order, then hung on the 4L axle (step 33)
+  b.step(); // 24
+  const rootIdx: number[] = [];
+  const putR = (p: Local, M: Mat4, min = 0) => rootIdx.push(b.put(p.file, p.color, mul(M, p.m), min, p.label));
+  // placed first with no connection requirement (the arm is only joined to the tree by the 4L axle)
+  putR(r[0], RW); putR(r[1], RW, 1); putR(r[2], RW, 1);
+  b.step(); // 25
+  putR(r[3], RW, 1); putR(r[4], RW, 1);
+  b.step(); // 26
+  for (const p of lev.slice(0, 4)) putR(p, mul(RW, LV), p === lev[0] ? 0 : 1);
+  b.step(); // 27
+  putR(g2, RW, 2);
+  b.step(); // 28
+  putR(lev[4], mul(RW, LV), 1); putR(lev[5], mul(RW, LV), 1);
+  b.step(); // 29
+  putR(lev[6], mul(RW, LV), 1);
+  b.attach("32474.dat", RED, { to: rootIdx[rootIdx.length - 2], accept: (m) => Math.abs(x(m) - apply(mul(RW, LV), [20, -80, 80])[0]) < 12, label: "lever handle ball" });
+  b.step(); // 30
+  putR(lev[8], mul(RW, LV), 2);
+  b.step(); // 31
+  putR(lev[9], mul(RW, LV), 1); putR(lev[10], mul(RW, LV), 1); putR(lev[11], mul(RW, LV), 1);
+  b.step(); // 32
+  putR(lev[12], mul(RW, LV), 1); putR(lev[13], mul(RW, LV), 0);
+  b.step(); // 33
+  const ub = extIdx[0];
+  const axle4 = pinAt("3705.dat", BLACK, [ub], tip, [tip[0] - 10, tip[1], tip[2]], "4L axle (root arm hinge)");
+  b.step(); // 34 handle: red 3L joiner, red 2L axle, red ball on the left end of the 4L axle
+  const j34 = b.attach("42195.dat", RED, { to: axle4, offsets: [-60, -50, -40, -30, -20, -10, 0], accept: (m) => Math.abs(x(m) - (tip[0] - 60)) < 2, label: "handle joiner" });
+  const ax34 = b.attach("32062.dat", RED, { to: j34, accept: (m) => Math.abs(x(m) - (tip[0] - 90)) < 2, label: "handle axle" });
+  b.attach("32474.dat", RED, { to: ax34, accept: (m) => x(m) < tip[0] - 95, label: "handle ball" });
+  void tlAx; void tlPin; void pin6;
   return b;
 }

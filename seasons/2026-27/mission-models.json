@@ -35,13 +35,13 @@
   "m05": {
     "file": "apps/desktop/resources/missions/m05.ldr",
     "book": "m05",
-    "parts": 62,
+    "parts": 77,
     "pose": {
-      "xMm": 410,
-      "yMm": 1099,
-      "headingDeg": 2.5
+      "xMm": 396,
+      "yMm": 1107,
+      "headingDeg": 174.5
     },
-    "fitMeanMm": 1.57
+    "fitMeanMm": 2.3
   },
   "m06-07": {
     "file": "apps/desktop/resources/missions/m06-07.ldr",
