@@ -177,8 +177,10 @@ const want = (name: string) => {
   }
 };
 for (const c of categories) for (const e of c.entries.values()) want(e.file);
-// Every part used by the bundled robots and mission models.
-for (const dir of ["robots", "missions"]) {
+// Every part used by the bundled robots, tools and mission models (and FLL Sim's own parts' primitives).
+want("4-4disc.dat");
+want("4-4cyli.dat");
+for (const dir of ["robots", "tools", "missions"]) {
   const d = join(repo, "apps/desktop/resources", dir);
   if (!existsSync(d)) continue;
   for (const f of readdirSync(d).filter((x) => x.endsWith(".ldr")))

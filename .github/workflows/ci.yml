@@ -28,3 +28,19 @@ jobs:
           path: |
             apps/desktop/release/*.deb
             apps/desktop/release/*.AppImage
+  release:
+    # a pushed version tag (v1.2.3) publishes the packages as a GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: linux-packages, path: dist }
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.deb
+            dist/*.AppImage
+          generate_release_notes: true

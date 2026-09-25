@@ -14,6 +14,8 @@ extraResources:
     to: apps/desktop/resources/ldraw
   - from: resources/robots
     to: apps/desktop/resources/robots
+  - from: resources/tools
+    to: apps/desktop/resources/tools
   - from: resources/missions
     to: apps/desktop/resources/missions
 linux:
