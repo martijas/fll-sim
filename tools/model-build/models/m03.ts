@@ -6,7 +6,8 @@
 // forest floor with spider) is carried by a four-bar linkage on each side: a lime 5L link from the
 // base (tan 3L pin) to the platform's back end hole, and a red bent-liftarm lever pivoting on an
 // upright 7L liftarm of the base, its short arm pinned to the platform. Pushing the levers flips
-// the platform over. The model is built in the finished state (scene 2 on top). The front lime
+// the platform over. The model is built in its match-start state (scene 1, the rock, on top; set
+// M03_STATE=finished for the book's last page). The front lime
 // L-liftarm (step 5) pivots freely on its tan axle/pin.
 import { IDENTITY, type Library, type Mat4 } from "@fll-sim/ldraw";
 import { Build, all, axisIs, dir, dump, near, orient, pt, type SnapInfo } from "../src/build";
@@ -408,13 +409,22 @@ export function build(lib: Library) {
   };
   const cap = s1.parts.find((p) => p.file === "4740.dat")!;
   const capBottom = (M: Mat4) => worldBox(lib, cap.file, mulM(mulM(M, s1T), cap.m)).hi[1];
-  let phi = 180;
-  for (let k = 0; k <= 400; k++) {
-    const cands = [180 + k * 0.05, 180 - k * 0.05];
-    const ok = cands.find((f) => capBottom(pose(f).M) <= -20);
+  // Match start (field setup guide): the rock (scene 1) on top, scene 2 hanging underneath; the
+  // platform rests at the smallest tilt where the linkage closes and scene 2 clears the base.
+  // M03_STATE=finished builds it flipped over instead (as on the book's last page).
+  const START = process.env.M03_STATE !== "finished";
+  const s2Parts = scene2(lib).parts, s2T = orient("-z", "-y", "-x", [-80, 18, -10]);
+  const s2Bottom = (M: Mat4) => Math.max(...s2Parts.map((p) => worldBox(lib, p.file, mulM(mulM(M, s2T), p.m)).hi[1]));
+  const valid = (M: Mat4) => Number.isFinite(M[7]) && Number.isFinite(M[11]);
+  let phi = START ? 0 : 180;
+  for (let k = 0; k <= 800; k++) {
+    const base = START ? 0 : 180;
+    const cands = [base + k * 0.05, base - k * 0.05];
+    const ok = cands.find((f) => valid(pose(f).M) && (START ? s2Bottom(pose(f).M) <= -20 : capBottom(pose(f).M) <= -20));
     if (ok !== undefined) { phi = ok; break; }
   }
   const { M: platM, H, Y } = pose(phi);
+  console.log(`M03 platform ${START ? "at the start (rock up)" : "flipped"}: ${phi.toFixed(2)}°`);
   if (DEBUG) console.log("linkage", { phi, H, Y, cap: capBottom(platM) }, [150, 160, 165, 170, 175, 180, 185, 190, 195, 200].map((f) => [f, Math.round(capBottom(pose(f).M)), Math.round(pose(f).M[7]), Math.round(pose(f).M[11])]));
   b.step();
 

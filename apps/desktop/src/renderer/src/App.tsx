@@ -15,7 +15,7 @@ import { Telemetry } from "./components/Telemetry";
 import { RobotPanel } from "./components/RobotPanel";
 import { loadRobotConfig, saveRobotConfig, toDriveBaseOptions, type RobotConfig } from "./lib/robotConfig";
 import { SimController } from "./lib/simController";
-import { loadBundledMissions, loadDefaultMat, loadMatImage, loadSeason, type BundledMission, type LoadedMat } from "./lib/assets";
+import { loadBundledMissions, loadDefaultMat, loadMatImage, loadSeason, poseOnDock, type BundledMission, type DockName, type DockSite, type LoadedMat } from "./lib/assets";
 import { playHubEvents } from "./lib/audio";
 import { DEFAULT_PROGRAM } from "./lib/samples";
 import type { Frame } from "./worker/protocol";
@@ -24,6 +24,13 @@ const SEASON_ID = "2026-27";
 const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 100];
 
 interface ConsoleLine { text: string; kind: "out" | "err" | "info" }
+
+/** Missions 13-15: the interchangeable models (any of them can go on any dock). */
+const DOCK_MODELS = [
+  { id: "m13", name: "M13 Keystone Species" },
+  { id: "m14", name: "M14 Seeds of Renewal" },
+  { id: "m15", name: "M15 Biocentric Architecture" },
+];
 
 export function App() {
   const [season, setSeason] = useState<SeasonConfig | null>(null);
@@ -68,6 +75,15 @@ export function App() {
   });
   /** Mission models shipped with the season (real parts, placed on their mat marks). */
   const [bundled, setBundled] = useState<Record<string, BundledMission>>({});
+  const [dockSites, setDockSites] = useState<Partial<Record<DockName, DockSite>>>({});
+  /** Missions 13-15: which model the team puts on each dock (part of their strategy). */
+  const [docks, setDocks] = useState<Record<DockName, string>>(() => {
+    try {
+      return { farm: "m13", city: "m14", mine: "m15", ...JSON.parse(localStorage.getItem("fllsim.docks") ?? "{}") };
+    } catch {
+      return { farm: "m13", city: "m14", mine: "m15" };
+    }
+  });
   const [realMissions, setRealMissions] = useState(() => localStorage.getItem("fllsim.realMissions") !== "off");
   /** Sim time (ms) when the current match started, or null. */
   const [matchStart, setMatchStart] = useState<number | null>(null);
@@ -87,7 +103,9 @@ export function App() {
         const s = await loadSeason(SEASON_ID);
         setSeason(s);
         setMat(await loadDefaultMat(s));
-        setBundled(await loadBundledMissions(SEASON_ID));
+        const b = await loadBundledMissions(SEASON_ID);
+        setBundled(b.models);
+        setDockSites(b.docks);
       } catch (e) {
         setBootError(String(e));
       }
@@ -146,12 +164,20 @@ export function App() {
   const fieldModels: FieldModel[] = useMemo(() => {
     if (!season || !ldraw) return [];
     const out: FieldModel[] = [];
-    const ids = new Set([...(realMissions ? Object.keys(bundled) : []), ...Object.keys(missionLdr)]);
+    // interchangeable models go on the dock the team chose (their field id is the dock's: dock-farm…)
+    const onDock = new Map<string, { model: BundledMission; pose: BundledMission["pose"] }>();
+    for (const [site, mid] of Object.entries(docks) as [DockName, string][]) {
+      const model = bundled[mid], where = dockSites[site];
+      if (model?.dock && where) onDock.set(`dock-${site}`, { model, pose: poseOnDock(model, where) });
+    }
+    const plain = Object.keys(bundled).filter((id) => !bundled[id].dock);
+    const ids = new Set([...(realMissions ? [...plain, ...onDock.keys()] : []), ...Object.keys(missionLdr)]);
     for (const id of ids) {
       const spec = season.missionModels.find((m) => m.id === id);
-      const text = missionLdr[id] ?? bundled[id]?.text;
+      const docked = onDock.get(id);
+      const text = missionLdr[id] ?? docked?.model.text ?? bundled[id]?.text;
       const f = spec?.shape;
-      const pose = bundled[id]?.pose ?? (f ? { xMm: f.cx, yMm: f.cy, headingDeg: f.kind === "rect" ? f.rot : 0 } : null);
+      const pose = docked?.pose ?? bundled[id]?.pose ?? (f ? { xMm: f.cx, yMm: f.cy, headingDeg: f.kind === "rect" ? f.rot : 0 } : null);
       if (!text || !pose) continue;
       try {
         const { robot: model, fixedBodies } = assembleMissionModel(ldraw.lib, parseModel(ldraw.lib, text).parts, { name: spec?.name ?? id, fixed: missionLdr[id] ? true : bundled[id]?.fixed });
@@ -161,7 +187,17 @@ export function App() {
       }
     }
     return out;
-  }, [season, ldraw, missionLdr, bundled, realMissions]);
+  }, [season, ldraw, missionLdr, bundled, realMissions, docks, dockSites]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("fllsim.docks", JSON.stringify(docks));
+    } catch {
+      /* ignore */
+    }
+    // M15's environmental bonus depends on the dock it is on
+    const site = (Object.entries(docks) as [DockName, string][]).find(([, m]) => m === "m15")?.[0];
+    if (site) setAnswers((a) => ({ ...a, m15d: site === "mine" ? "Mine" : site === "city" ? "City" : "Farm" }));
+  }, [docks]);
   useEffect(() => {
     try {
       localStorage.setItem("fllsim.realMissions", realMissions ? "on" : "off");
@@ -177,6 +213,8 @@ export function App() {
     const out = season.missionModels.map((m) => ({ id: m.id, name: label(m) }));
     for (const id of Object.keys(bundled).sort()) {
       if (out.some((m) => m.id === id)) continue;
+      const dm = DOCK_MODELS.find((m) => m.id === id);
+      if (dm) { out.push({ id, name: dm.name }); continue; }
       const base = season.missionModels.find((m) => id.startsWith(m.id + "-"));
       out.push({ id, name: base ? `${label(base)} (${id.slice(base.id.length + 1)})` : id });
     }
@@ -477,6 +515,27 @@ export function App() {
                 <button onClick={() => setRealMissions(!realMissions)} disabled={running} title="The season's mission models built from real LEGO parts (off = simple blocks, faster)">
                   Mission models: {realMissions ? "LEGO" : "blocks"}
                 </button>
+              )}
+              {Object.keys(dockSites).length > 0 && (
+                <span className="docks" title="Missions 13-15: choose which model goes on each dock (part of your strategy)">
+                  {(["farm", "city", "mine"] as DockName[]).map((site) => (
+                    <label key={site}>
+                      {site[0].toUpperCase() + site.slice(1)}{" "}
+                      <select
+                        value={docks[site]}
+                        disabled={running}
+                        onChange={(e) => {
+                          const mid = e.target.value;
+                          // (a model can only be on one dock: swap with the dock that had it)
+                          const other = (Object.keys(docks) as DockName[]).find((k) => docks[k] === mid);
+                          setDocks({ ...docks, [site]: mid, ...(other && other !== site ? { [other]: docks[site] } : {}) });
+                        }}
+                      >
+                        {DOCK_MODELS.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </select>
+                    </label>
+                  ))}
+                </span>
               )}
             </div>
             <div className="status">

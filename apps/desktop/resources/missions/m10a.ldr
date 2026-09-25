@@ -2,79 +2,80 @@
 0 Name: m10a.ldr
 0 Author: FLL Sim
 
-0 // spider: lime 2L liftarm (back, bottom)
-1 27 -254.7366 -9.0005 40 0 0 -1 1 0 0 0 -1 0 60483.dat
-0 // spider: black pin
-1 0 -274.7366 -9.0005 30 0 0 -1 0 -1 0 -1 0 0 61332.dat
-0 // spider: blue axle/pin (axle in the lime liftarm)
-1 1 -254.7366 -9.0005 30 0 0 1 0 -1 0 1 0 0 43093.dat
 0 STEP
-0 // spider: green 3x5 L (back)
-1 2 -234.7366 -89.0005 20 -1 0 0 0 0 1 0 1 0 32526.dat
 0 STEP
-0 // spider: blue 3L pin (top)
-1 1 -234.7366 -89.0005 0 0 0 -1 0 -1 0 -1 0 0 42924.dat
-0 // spider: blue 3L pin
-1 1 -234.7366 -69.0005 0 0 0 -1 0 -1 0 -1 0 0 42924.dat
 0 STEP
-0 // spider: brown 7x3 bent liftarm (upright)
-1 70 -234.7366 -49.0005 0 1 0 0 0 0 -1 0 1 0 32271.dat
-0 // spider: blue axle/pin (top)
-1 1 -202.7366 -193.0005 -10 0 0 1 0 -1 0 1 0 0 43093.dat
 0 STEP
-0 // spider: lime 2L liftarm (step 5)
-1 27 -234.7366 -9.0005 0 0 0 1 -1 0 0 0 -1 0 60483.dat
-0 // spider: blue 3L pin (step 5)
-1 1 -214.7366 -9.0005 -20 0 0 -1 0 -1 0 -1 0 0 42924.dat
-0 // spider: black 4L axle
-1 0 -234.7366 -9.0005 -10 0 0 -1 0 -1 0 -1 0 0 3705.dat
-0 // spider: green 3x5 L (front)
-1 2 -234.7366 -89.0005 -20 1 0 0 0 0 1 0 -1 0 32526.dat
 0 STEP
-0 // spider: lime 2L liftarm (front, bottom)
-1 27 -234.7366 -9.0005 -40 0 0 1 -1 0 0 0 -1 0 60483.dat
 0 STEP
-0 // spider: blue axle/pin (corner)
-1 1 -234.7366 -169.0005 -10 0 0 -1 0 -1 0 -1 0 0 43093.dat
-0 // spider: brown 7x3 bent liftarm (top arm)
-1 70 -87.5366 -159.4005 -20 -0.28 0 -0.96 0.96 0 -0.28 0 -1 0 32271.dat
 0 STEP
-0 // spider: grey pin (free) for the hanging liftarm
-1 71 -183.5366 -187.4005 -10 0 0 -1 0 -1 0 -1 0 0 3673.dat
-0 // spider: brown 3L liftarm (hanging, swings)
-1 70 -171.2234 -171.6402 0 0.788 0 0.6157 -0.6157 0 0.788 0 -1 0 32523.dat
 0 STEP
-0 // spider web: tan 3L pin (hinge)
-1 19 -194.7366 -9.0005 0 0 0 -1 0 -1 0 -1 0 0 39888.dat
-0 // spider web: 9L bottom (A)
-1 15 -114.7366 -9.0005 20 0 0 1 -1 0 0 0 -1 0 40490.dat
-0 // spider web: 9L left (B)
-1 15 -194.7366 -89.0005 0 -1 0 0 0 0 -1 0 -1 0 40490.dat
-0 // spider web: grey pin
-1 71 -114.7366 -9.0005 10 0 0 -1 0 -1 0 -1 0 0 3673.dat
-0 // spider web: grey pin
-1 71 -34.7366 -9.0005 10 0 0 -1 0 -1 0 -1 0 0 3673.dat
-0 // spider web: grey pin
-1 71 -194.7366 -89.0005 10 0 0 -1 0 -1 0 -1 0 0 3673.dat
-0 // spider web: 9L middle (C)
-1 15 -114.7366 -89.0005 20 0 0 1 -1 0 0 0 -1 0 40490.dat
-0 // spider web: grey pin
-1 71 -114.7366 -89.0005 10 0 0 -1 0 -1 0 -1 0 0 3673.dat
-0 // spider web: grey pin
-1 71 -34.7366 -89.0005 10 0 0 -1 0 -1 0 -1 0 0 3673.dat
-0 // spider web: grey pin
-1 71 -194.7366 -169.0005 10 0 0 -1 0 -1 0 -1 0 0 3673.dat
-0 // spider web: 9L top (D)
-1 15 -114.7366 -169.0005 20 0 0 1 -1 0 0 0 -1 0 40490.dat
-0 // spider web: grey pin
-1 71 -114.7366 -169.0005 10 0 0 -1 0 -1 0 -1 0 0 3673.dat
-0 // spider web: grey pin
-1 71 -34.7366 -169.0005 10 0 0 -1 0 -1 0 -1 0 0 3673.dat
-0 // spider web: 9L middle vertical (E)
-1 15 -114.7366 -89.0005 0 -1 0 0 0 0 -1 0 -1 0 40490.dat
-0 // spider web: 9L right (F)
-1 15 -34.7366 -89.0005 0 -1 0 0 0 0 -1 0 -1 0 40490.dat
-0 // spider web: red 1L pin with stud
-1 4 -114.7366 -109.0005 -10 0 0 -1 0 -1 0 -1 0 0 89678.dat
-0 // spider (on the stud)
-1 0 -114.7366 -109.0005 -15 -1 0 0 0 0 -1 0 -1 0 29111.dat
+0 STEP
+0 // snail body: grey 4x4 bent liftarm (back)
+1 71 63.2634 -9.0005 20 0 0 1 -1 0 0 0 -1 0 32348.dat
+0 // snail body: yellow 3L axle (bottom)
+1 14 63.2634 -9.0005 0 0 0 -1 0 -1 0 -1 0 0 4519.dat
+0 // snail body: yellow 3L axle (top)
+1 14 159.2634 -57.0005 0 0 0 -1 0 -1 0 -1 0 0 4519.dat
+0 STEP
+0 // snail body: grey pin (back link pivot)
+1 71 103.2634 -9.0005 30 0 0 -1 0 -1 0 -1 0 0 3673.dat
+0 STEP
+0 // snail body: dark grey 5L liftarm
+1 72 83.2634 -9.0005 0 0 0 1 -1 0 0 0 -1 0 32316.dat
+0 // snail body: blue 3L pin (corner)
+1 1 123.2634 -9.0005 0 0 0 1 0 -1 0 1 0 0 42924.dat
+0 STEP
+0 // snail body: brown 7x3 bent liftarm
+1 70 159.2634 -57.0005 0 0.8 0 0.6 0.6 0 -0.8 0 1 0 32271.dat
+0 STEP
+0 // snail body: grey 4x4 bent liftarm (front)
+1 71 63.2634 -9.0005 -20 0 0 1 -1 0 0 0 -1 0 32348.dat
+0 // snail body: grey pin (front link pivot)
+1 71 103.2634 -9.0005 -30 0 0 -1 0 -1 0 -1 0 0 3673.dat
+0 STEP
+0 STEP
+0 // snail: brown 3L link (back)
+1 70 106.1956 -28.7843 40 -0.9892 0 0.1466 -0.1466 0 -0.9892 0 -1 0 32523.dat
+0 STEP
+0 // snail neck: lime 7x3 bent liftarm
+1 27 137.2634 -77.0005 0 0.8 0 0.6 0.6 0 -0.8 0 1 0 32271.dat
+0 // snail neck: yellow 3L axle
+1 14 137.2634 -77.0005 0 0 0 -1 0 -1 0 -1 0 0 4519.dat
+0 // snail neck: dark grey cam
+1 72 123.1956 -62.7843 -15 -0.7108 -0.7034 0 -0.7034 0.7108 0 0 0 -1 6575a.dat
+0 // snail neck: dark grey cam
+1 72 123.1956 -62.7843 -25 -0.7108 -0.7034 0 -0.7034 0.7108 0 0 0 -1 6575a.dat
+0 // snail neck: dark grey cam
+1 72 123.1956 -62.7843 15 -0.7108 -0.7034 0 -0.7034 0.7108 0 0 0 -1 6575a.dat
+0 // snail neck: dark grey cam
+1 72 123.1956 -62.7843 25 -0.7108 -0.7034 0 -0.7034 0.7108 0 0 0 -1 6575a.dat
+0 // snail neck: tan axle/pin (front)
+1 19 109.1278 -48.5682 -30 0 0 1 0 -1 0 1 0 0 3749.dat
+0 // snail neck: tan axle/pin (back)
+1 19 109.1278 -48.5682 30 0 0 -1 0 -1 0 -1 0 0 3749.dat
+0 // snail neck: red 2L axle (in the corner pin hole)
+1 4 209.2634 -173.0005 0 0 0 -1 0 -1 0 -1 0 0 32062.dat
+0 // snail neck: black thin 2L liftarm (back)
+1 0 209.2634 -173.0005 15 -1 0 0 0 0 -1 0 -1 0 41677.dat
+0 // snail neck: black thin 2L liftarm (front)
+1 0 209.2634 -173.0005 -15 -1 0 0 0 0 -1 0 -1 0 41677.dat
+0 // snail neck: white 4L bar (bars in axle holes register no connection)
+1 15 209.2634 -193.0005 40 1 0 0 0 0 1 0 -1 0 30374.dat
+0 // snail neck: orange cross block (head, turns on the bar)
+1 25 229.2634 -193.0005 0 0 1 0 0 0 -1 -1 0 0 42003.dat
+0 // snail neck: red 1L pin with stud
+1 4 249.2634 -203.0005 0 0 1 0 -1 0 0 0 0 1 89678.dat
+0 // snail neck: gold T-piece (antennae)
+1 297 249.2634 -207.0005 0 -1 0 0 0 1 0 0 0 -1 4697b.dat
+0 // snail neck: lime round plate (eye front)
+1 27 209.2634 -193.0005 -28 1 0 0 0 0 -1 0 1 0 85861.dat
+0 // snail neck: yellow 3x3 dish (eye front)
+1 14 209.2634 -193.0005 -36 1 0 0 0 0 -1 0 1 0 43898.dat
+0 // snail neck: lime round plate (eye back)
+1 27 209.2634 -193.0005 28 1 0 0 0 0 1 0 -1 0 85861.dat
+0 // snail neck: yellow 3x3 dish (eye back)
+1 14 209.2634 -193.0005 36 1 0 0 0 0 1 0 -1 0 43898.dat
+0 STEP
+0 // snail: brown 3L link (front)
+1 70 106.1956 -28.7843 -40 -0.9892 0 0.1466 -0.1466 0 -0.9892 0 -1 0 32523.dat

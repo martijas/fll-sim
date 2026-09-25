@@ -127,3 +127,6 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 .step-ctl { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
 .step-ctl b { color: var(--accent); }
 .model-name { width: 140px; }
+
+.docks { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; }
+.docks select { font-size: 12px; max-width: 150px; }

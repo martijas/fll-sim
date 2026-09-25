@@ -47,19 +47,37 @@ export interface BundledMission {
   pose: { xMm: number; yMm: number; headingDeg: number };
   /** false = not held by Dual Lock */
   fixed?: boolean;
+  /** Interchangeable models (M13-15): where their dock is in the model (mm) and which way it faces. */
+  dock?: { x: number; z: number; dirDeg: number };
 }
 
-/** The season's published mission models (seasons/<id>/mission-models.json), empty if none. */
-export async function loadBundledMissions(id: string): Promise<Record<string, BundledMission>> {
+export type DockName = "farm" | "city" | "mine";
+/** A dock location on the mat: centre (mm) and the direction its uprights face (deg). */
+export interface DockSite { xMm: number; yMm: number; dirDeg: number }
+
+/** The season's published mission models (seasons/<id>/mission-models.json) and dock locations. */
+export async function loadBundledMissions(id: string): Promise<{ models: Record<string, BundledMission>; docks: Partial<Record<DockName, DockSite>> }> {
   const bytes = await window.fllsim.readAsset(`seasons/${id}/mission-models.json`);
-  if (!bytes) return {};
-  const index = JSON.parse(new TextDecoder().decode(bytes)) as Record<string, { file: string; pose: BundledMission["pose"]; fixed?: boolean }>;
-  const out: Record<string, BundledMission> = {};
+  if (!bytes) return { models: {}, docks: {} };
+  type Entry = { file: string; pose: BundledMission["pose"]; fixed?: boolean; dock?: BundledMission["dock"] };
+  const raw = JSON.parse(new TextDecoder().decode(bytes)) as Record<string, unknown>;
+  const docks = (raw._docks ?? {}) as Partial<Record<DockName, DockSite>>;
+  delete raw._docks;
+  const index = raw as Record<string, Entry>;
+  const models: Record<string, BundledMission> = {};
   await Promise.all(
     Object.entries(index).map(async ([mid, e]) => {
       const ldr = await window.fllsim.readAsset(e.file);
-      if (ldr) out[mid] = { id: mid, text: new TextDecoder("latin1").decode(ldr), pose: e.pose, fixed: e.fixed };
+      if (ldr) models[mid] = { id: mid, text: new TextDecoder("latin1").decode(ldr), pose: e.pose, fixed: e.fixed, dock: e.dock };
     }),
   );
-  return out;
+  return { models, docks };
+}
+
+/** Where to put an interchangeable model so its dock sits on a dock location. */
+export function poseOnDock(model: BundledMission, site: DockSite): BundledMission["pose"] {
+  const d = model.dock!;
+  const h = site.dirDeg - d.dirDeg, r = (h * Math.PI) / 180;
+  const c = Math.cos(r), s = Math.sin(r);
+  return { xMm: site.xMm - (c * d.x - s * d.z), yMm: site.yMm - (s * d.x + c * d.z), headingDeg: ((h % 360) + 360) % 360 };
 }
