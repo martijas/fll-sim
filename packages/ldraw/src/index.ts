@@ -122,7 +122,22 @@ export function parseColors(ldconfig: string): Map<number, LDColor> {
  * origin, stretched between its two anchors by its placement matrix (X column = anchor to anchor).
  */
 export const BAND_PART = "fllsim-band.dat";
+/**
+ * A mount point (not a real part: no mass, no collisions). Robots and tools carry one per place
+ * a tool attaches; its label is the mount's name. Attaching a tool puts the tool's mount exactly
+ * on the robot's mount of the same name, so the tool always connects the same way. Drawn as a
+ * small flat arrow pointing along its -Z.
+ */
+export const MOUNT_PART = "fllsim-mount.dat";
 const BUILTIN: Record<string, string> = {
+  [MOUNT_PART]: `0 Mount Point (FLL Sim)
+0 Name: ${MOUNT_PART}
+0 Author: FLL Sim
+0 !LDRAW_ORG Unofficial_Part
+1 16 0 0 0 8 0 0 0 1 0 0 0 8 4-4disc.dat
+3 16 -6 -0.5 -6 6 -0.5 -6 0 -0.5 -18
+3 16 0 -0.5 -18 6 -0.5 -6 -6 -0.5 -6
+`,
   [BAND_PART]: `0 Rubber Band (FLL Sim)
 0 Name: ${BAND_PART}
 0 Author: FLL Sim

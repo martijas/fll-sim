@@ -11,10 +11,11 @@
 // Frames: LDraw model frame (LDU, -Y up, front -Z) -> robot frame (mm, +Y up, forward -Z)
 // via (x, y, z) -> (-x, -y, z) * 0.4.
 
-import { BAND_PART, type Library, type Mat4, type PlacedPart, type Snap, flatten, mul, normName, splitMpd } from "@fll-sim/ldraw";
+import { BAND_PART, MOUNT_PART, type Library, type Mat4, type PlacedPart, type Snap, flatten, mul, normName, splitMpd } from "@fll-sim/ldraw";
 import type { BodySpec, MotorJointSpec, FreeJointSpec, GearSpec, Material, Port, RobotModel, SensorSpec, ShapeSpec } from "@fll-sim/sim";
 import type { Quat } from "@fll-sim/units";
 import { analyzePart, type Box, type PartInfo, type Vec3 } from "./analyze";
+import { invert } from "./place";
 
 export { analyzePart } from "./analyze";
 export type { PartInfo } from "./analyze";
@@ -330,7 +331,15 @@ export interface AssembleOptions {
   /** Default port assignment for electronics without a !FLLSIM PORT line (in part order). */
   autoPorts?: boolean;
   name?: string;
+  /**
+   * A tool put on at a mount (see attachTool): if nothing of it connects to the rest, its part
+   * nearest `pointLdu` is held rigidly to the robot's part nearest that point.
+   */
+  attached?: { parts: (part: ModelPart, index: number) => boolean; pointLdu: Vec3 }[];
 }
+
+/** A mount point of a robot or tool (see MOUNT_PART): its name (label) and frame (model LDU). */
+export interface Mount { name: string; m: Mat4; part: number }
 
 export interface AssemblyReport {
   bodies: number;
@@ -340,12 +349,58 @@ export interface AssemblyReport {
   gears: number;
   loose: number;
   warnings: string[];
+  /** Mount points (and the body each is on). */
+  mounts?: (Mount & { body: string })[];
 }
 
 interface Node { part: number; rotor: boolean }
 
-/** Build a physics RobotModel from placed LDraw parts. */
+export const isMount = (p: { file: string }) => normName(p.file) === MOUNT_PART;
+
+/** The mount points in a model, in part order. */
+export function findMounts(parts: ModelPart[]): Mount[] {
+  const out: Mount[] = [];
+  parts.forEach((p, i) => { if (isMount(p)) out.push({ name: (p.label ?? "").trim() || "mount", m: p.m, part: i }); });
+  return out;
+}
+
+/**
+ * Put a tool on a robot: the tool's parts are moved so its mount lies exactly on the robot's
+ * mount with the same name (`mount`, or the first name they share). Returns the combined parts
+ * (the tool's mounts left out, its parts labelled "[tool:<name>]"), or null if they share none.
+ */
+export function attachTool(robot: ModelPart[], tool: ModelPart[], toolName: string, mount?: string): { parts: ModelPart[]; mount: string; pointLdu: Vec3 } | null {
+  const rm = findMounts(robot), tm = findMounts(tool);
+  const pair = rm.flatMap((r) => tm.filter((t) => t.name === r.name && (!mount || r.name === mount)).map((t) => [r, t] as const))[0];
+  if (!pair) return null;
+  const [r, t] = pair;
+  const x = mul(r.m, invert(t.m));
+  const tag = `[tool:${toolName}]`;
+  const moved = tool.filter((p) => !isMount(p)).map((p) => ({ ...p, m: mul(x, p.m), label: p.label ? `${p.label} ${tag}` : tag, step: undefined }));
+  return { parts: [...robot, ...moved], mount: r.name, pointLdu: [r.m[3], r.m[7], r.m[11]] };
+}
+
+/** Build a physics RobotModel from placed LDraw parts (mount points are left out of the physics). */
 export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = {}): { robot: RobotModel; report: AssemblyReport; bodyOfPart: string[]; toModelMm: (ldu: Vec3) => { x: number; y: number; z: number } } {
+  const mounts = findMounts(parts);
+  if (!mounts.length) return assembleParts(lib, parts, o);
+  const keep = parts.map((_, i) => i).filter((i) => !isMount(parts[i]));
+  const r = assembleParts(lib, keep.map((i) => parts[i]), { ...o, attached: o.attached?.map((a) => ({ ...a, parts: (p, j) => a.parts(p, keep[j]) })) });
+  const bodyOfKept = new Map(keep.map((i, j) => [i, r.bodyOfPart[j]]));
+  // a mount belongs to the body of the part nearest it
+  const nearest = (m: Mat4) => {
+    let best = keep[0], d = Infinity;
+    for (const i of keep) {
+      const q = parts[i].m, dd = (q[3] - m[3]) ** 2 + (q[7] - m[7]) ** 2 + (q[11] - m[11]) ** 2;
+      if (dd < d) { d = dd; best = i; }
+    }
+    return best;
+  };
+  const bodyOfPart = parts.map((p, i) => bodyOfKept.get(i) ?? bodyOfKept.get(nearest(p.m))!);
+  return { ...r, bodyOfPart, report: { ...r.report, mounts: mounts.map((m) => ({ ...m, body: bodyOfPart[m.part] })) } };
+}
+
+function assembleParts(lib: Library, parts: ModelPart[], o: AssembleOptions = {}): { robot: RobotModel; report: AssemblyReport; bodyOfPart: string[]; toModelMm: (ldu: Vec3) => { x: number; y: number; z: number } } {
   const warnings: string[] = [];
   const infos = parts.map((p) => analyzePart(lib, p.file));
 
@@ -481,6 +536,23 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
       }
       if (!changed) break;
     }
+  }
+
+  // Tools put on at a mount: held to the robot at the mount if none of their parts connect to it.
+  for (const at of o.attached ?? []) {
+    const inTool = parts.map((p, i) => at.parts(p, i));
+    if (!inTool.some(Boolean) || inTool.every(Boolean)) continue;
+    // everything connected to the tool (by any joint)
+    const comp = new DSU(nodes.length);
+    for (const c of conns) comp.union(c.a, c.b);
+    for (let i = 0; i < nodes.length; i++) comp.union(i, dsu.find(i));
+    const toolRoots = new Set(parts.map((_, i) => i).filter((i) => inTool[i]).map((i) => comp.find(i)));
+    if (parts.some((_, i) => !inTool[i] && toolRoots.has(comp.find(i)))) continue; // it connects for real
+    const d2 = (i: number) => (parts[i].m[3] - at.pointLdu[0]) ** 2 + (parts[i].m[7] - at.pointLdu[1]) ** 2 + (parts[i].m[11] - at.pointLdu[2]) ** 2;
+    const pick = (want: boolean) => parts.map((_, i) => i).filter((i) => inTool[i] === want && !infos[i].band && !infos[i].rope).sort((a, b) => d2(a) - d2(b))[0];
+    const a = pick(true), b = pick(false);
+    if (a !== undefined && b !== undefined && canUnion(a, b)) dsu.union(a, b);
+    else warnings.push("A tool is not connected to the robot at its mount");
   }
 
   // Weak stud links: a small group (≤ 4 parts) held on by ≤ 2 studs stays its own body with a

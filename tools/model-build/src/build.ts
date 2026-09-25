@@ -118,6 +118,20 @@ export class Build {
     return this.curStep;
   }
 
+  /** Hub port of a motor or sensor part (robots): written as "0 !FLLSIM PORT X". */
+  setPort(part: number, port: "A" | "B" | "C" | "D" | "E" | "F") {
+    this.parts[part].port = port;
+  }
+
+  /**
+   * A mount point (robots and tools): a tool attaches by putting its mount of the same name
+   * exactly on the robot's. `m` = the mount frame (origin at the joining spot, e.g. the centre
+   * of the pin hole the tool's first pin goes into; orientation as the tool sits when attached).
+   */
+  mount(name: string, m: Mat4): number {
+    return this.place("fllsim-mount.dat", 16, m, name);
+  }
+
   place(file: string, color: number, m: Mat4, label?: string): number {
     this.parts.push({ file, color, m, step: this.curStep, label });
     return this.parts.length - 1;
