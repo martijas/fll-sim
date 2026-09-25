@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "private": true,
   "description": "FIRST LEGO League robot and field simulator",
-  "author": "FLL Sim contributors",
+  "author": {
+    "name": "martijas",
+    "email": "martijas@users.noreply.github.com"
+  },
   "type": "module",
   "main": "out/main/index.js",
   "scripts": {
@@ -36,6 +39,6 @@
     "three": "0.186.1",
     "vite": "7.3.6"
   },
-  "homepage": "https://github.com/",
+  "homepage": "https://github.com/martijas/fll-sim",
   "desktopName": "fll-sim.desktop"
 }

@@ -105,7 +105,7 @@ async function handle(m: ToWorker) {
     if (m.type === "init") {
       ctrl = new Int32Array(m.ctrl);
       const mat = m.mat ? { width: m.mat.width, height: m.mat.height, data: new Uint8ClampedArray(m.mat.data) } : null;
-      sim = await Simulation.create({ season: m.season, robot: m.robot, start: m.start, mat, fieldModels: m.fieldModels, footprints: m.footprints });
+      sim = await Simulation.create({ season: m.season, robot: m.robot, start: m.start, mat, fieldModels: m.fieldModels, footprints: m.footprints, colorCalibration: m.colorCalibration });
       api = new SpikeApi(sim);
       sim.stepMs(250); // let the robot settle on the mat
       post({ type: "scene", bodies: sim.scene, bodyIds: sim.bodies.map((b) => b.id) });

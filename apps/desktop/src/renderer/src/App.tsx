@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { makeDriveBase, type FieldModel, type RobotModel, type SeasonConfig, type StartPose, type VisualSpec } from "@fll-sim/sim";
+import { DEFAULT_CALIBRATION, heightFactor, makeDriveBase, type ColorCalibration, type FieldModel, type RobotModel, type SeasonConfig, type StartPose, type VisualSpec } from "@fll-sim/sim";
 import { ScorePanel } from "./components/ScorePanel";
 import { defaultAnswers, type Answers } from "../../../../../seasons/2026-27/scoring";
 import type { Library } from "@fll-sim/ldraw";
@@ -13,6 +13,8 @@ import { CodeEditor } from "./components/CodeEditor";
 import { HubPanel } from "./components/HubPanel";
 import { Telemetry } from "./components/Telemetry";
 import { RobotPanel } from "./components/RobotPanel";
+import { CalibrationPanel } from "./components/CalibrationPanel";
+import type { CalResult } from "./lib/calibration";
 import { loadRobotConfig, saveRobotConfig, toDriveBaseOptions, type RobotConfig } from "./lib/robotConfig";
 import { SimController } from "./lib/simController";
 import { loadBundledMissions, loadDefaultMat, loadMatImage, loadSeason, poseOnDock, type BundledMission, type DockName, type DockSite, type LoadedMat } from "./lib/assets";
@@ -49,6 +51,19 @@ export function App() {
   const [error, setError] = useState<{ line?: number; text: string } | null>(null);
   const [robot, setRobot] = useState<RobotConfig>(loadRobotConfig);
   const [showRobot, setShowRobot] = useState(false);
+  const [showCal, setShowCal] = useState(false);
+  /** Colour sensor calibration (from the calibration kit), used by the simulator. */
+  const [colorCal, setColorCal] = useState<ColorCalibration>(() => {
+    try {
+      return { ...DEFAULT_CALIBRATION, ...JSON.parse(localStorage.getItem("fllsim.colorCal") ?? "{}") };
+    } catch {
+      return DEFAULT_CALIBRATION;
+    }
+  });
+  // calibration runs in the simulator: console lines and "program finished"
+  const calTap = useRef<((line: string) => void) | null>(null);
+  const calDone = useRef<(() => void) | null>(null);
+  const lastFrame = useRef<Frame | null>(null);
   /** Set when a Word Blocks project is open: the editor shows its compiled Python read-only. */
   const [blocks, setBlocks] = useState<CompileResult | null>(null);
   const [tab, setTab] = useState<"sim" | "build">("sim");
@@ -246,13 +261,18 @@ export function App() {
       {
         scene: (bodies, ids) => field.current?.setScene(bodies, ids, visualsRef.current.lib, visualsRef.current.visuals),
         frame: (f) => {
+          lastFrame.current = f;
           field.current?.setTransforms(f.transforms);
           if (f.running) field.current?.addTrail(f.pose.xMm, f.pose.yMm);
           setFrame(f);
         },
-        stdout: (l) => log(l),
+        stdout: (l) => {
+          log(l);
+          calTap.current?.(l);
+        },
         hub: (ev) => playHubEvents(ev, speedRef.current),
         done: (r) => {
+          calDone.current?.();
           setRunning(false);
           setPaused(false);
           setMatchStart((ms) => {
@@ -274,13 +294,13 @@ export function App() {
           log(`Simulator error: ${m}`, "err");
         },
       },
-      { season, mat: mat?.payload ?? null, robot: robotModel, start, fieldModels, footprints },
+      { season, mat: mat?.payload ?? null, robot: robotModel, start, fieldModels, footprints, colorCalibration: colorCal },
     );
     ctl.current = c;
     c.boot();
     return () => c.dispose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [season, mat, robotModel, fieldModels, footprints]);
+  }, [season, mat, robotModel, fieldModels, footprints, colorCal]);
 
   useEffect(() => {
     consoleEnd.current?.scrollIntoView({ block: "end" });
@@ -381,6 +401,60 @@ export function App() {
       log(`Saved ${r.path}`, "info");
     }
   };
+  /** Run a calibration program in the simulator from a fresh start; its console lines and how far the robot moved. */
+  const runForCalibration = async (source: string) => {
+    const c = ctl.current;
+    if (!c) return { lines: [], movedMm: 0 };
+    field.current?.clearTrail();
+    c.setStart(start);
+    await new Promise((r) => setTimeout(r, 600)); // let the fresh field settle and report its pose
+    const p0 = lastFrame.current?.pose;
+    const lines: string[] = [];
+    calTap.current = (l) => lines.push(l);
+    const done = new Promise<void>((r) => (calDone.current = r));
+    setRunning(true);
+    c.run(source);
+    await done;
+    calTap.current = calDone.current = null;
+    await new Promise((r) => setTimeout(r, 100));
+    const p1 = lastFrame.current?.pose;
+    return { lines, movedMm: p0 && p1 ? Math.hypot(p1.xMm - p0.xMm, p1.yMm - p0.yMm) : 0 };
+  };
+  /** The simulator's colour readings over the mat's white and black (for the calibration kit). */
+  const colorModel = useMemo(() => {
+    const sensor = robotModel.sensors.find((x) => x.type === "color");
+    if (!sensor) return undefined;
+    // luminance of the mat's white and black: 99th / 1st percentile of the loaded mat (else typical print)
+    let lumWhite = 0.85, lumBlack = 0.02;
+    const px = mat?.payload;
+    if (px) {
+      const d = new Uint8Array(px.data), lums: number[] = [];
+      const lin = (v: number) => { const c = v / 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+      for (let i = 0; i < d.length; i += 4 * 97) lums.push(0.2126 * lin(d[i]) + 0.7152 * lin(d[i + 1]) + 0.0722 * lin(d[i + 2]));
+      lums.sort((a, b) => a - b);
+      lumBlack = lums[Math.floor(lums.length * 0.01)];
+      lumWhite = lums[Math.floor(lums.length * 0.99)];
+    }
+    const f = heightFactor(sensor.posMm.y);
+    const read = (lum: number) => Math.round(Math.max(0, Math.min(100, f * (colorCal.offset + colorCal.gain * Math.pow(lum, 0.6)))));
+    return { white: read(lumWhite), black: read(lumBlack), heightFactor: f, lumWhite, lumBlack };
+  }, [robotModel, mat, colorCal]);
+  const applyCalibration = (r: CalResult) => {
+    if (r.wheelDiameterMm || r.trackWidthMm) {
+      const c = { ...robot, ...(r.wheelDiameterMm ? { wheelDiameterMm: r.wheelDiameterMm } : {}), ...(r.trackWidthMm ? { trackWidthMm: r.trackWidthMm } : {}) };
+      saveRobotConfig(c);
+      setRobot(c);
+    }
+    if (r.colorCalibration) {
+      setColorCal(r.colorCalibration);
+      try {
+        localStorage.setItem("fllsim.colorCal", JSON.stringify(r.colorCalibration));
+      } catch {
+        /* ignore */
+      }
+    }
+    log(`Calibration applied: ${r.notes.join(" ")}`, "info");
+  };
   const applyRobot = (c: RobotConfig) => {
     saveRobotConfig(c);
     setRobot(c);
@@ -468,6 +542,7 @@ export function App() {
             <option value="ldraw" disabled={!buildParts.length}>Robot: my build ({buildParts.length} parts)</option>
           </select>
           <button onClick={() => setShowRobot(true)} disabled={running || robotSource !== "drivebase"} title="Motor and sensor ports, wheels">Ports…</button>
+          <button onClick={() => setShowCal(true)} disabled={running || robotSource !== "drivebase"} title="Measure your real robot with a few test programs and make the simulated one match it">Calibrate…</button>
           <button onClick={importMat} title="Load a scan/photo of your mat, cropped to its edges">Mat image…</button>
         </div>
       </header>
@@ -577,6 +652,7 @@ export function App() {
         </section>
       </main>
       {showRobot && <RobotPanel config={robot} onApply={applyRobot} onClose={() => setShowRobot(false)} />}
+      {showCal && <CalibrationPanel config={robot} colorCal={colorCal} colorModel={colorModel} runInSim={runForCalibration} onApply={applyCalibration} onClose={() => setShowCal(false)} />}
     </div>
   );
 }

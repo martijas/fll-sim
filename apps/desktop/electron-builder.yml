@@ -20,7 +20,7 @@ linux:
   target: [deb, AppImage]
   category: Education
   icon: build/icon.png
-  maintainer: FLL Sim contributors <superboom915@gmail.com>
+  maintainer: martijas <martijas@users.noreply.github.com>
   synopsis: FIRST LEGO League robot and field simulator
   syncDesktopName: true
   desktop:

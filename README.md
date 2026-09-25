@@ -33,6 +33,25 @@ repository. Load your own copy with **Mat image…**; see "Season materials and 
 
 See `PLAN.md` for the full design.
 
+## Installing on a team laptop
+
+Build the packages once (`pnpm dist:linux`, output in `apps/desktop/release/`), then on each
+laptop (Debian 12+ / Ubuntu 22.04+, 64-bit):
+
+- **.deb:** `sudo apt install ./fll-sim_0.1.0_amd64.deb`, then start **FLL Sim** from the
+  applications menu (or run `fll-sim`).
+- **AppImage** (no install, no admin rights): `chmod +x fll-sim-0.1.0-x86_64.AppImage` and
+  double-click it. On systems without FUSE 2 run it with `--appimage-extract-and-run`.
+
+**First start: load the mat.** FIRST's mat artwork can't be shipped with the app. Copy your
+prepared mat image (`resources/2026-27-bioglow/derived/mat-color.png` from the computer where it
+was made; see "Season materials and the mat") to the laptop, click **Mat image…** and pick it. The
+app remembers it. Without it the table shows a plain mat with the launch areas; everything else
+works.
+
+Both packages were checked by installing the `.deb` contents and running the AppImage: the
+app starts, loads every mission model and runs a program.
+
 ## Running from source
 
 Requires Node.js 22+ and pnpm (`corepack enable`).
@@ -99,6 +118,25 @@ Rebrickable CSV dumps in `~/.cache/fll-sim/rebrickable`).
 - **Grip:** tyres ≈ 1.0, smooth racing tyres 1.1, rubber 0.9, plastic tracks 0.4, plastic 0.3,
   steel ball casters 0.12 (against the mat). All of these are estimates to calibrate on a real
   table.
+
+## Calibrating against your real robot
+
+**Calibrate…** (next to **Ports…**) makes the simulated robot match your real one; it takes about
+15 minutes at the table:
+
+1. Set your robot's ports, wheel size and track width in **Ports…**.
+2. In **Calibrate…**, save the five test programs (*Save program…*) and open them in the SPIKE
+   App. They are Python projects, which the SPIKE App runs even if your team codes in Word Blocks.
+3. Run them on the robot on the real mat: drive straight (measure how far the front moved and
+   type it in), spin in place, top speed, coast to a stop, and colour sensor over white then a
+   black line (press the right button when the sensor is over the line).
+4. Copy everything the SPIKE console printed into the box (only the `CAL,…` lines matter).
+5. Click **Run the tests in the simulator**; the table then compares the real robot with the
+   simulated one, and **Apply corrections** updates the effective wheel size, turning width and
+   colour sensor calibration.
+
+The comparison also shows the difference in top speed, acceleration, coasting and straight-line
+drift, which tells you what else to adjust.
 
 ## Missions and scoring (BIOGLOW)
 

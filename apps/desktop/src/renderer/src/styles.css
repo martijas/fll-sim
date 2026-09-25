@@ -130,3 +130,15 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 
 .docks { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; }
 .docks select { font-size: 12px; max-width: 150px; }
+
+.modal.calibration { width: min(860px, 94vw); max-height: 90vh; overflow: auto; }
+.cal-tests { padding-left: 18px; margin: 8px 0; }
+.cal-tests li { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid #333; }
+.cal-tests .hint { display: block; font-size: 12px; opacity: 0.8; }
+.cal-field { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+.cal-field input { width: 110px; }
+.cal-log { width: 100%; min-height: 110px; font-family: monospace; font-size: 12px; box-sizing: border-box; }
+.cal-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+.cal-table td, .cal-table th { padding: 3px 8px; border-bottom: 1px solid #333; text-align: left; }
+.cal-notes { font-size: 13px; padding-left: 18px; }
+.modal-buttons.left { justify-content: flex-start; }
