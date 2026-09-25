@@ -474,7 +474,9 @@ function assembleParts(lib: Library, parts: ModelPart[], o: AssembleOptions = {}
   }
 
   // Iterate: clusters joined by hinges on >= 2 distinct axes are rigid.
-  for (let iter = 0; iter < 20; iter++) {
+  // (the pairs are regrouped after every merge: a merge changes which clusters meet)
+  let housingLocked = false;
+  for (let iter = 0; iter < 2000; iter++) {
     const pairs = new Map<string, Connection[]>();
     for (const c of conns) {
       const a = dsu.find(c.a), b = dsu.find(c.b);
@@ -489,11 +491,14 @@ function assembleParts(lib: Library, parts: ModelPart[], o: AssembleOptions = {}
         if (canUnion(a, b)) {
           dsu.union(a, b);
           changed = true;
-        } else if (cs.every((c) => c.kind === "revolute") && distinctAxes(cs) >= 2) warnings.push("A motor's output is locked to its own housing");
+          break;
+        } else if (cs.every((c) => c.kind === "revolute") && distinctAxes(cs) >= 2) housingLocked = true;
       }
     }
     if (!changed) break;
+    housingLocked = false;
   }
+  if (housingLocked) warnings.push("A motor's output is locked to its own housing");
 
   // Glue connectionless parts (hoses, decorations without snap data) to what they touch.
   if (o.glue) {
