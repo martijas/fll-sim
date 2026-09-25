@@ -6,7 +6,7 @@
 //
 //   pnpm --filter @fll-sim/ldraw-pack run build-pack [--elements resources/.../element-overview.pdf]
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gunzipSync, gzipSync } from "node:zlib";
@@ -177,6 +177,13 @@ const want = (name: string) => {
   }
 };
 for (const c of categories) for (const e of c.entries.values()) want(e.file);
+// Every part used by the bundled robots and mission models.
+for (const dir of ["robots", "missions"]) {
+  const d = join(repo, "apps/desktop/resources", dir);
+  if (!existsSync(d)) continue;
+  for (const f of readdirSync(d).filter((x) => x.endsWith(".ldr")))
+    for (const l of parseLines(readFileSync(join(d, f), "latin1")).lines) if (l.t === 1) want(l.file);
+}
 files.set("LDConfig.ldr", src.read("LDConfig.ldr")!);
 
 // Sanity: every catalog part flattens with no missing subfiles.

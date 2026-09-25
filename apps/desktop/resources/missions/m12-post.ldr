@@ -1,0 +1,40 @@
+0 m12-post
+0 Name: m12-post.ldr
+0 Author: FLL Sim
+
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 STEP
+0 // double bent liftarm (post: small frame)
+1 71 230 -9 -220 0 0 1 -1 0 0 0 -1 0 32009.dat
+0 // axle/pin (post: small frame)
+1 1 70 -9 -210 0 0 -1 0 -1 0 -1 0 0 43093.dat
+0 // 3L pin (post: small frame)
+1 1 110 -9 -220 0 0 1 0 -1 0 1 0 0 42924.dat
+0 // black pin (post: small frame)
+1 0 150 -9 -230 0 0 1 0 -1 0 1 0 0 61332.dat
+0 // dark grey 3L liftarm, back (post: small frame)
+1 72 130 -9 -240 0 0 1 -1 0 0 0 -1 0 32523.dat
+0 // dark grey 3L liftarm, front (post: small frame)
+1 72 90 -9 -200 0 0 1 -1 0 0 0 -1 0 32523.dat
+0 // yellow 3L axle (post: small frame)
+1 14 230 -89 -220 0 1 0 0 0 1 1 0 0 4519.dat
+0 // red 2L liftarm (post: small frame)
+1 4 230 -89 -200 0 0 -1 -1 0 0 0 1 0 60483.dat
+0 // red 2L liftarm (post: small frame)
+1 4 230 -89 -240 0 0 -1 -1 0 0 0 1 0 60483.dat

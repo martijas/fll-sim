@@ -25,6 +25,10 @@ export const LDU = 0.4;
 export interface ModelPart extends PlacedPart {
   /** Port for electronics: "0 !FLLSIM PORT A" on the line before the part. */
   port?: Port;
+  /** Building-instruction step (1-based), from LDraw "0 STEP" lines. */
+  step?: number;
+  /** Free-text label from a "0 // label" comment line before the part (e.g. "seed 1"). */
+  label?: string;
 }
 
 /** Parse an .ldr/.mpd (including Studio .io exports saved as .mpd) into placed parts. */
@@ -34,24 +38,46 @@ export function parseModel(lib: Library, text: string): { parts: ModelPart[]; lo
   // Port annotations ("0 !FLLSIM PORT X" before a part line in the main file), keyed by the
   // part's position so they stay attached even if other lines fail to load.
   const portAt = new Map<string, Port>();
+  const stepAt = new Map<string, number>();
+  const labelAt = new Map<string, string>();
+  let pendingLabel: string | undefined;
   let pending: Port | undefined;
+  let step = 1;
+  let sawStep = false;
   for (const line of (files.get(main) ?? "").split(/\r?\n/)) {
     const m = line.match(/^\s*0\s+!FLLSIM\s+PORT\s+([A-F])/i);
+    const lm = line.match(/^\s*0\s+\/\/\s*(.+?)\s*$/);
+    if (lm) pendingLabel = lm[1];
     if (m) pending = m[1].toUpperCase() as Port;
-    else if (/^\s*1\s/.test(line)) {
+    else if (/^\s*0\s+(STEP|ROTSTEP)\b/i.test(line)) {
+      step++;
+      sawStep = true;
+    } else if (/^\s*1\s/.test(line)) {
       const t = line.trim().split(/\s+/);
-      if (pending) portAt.set(`${normName(t.slice(14).join(" "))}@${Number(t[2]).toFixed(1)},${Number(t[3]).toFixed(1)},${Number(t[4]).toFixed(1)}`, pending);
+      const key = `${normName(t.slice(14).join(" "))}@${Number(t[2]).toFixed(1)},${Number(t[3]).toFixed(1)},${Number(t[4]).toFixed(1)}`;
+      if (pending) portAt.set(key, pending);
+      if (!stepAt.has(key)) stepAt.set(key, step);
+      if (pendingLabel) labelAt.set(key, pendingLabel);
       pending = undefined;
+      pendingLabel = undefined;
     }
   }
-  const parts: ModelPart[] = r.parts.map((p) => ({ ...p, port: portAt.get(`${p.file}@${p.m[3].toFixed(1)},${p.m[7].toFixed(1)},${p.m[11].toFixed(1)}`) }));
+  const keyOf = (p: PlacedPart) => `${p.file}@${p.m[3].toFixed(1)},${p.m[7].toFixed(1)},${p.m[11].toFixed(1)}`;
+  const parts: ModelPart[] = r.parts.map((p) => ({ ...p, port: portAt.get(keyOf(p)), step: sawStep ? stepAt.get(keyOf(p)) : undefined, label: labelAt.get(keyOf(p)) }));
   const notParts = [...new Set(r.missing)];
   return { parts, local: files, missing: notParts };
 }
 
 export function serializeModel(parts: ModelPart[], name = "robot.ldr"): string {
   const out = [`0 ${name.replace(/\.ldr$/i, "")}`, `0 Name: ${name}`, "0 Author: FLL Sim", ""];
-  for (const p of parts) {
+  const stepped = parts.some((p) => p.step !== undefined);
+  let step = 1;
+  for (const p of stepped ? [...parts].sort((a, b) => (a.step ?? 1) - (b.step ?? 1)) : parts) {
+    while (stepped && (p.step ?? 1) > step) {
+      out.push("0 STEP");
+      step++;
+    }
+    if (p.label) out.push(`0 // ${p.label}`);
     if (p.port) out.push(`0 !FLLSIM PORT ${p.port}`);
     const m = p.m;
     const f = (v: number) => +v.toFixed(4);
@@ -71,10 +97,13 @@ export interface WSnap {
   t0: number; // extent along axis relative to o
   t1: number;
   r: number; // max radius
+  rMin: number; // smallest radius (the part of a pin/axle that enters a hole)
   axle: boolean; // has axle ("A") sections
   round: boolean; // has round ("R") sections
   stud: boolean;
   friction: boolean;
+  /** Sections along the axis as [from, to] intervals relative to `o` (first listed at the +axis end). */
+  secs: { shape: string; r: number; t0: number; t1: number }[];
 }
 
 function parseSecs(secs: string, yScale: number): Sec[] {
@@ -104,9 +133,18 @@ export function worldSnapFor(s: Snap, m: Mat4, part: number, node: number, frict
   const L = secs.reduce((a, x) => a + x.len, 0);
   const a = norm(ycol);
   const [t0, t1] = s.center ? [-L / 2, L / 2] : [-L, 0];
+  // LDCad lists sections starting from the snap's +Y end.
+  let cur = t1;
+  const placedSecs = secs.map((x) => {
+    const sec = { shape: x.shape.replace(/_/g, "") || "R", r: x.r, t0: cur - x.len, t1: cur };
+    cur -= x.len;
+    return sec;
+  });
   return {
+    secs: placedSecs,
     part, node, gender: s.gender, o: [w[3], w[7], w[11]], a, t0, t1,
     r: Math.max(...secs.map((x) => x.r)),
+    rMin: Math.min(...secs.map((x) => x.r)),
     axle: secs.some((x) => x.shape === "A"),
     round: secs.some((x) => x.shape === "R"),
     stud: /stud/i.test(s.id ?? "") || (s.caps === "one" && L <= 4.5 && secs.every((x) => x.shape === "R")),
@@ -115,7 +153,7 @@ export function worldSnapFor(s: Snap, m: Mat4, part: number, node: number, frict
 }
 
 export type ConnKind = "rigid" | "revolute";
-export interface Connection { a: number; b: number; kind: ConnKind; point: Vec3; axis: Vec3; friction: boolean }
+export interface Connection { a: number; b: number; kind: ConnKind; point: Vec3; axis: Vec3; friction: boolean; /** engaged length (LDU) */ depth: number }
 
 /** Find male/female snap matches between different nodes. */
 export function findConnections(snaps: WSnap[]): Connection[] {
@@ -144,22 +182,48 @@ export function findConnections(snaps: WSnap[]): Connection[] {
     for (const f of cands) {
       if (f.node === m.node || f.part === m.part) continue;
       if (Math.abs(Math.abs(dot(m.a, f.a)) - 1) > 0.01) continue; // parallel
+      if ((m.stud || f.stud) && dot(m.a, f.a) < 0) continue; // studs only clip in one direction
       const d = sub(m.o, f.o);
       const perp = sub(d, scalev(f.a, dot(d, f.a)));
       if (Math.hypot(...perp) > 1.5) continue; // coaxial
-      if (m.r > f.r + 0.6) continue; // fits
+      if (m.rMin > f.r + 0.6) continue; // the narrowest section must fit the hole
       // overlap along the shared axis
       const s = dot(m.a, f.a) > 0 ? 1 : -1;
       const mo = dot(d, f.a);
       const m0 = mo + Math.min(m.t0 * s, m.t1 * s), m1 = mo + Math.max(m.t0 * s, m.t1 * s);
       const overlap = Math.min(m1, f.t1) - Math.max(m0, f.t0);
       if (overlap < 0.9) continue;
-      const k = `${Math.min(m.node, f.node)}-${Math.max(m.node, f.node)}-${Math.round(dot(m.o, f.a))}-${key(m.o)}`;
+      // A stud has exactly one seated position: the anti-stud's origin (the part's underside)
+      // sits on the stud's base (the top surface it stands on).
+      if ((m.stud || f.stud) && Math.abs(mo) > 1.5) continue;
+      // Section by section: what actually sits inside the hole?
+      let axleInAxle = 0, roundIn = 0, bad = 0;
+      if (!(m.stud || f.stud)) {
+        for (const ms of m.secs) {
+          const a0 = mo + Math.min(ms.t0 * s, ms.t1 * s), a1 = mo + Math.max(ms.t0 * s, ms.t1 * s);
+          for (const fs of f.secs) {
+            const ov = Math.min(a1, fs.t1) - Math.max(a0, fs.t0);
+            if (ov < 0.9) continue;
+            const mShape = ms.shape.startsWith("A") ? "A" : "R", fShape = fs.shape.startsWith("A") ? "A" : "R";
+            if (ms.r > fs.r + 0.6 && !(mShape === "A" && fShape === "R")) {
+              // a wider section (e.g. a collar) inside a narrower hole section
+              if (ms.r > fs.r + 2.1) bad += ov;
+              continue;
+            }
+            if (mShape === "A" && fShape === "A") axleInAxle += ov;
+            else if (fShape === "R") roundIn += ov;
+            else bad += ov; // round pin in an axle hole
+          }
+        }
+        if (bad > 2 || axleInAxle + roundIn < 0.9) continue;
+      }
+      // one connection per (node pair, male snap position): duplicate snap entries don't double count
+      const k = `${Math.min(m.node, f.node)}-${Math.max(m.node, f.node)}-${m.o.map((v) => Math.round(v)).join(",")}`;
       if (seen.has(k)) continue;
       seen.add(k);
-      const rigid = m.stud || f.stud || (m.axle && f.axle && !f.round) || (m.axle && f.axle && !m.round);
+      const rigid = m.stud || f.stud || axleInAxle >= 0.9;
       const mid = addv(f.o, scalev(f.a, (Math.max(m0, f.t0) + Math.min(m1, f.t1)) / 2));
-      out.push({ a: m.node, b: f.node, kind: rigid ? "rigid" : "revolute", point: mid, axis: f.a, friction: m.friction || f.friction });
+      out.push({ a: m.node, b: f.node, kind: rigid ? "rigid" : "revolute", point: mid, axis: f.a, friction: m.friction || f.friction, depth: m.stud || f.stud ? overlap : axleInAxle + roundIn });
     }
   }
   return out;
@@ -191,6 +255,16 @@ function distinctAxes(conns: Connection[]): number {
 }
 
 export interface AssembleOptions {
+  /**
+   * Parts with no working connection (flexible hose segments, decorative pieces without snap
+   * data) for which this returns true are glued to whatever they touch. Loose game pieces must
+   * return false so they stay free.
+   */
+  glue?: (part: ModelPart, index: number) => boolean;
+  /** Whether glued part `part` may stick to `target` (default: any). */
+  glueTo?: (part: ModelPart, target: ModelPart) => boolean;
+  /** Fewer, bigger colliders: mostly solid parts become a single box (for large field models). */
+  coarse?: boolean;
   /** Default port assignment for electronics without a !FLLSIM PORT line (in part order). */
   autoPorts?: boolean;
   name?: string;
@@ -207,7 +281,7 @@ export interface AssemblyReport {
 interface Node { part: number; rotor: boolean }
 
 /** Build a physics RobotModel from placed LDraw parts. */
-export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = {}): { robot: RobotModel; report: AssemblyReport } {
+export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = {}): { robot: RobotModel; report: AssemblyReport; bodyOfPart: string[] } {
   const warnings: string[] = [];
   const infos = parts.map((p) => analyzePart(lib, p.file));
 
@@ -279,6 +353,49 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     if (!changed) break;
   }
 
+  // Glue connectionless parts (hoses, decorations without snap data) to what they touch.
+  if (o.glue) {
+    const boxes = parts.map((p, i) => {
+      const inf = infos[i];
+      const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+      for (const c of corners(inf.min, inf.max)) {
+        const w = [p.m[0] * c[0] + p.m[1] * c[1] + p.m[2] * c[2] + p.m[3], p.m[4] * c[0] + p.m[5] * c[1] + p.m[6] * c[2] + p.m[7], p.m[8] * c[0] + p.m[9] * c[1] + p.m[10] * c[2] + p.m[11]];
+        for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], w[k]); max[k] = Math.max(max[k], w[k]); }
+      }
+      return { min, max };
+    });
+    const touching = (a: number, b: number) => {
+      // generous: flexible hose segments are drawn with gaps between them
+      for (let k = 0; k < 3; k++) if (boxes[a].min[k] > boxes[b].max[k] + 12 || boxes[b].min[k] > boxes[a].max[k] + 12) return false;
+      return true;
+    };
+    for (let pass = 0; pass < 80; pass++) {
+      let changed = false;
+      // clusters that are connected to something else stay as they are
+      const connected = new Set<number>();
+      for (const c of conns) {
+        const a = dsu.find(c.a), b = dsu.find(c.b);
+        if (a !== b) { connected.add(a); connected.add(b); }
+      }
+      const members = new Map<number, number[]>();
+      parts.forEach((_, i) => (members.get(dsu.find(i)) ?? members.set(dsu.find(i), []).get(dsu.find(i))!).push(i));
+      for (const [root, idx] of members) {
+        if (connected.has(root) || !idx.every((i) => o.glue!(parts[i], i))) continue;
+        // prefer gluing onto a non-glue cluster; otherwise onto another glue part (hose chains)
+        let target = -1;
+        for (const i of idx) for (let j = 0; j < parts.length; j++) {
+          if (dsu.find(j) === root || !touching(i, j) || (o.glueTo && !o.glueTo(parts[i], parts[j]))) continue;
+          if (target < 0 || !o.glue!(parts[j], j)) target = j;
+        }
+        if (target >= 0 && canUnion(idx[0], target)) {
+          dsu.union(idx[0], target);
+          changed = true;
+        }
+      }
+      if (!changed) break;
+    }
+  }
+
   // Clusters -> bodies.
   const clusterOf = nodes.map((_, i) => dsu.find(i));
   const clusterIds = [...new Set(clusterOf)];
@@ -322,7 +439,13 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
       shapes.push({ kind: "sphere", radiusMm: inf.sphere.r * LDU, posMm: v3(R(p.m, inf.sphere.c)), color: col, material: "steel", massKg: mass });
     } else {
       const vol = boxes.reduce((s, x) => s + x.h[0] * x.h[1] * x.h[2], 0) || 1;
-      for (const bx of boxes) shapes.push(boxShape(p.m, bx, R, col, material, (mass * bx.h[0] * bx.h[1] * bx.h[2]) / vol));
+      const lo = [0, 1, 2].map((k) => Math.min(...boxes.map((b) => b.c[k] - b.h[k])));
+      const hi = [0, 1, 2].map((k) => Math.max(...boxes.map((b) => b.c[k] + b.h[k])));
+      const hull = (hi[0] - lo[0]) * (hi[1] - lo[1]) * (hi[2] - lo[2]) / 8;
+      // coarse: a mostly solid part (brick, plate, beam) becomes one oriented box
+      if (o.coarse && boxes.length > 1 && vol / hull > 0.55)
+        shapes.push(boxShape(p.m, { c: [0, 1, 2].map((k) => (lo[k] + hi[k]) / 2) as Vec3, h: [0, 1, 2].map((k) => (hi[k] - lo[k]) / 2) as Vec3 }, R, col, material, mass));
+      else for (const bx of boxes) shapes.push(boxShape(p.m, bx, R, col, material, (mass * bx.h[0] * bx.h[1] * bx.h[2]) / vol));
     }
     b.shapes.push(...shapes);
     // Visuals (whole part, or the motor's housing / rotor subfile).
@@ -425,7 +548,8 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     hub: hub ?? { body: bodies[0]?.id ?? "body0", posMm: { x: 0, y: 40, z: 0 }, rot: { x: 0, y: 0, z: 0, w: 1 } },
     footprintMm: { w: fw * 2, l: fl * 2, h: fh },
   };
-  return { robot, report: { bodies: bodies.length, joints: freeJoints.length, motors: motors.length, loose, warnings } };
+  const bodyOfPart = parts.map((_, i) => bodies[bodyIndex.get(clusterOf[i])!].id);
+  return { robot, report: { bodies: bodies.length, joints: freeJoints.length, motors: motors.length, loose, warnings }, bodyOfPart };
 }
 
 // ---- frame helpers -------------------------------------------------------------------------------
@@ -535,3 +659,28 @@ function motorInertia(type: "small" | "medium" | "large") {
 
 export { normName };
 export { placeOnSnap, partSnaps, snapFrame, invert, autoFit, type FitCandidate } from "./place";
+
+/** Game-piece tag in a part label: "... [loose:seed 1]" (parts with the same tag form one piece). */
+export const looseTag = (p: ModelPart): string | null => /\[loose:([^\]]+)\]/.exec(p.label ?? "")?.[1] ?? null;
+
+/**
+ * A mission model for the field. Parts that didn't connect (hoses, clips, decorations without
+ * snap data) are glued to what they touch; game pieces (labels tagged `[loose:<piece>]`) only
+ * stick to their own piece so they stay free. The heaviest non-game-piece body resting on the
+ * mat is held by Dual Lock (unless `fixed` is false).
+ */
+export function assembleMissionModel(lib: Library, parts: ModelPart[], o: { name?: string; fixed?: boolean } = {}): { robot: RobotModel; fixedBodies: string[] } {
+  const { robot, bodyOfPart } = assemble(lib, parts, {
+    name: o.name,
+    autoPorts: false,
+    coarse: true,
+    glue: () => true,
+    glueTo: (a, b) => looseTag(a) === looseTag(b),
+  });
+  if (o.fixed === false) return { robot, fixedBodies: [] };
+  const pieces = new Set(parts.map((p, i) => (looseTag(p) ? bodyOfPart[i] : null)).filter((x): x is string => !!x));
+  const lowest = (b: RobotModel["bodies"][number]) => Math.min(...b.shapes.map((sh) => sh.posMm.y - (sh.kind === "box" ? sh.sizeMm.y / 2 : sh.radiusMm)));
+  const floor = Math.min(...robot.bodies.map(lowest));
+  const grounded = robot.bodies.filter((b) => !pieces.has(b.id) && lowest(b) < floor + 3).sort((a, b) => b.massKg - a.massKg);
+  return { robot, fixedBodies: grounded.slice(0, 1).map((b) => b.id) };
+}

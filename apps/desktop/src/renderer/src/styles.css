@@ -124,3 +124,6 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 .score-auto.bad { color: #ffb36b; }
 .small { font-size: 11px; }
 .match-timer { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent); min-width: 48px; }
+.step-ctl { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.step-ctl b { color: var(--accent); }
+.model-name { width: 140px; }

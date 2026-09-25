@@ -1,0 +1,547 @@
+0 dock-mine
+0 Name: dock-mine.ldr
+0 Author: FLL Sim
+
+0 // white 1x12 plate (floor, right edge)
+1 15 153.405 -32 16.0455 0 0 1 0 1 0 -1 0 0 60479.dat
+0 // tan 2x2 corner brick (back right)
+1 19 153.405 -56 126.0455 -1 0 0 0 1 0 0 0 -1 2357.dat
+0 STEP
+0 // white 6x12 plate (floor)
+1 15 83.405 -32 16.0455 0 0 1 0 1 0 -1 0 0 3028.dat
+0 STEP
+0 // trans blue 1x2 tile (stream)
+1 43 123.405 -40 106.0455 1 0 0 0 1 0 0 0 1 3069b.dat
+0 // trans blue quarter tile
+1 43 93.405 -40 106.0455 -1 0 0 0 1 0 0 0 -1 25269.dat
+0 // green 2x2 jumper tile
+1 2 103.405 -40 76.0455 1 0 0 0 1 0 0 0 1 87580.dat
+0 // trans blue quarter tile
+1 43 133.405 -40 86.0455 1 0 0 0 1 0 0 0 1 25269.dat
+0 STEP
+0 // green 2x2 jumper tile
+1 2 63.405 -40 76.0455 1 0 0 0 1 0 0 0 1 87580.dat
+0 // green 2x2 jumper tile
+1 2 103.405 -40 36.0455 1 0 0 0 1 0 0 0 1 87580.dat
+0 // green 2x2 jumper tile
+1 2 63.405 -40 36.0455 1 0 0 0 1 0 0 0 1 87580.dat
+0 STEP
+0 // green 1x2 brick with hole (right face, back)
+1 2 153.405 -80 116.0455 0 0 1 0 1 0 -1 0 0 3700.dat
+0 // dark tan 1x2 plate
+1 28 153.405 -88 116.0455 0 0 1 0 1 0 -1 0 0 3023b.dat
+0 // bright green tooth plate
+1 10 153.405 -96 126.0455 -1 0 0 0 1 0 0 0 -1 15070.dat
+0 // tan 1x1 round plate
+1 19 153.405 -96 106.0455 1 0 0 0 1 0 0 0 1 6141.dat
+0 STEP
+0 // green 1x1 round brick
+1 2 113.405 -56 126.0455 1 0 0 0 1 0 0 0 1 3062b.dat
+0 // tan 1x8 brick (back wall)
+1 19 23.405 -56 126.0455 1 0 0 0 1 0 0 0 1 3008.dat
+0 STEP
+0 // window (back wall)
+1 19 123.405 -104 126.0455 -1 0 0 0 1 0 0 0 -1 60592.dat
+0 // window (back wall) glass
+1 43 123.405 -104 126.0455 -1 0 0 0 1 0 0 0 -1 60601.dat
+0 // window (back wall)
+1 19 83.405 -104 126.0455 -1 0 0 0 1 0 0 0 -1 60592.dat
+0 // window (back wall) glass
+1 43 83.405 -104 126.0455 -1 0 0 0 1 0 0 0 -1 60601.dat
+0 STEP
+0 // green leaves plate
+1 2 103.405 -48 76.0455 0 0 -1 0 1 0 1 0 0 32607.dat
+0 // pink flower bud (approximated by a rose)
+1 29 103.405 -48 76.0455 1 0 0 0 1 0 0 0 1 95829.dat
+0 // yellow 1x1 flower plate
+1 14 63.405 -48 36.0455 1 0 0 0 1 0 0 0 1 24866.dat
+0 STEP
+0 // green flower petals (tall plant)
+1 10 103.405 -64 36.0455 1 0 0 0 1 0 0 0 1 4727.dat
+0 // green 1x1 flower plate
+1 2 103.405 -72 36.0455 1 0 0 0 1 0 0 0 1 24866.dat
+0 // green flower petals (tall plant)
+1 10 103.405 -96 36.0455 1 0 0 0 1 0 0 0 1 4727.dat
+0 // green 1x1 flower plate
+1 2 103.405 -104 36.0455 1 0 0 0 1 0 0 0 1 24866.dat
+0 // green flower petals (tall plant)
+1 10 103.405 -128 36.0455 1 0 0 0 1 0 0 0 1 4727.dat
+0 // red flower (tall plant)
+1 4 103.405 -128 36.0455 1 0 0 0 1 0 0 0 1 4367.dat
+0 STEP
+0 // green leaves plate (stem plant)
+1 2 63.405 -48 76.0455 0 0 -1 0 1 0 1 0 0 32607.dat
+0 // green leaves plate (stem plant)
+1 2 63.405 -56 76.0455 0.7071 0 0.7071 0 1 0 -0.7071 0 0.7071 32607.dat
+0 // green leaves plate (stem plant)
+1 2 63.405 -64 76.0455 0.7071 0 -0.7071 0 1 0 0.7071 0 0.7071 32607.dat
+0 // bar with six stems
+1 2 63.405 -64 76.0455 1 0 0 0 1 0 0 0 1 19119.dat
+0 // flower plate on a stem
+1 14 43.905 -96.72 76.0455 0.867 0.4983 0 -0.4983 0.867 0 0 0 1 24866.dat
+0 // flower plate on a stem
+1 2 73.105 -96.72 92.8255 0.9684 -0.2495 0 0.2236 0.8681 0.4431 -0.1105 -0.4291 0.8965 24866.dat
+0 // flower plate on a stem
+1 14 47.385 -78.54 48.4855 0.8817 0.4717 0 -0.1826 0.3413 -0.9221 -0.435 0.813 0.387 24866.dat
+0 // flower plate on a stem
+1 2 73.105 -96.72 59.2655 0.9684 -0.2495 0 0.2236 0.8681 -0.4431 0.1105 0.4291 0.8965 24866.dat
+0 // flower plate on a stem
+1 14 47.385 -78.54 103.6055 0.8817 0.4717 0 -0.1826 0.3413 0.9221 0.435 -0.813 0.387 24866.dat
+0 // flower plate on a stem
+1 2 95.345 -78.54 76.0455 0 -0.9404 -0.3401 0 0.3401 -0.9404 1 0 0 24866.dat
+0 STEP
+0 // white 6x12 plate (floor, left)
+1 15 -36.595 -32 16.0455 0 0 1 0 1 0 -1 0 0 3028.dat
+0 STEP
+0 // tan 1x3 brick (back wall)
+1 19 33.405 -80 126.0455 1 0 0 0 1 0 0 0 1 3622.dat
+0 // tan 1x3 brick (back wall)
+1 19 33.405 -104 126.0455 1 0 0 0 1 0 0 0 1 3622.dat
+0 STEP
+0 // tan 2x2 corner brick (back left)
+1 19 -86.595 -56 126.0455 0 0 1 0 1 0 -1 0 0 2357.dat
+0 STEP
+0 // window (back wall)
+1 19 -16.595 -104 126.0455 -1 0 0 0 1 0 0 0 -1 60592.dat
+0 // window (back wall) glass
+1 43 -16.595 -104 126.0455 -1 0 0 0 1 0 0 0 -1 60601.dat
+0 // window (back wall)
+1 19 -56.595 -104 126.0455 -1 0 0 0 1 0 0 0 -1 60592.dat
+0 // window (back wall) glass
+1 43 -56.595 -104 126.0455 -1 0 0 0 1 0 0 0 -1 60601.dat
+0 STEP
+0 // green 1x2 brick with hole (left face, back)
+1 2 -86.595 -80 116.0455 0 0 1 0 1 0 -1 0 0 3700.dat
+0 // dark tan 1x2 plate
+1 28 -86.595 -88 116.0455 0 0 1 0 1 0 -1 0 0 3023b.dat
+0 // yellow tooth plate
+1 14 -86.595 -96 126.0455 -1 0 0 0 1 0 0 0 -1 15070.dat
+0 // tan 1x1 round plate
+1 19 -86.595 -96 106.0455 1 0 0 0 1 0 0 0 1 6141.dat
+0 STEP
+0 // crank: right quarter circle liftarm
+1 0 -71.595 -46 -93.9545 0 -1 0 0 0 -1 1 0 0 32249.dat
+0 // crank: white axle-pin (right pivot, pin sticking out right)
+1 15 -66.595 -46 -93.9545 1 0 0 0 1 0 0 0 1 65249.dat
+0 // crank: grey 2L liftarm on the pivot axle
+1 71 -56.595 -56 -93.9545 0 -1 0 0 0 -1 1 0 0 43857.dat
+0 // crank: tan 3/4 pin (half pin into the quarter circle)
+1 19 -66.595 -66 -93.9545 -1 0 0 0 1 0 0 0 -1 32002.dat
+0 // crank: yellow 5L axle (top holes)
+1 14 -26.595 -86 -93.9545 -1 0 0 0 1 0 0 0 -1 32073.dat
+0 // crank: crank arm (3L thin liftarm with pin)
+1 0 -56.595 -86 -93.9545 0 -1 0 -1 0 0 0 0 -1 61408.dat
+0 // crank: red 2L pin connector (handle)
+1 4 -86.595 -86 -133.9545 -1 0 0 0 1 0 0 0 -1 62462.dat
+0 // crank: blue axle-pin (handle)
+1 1 -106.595 -86 -133.9545 -1 0 0 0 1 0 0 0 -1 43093.dat
+0 // crank: red ball (crank handle)
+1 4 -120.595 -86 -133.9545 0 1 0 1 0 0 0 0 -1 32474.dat
+0 // crank: tan 3/4 pin (right, lower string)
+1 19 -66.595 -46 -73.9545 -1 0 0 0 1 0 0 0 -1 32002.dat
+0 // crank: olive 2L pin connector
+1 330 -46.595 -46 -73.9545 -1 0 0 0 1 0 0 0 -1 62462.dat
+0 // crank: black pin
+1 0 -26.595 -46 -73.9545 -1 0 0 0 1 0 0 0 -1 61332.dat
+0 // crank: green 2L pin connector
+1 10 -6.595 -46 -73.9545 -1 0 0 0 1 0 0 0 -1 62462.dat
+0 // crank: tan 3/4 pin (left, lower string)
+1 19 13.405 -46 -73.9545 1 0 0 0 1 0 0 0 1 32002.dat
+0 // crank: white axle-pin (front string)
+1 15 -46.595 -46 -53.9545 -1 0 0 0 1 0 0 0 -1 65249.dat
+0 // crank: olive 2L pin connector (front string)
+1 330 -16.595 -46 -53.9545 -1 0 0 0 1 0 0 0 -1 62462.dat
+0 // crank: lime 1L liftarm
+1 27 -46.595 -46 -53.9545 0 -1 0 -1 0 0 0 0 -1 18654.dat
+0 // crank: pink half bush
+1 5 -61.595 -46 -53.9545 0 0 -1 0 -1 0 -1 0 0 32123b.dat
+0 // crank: black 3L liftarm (hatch stack)
+1 0 -36.595 -86 -73.9545 0 -1 0 1 0 0 0 0 1 32523.dat
+0 // crank: black 3L liftarm (hatch stack)
+1 0 -16.595 -86 -73.9545 0 -1 0 1 0 0 0 0 1 32523.dat
+0 // crank: black 3L liftarm (hatch stack)
+1 0 3.405 -86 -73.9545 0 -1 0 1 0 0 0 0 1 32523.dat
+0 // crank: blue 3L pin (hatch stack)
+1 1 -16.595 -86 -73.9545 -1 0 0 0 1 0 0 0 -1 42924.dat
+0 // crank: blue axle-pin (front string, left)
+1 1 3.405 -46 -53.9545 1 0 0 0 1 0 0 0 1 43093.dat
+0 // crank: pink half bush (left)
+1 5 8.405 -46 -53.9545 0 0 -1 0 -1 0 -1 0 0 32123b.dat
+0 // crank: left quarter circle liftarm
+1 0 18.405 -46 -93.9545 0 -1 0 0 0 -1 1 0 0 32249.dat
+0 // crank: white axle-pin (left pivot, pin sticking out left)
+1 15 13.405 -46 -93.9545 -1 0 0 0 1 0 0 0 -1 65249.dat
+0 // crank: tan 1x2 brick with holes (left pivot)
+1 19 33.405 -56 -83.9545 0 0 -1 0 1 0 1 0 0 32000.dat
+0 // crank: tan 1x2 brick with holes (right pivot)
+1 19 -86.595 -56 -83.9545 0 0 -1 0 1 0 1 0 0 32000.dat
+0 STEP
+0 // tan 1x4 plate (front)
+1 19 83.405 -40 -93.9545 1 0 0 0 1 0 0 0 1 3710.dat
+0 // tan 2x2 corner brick (front right)
+1 19 153.405 -56 -93.9545 0 0 -1 0 1 0 1 0 0 2357.dat
+0 STEP
+0 // window (front wall)
+1 19 103.405 -88 -93.9545 1 0 0 0 1 0 0 0 1 60592.dat
+0 // window (front wall) glass
+1 43 103.405 -88 -93.9545 1 0 0 0 1 0 0 0 1 60601.dat
+0 // window (front wall)
+1 19 63.405 -88 -93.9545 1 0 0 0 1 0 0 0 1 60592.dat
+0 // window (front wall) glass
+1 43 63.405 -88 -93.9545 1 0 0 0 1 0 0 0 1 60601.dat
+0 STEP
+0 // green 1x1 round brick
+1 2 33.405 -80 -93.9545 1 0 0 0 1 0 0 0 1 3062b.dat
+0 // green 1x1 round brick
+1 2 133.405 -80 -93.9545 1 0 0 0 1 0 0 0 1 3062b.dat
+0 // bright green tooth plate
+1 10 33.405 -88 -93.9545 1 0 0 0 1 0 0 0 1 15070.dat
+0 // bright green tooth plate
+1 10 133.405 -88 -93.9545 1 0 0 0 1 0 0 0 1 15070.dat
+0 STEP
+0 // green 1x2 brick with hole (right face, front)
+1 2 153.405 -80 -83.9545 0 0 1 0 1 0 -1 0 0 3700.dat
+0 // dark tan 1x2 plate
+1 28 153.405 -88 -83.9545 0 0 1 0 1 0 -1 0 0 3023b.dat
+0 STEP
+0 // tan 1x1 round plate
+1 19 153.405 -96 -73.9545 1 0 0 0 1 0 0 0 1 6141.dat
+0 // green 1x3 plate
+1 2 133.405 -96 -93.9545 1 0 0 0 1 0 0 0 1 3623.dat
+0 // tan 1x4 plate
+1 19 63.405 -96 -93.9545 1 0 0 0 1 0 0 0 1 3710.dat
+0 STEP
+0 // green 1x2 brick with hole (left face, front)
+1 2 -86.595 -80 -83.9545 0 0 1 0 1 0 -1 0 0 3700.dat
+0 // dark tan 1x2 plate
+1 28 -86.595 -88 -83.9545 0 0 1 0 1 0 -1 0 0 3023b.dat
+0 // tan 1x1 round plate
+1 19 -86.595 -96 -73.9545 1 0 0 0 1 0 0 0 1 6141.dat
+0 // bright green tooth plate
+1 10 -86.595 -96 -93.9545 1 0 0 0 1 0 0 0 1 15070.dat
+0 STEP
+0 // green 1x2 brick with hole (right face, back, upper)
+1 2 153.405 -120 116.0455 0 0 1 0 1 0 -1 0 0 3700.dat
+0 // dark tan 1x2 plate
+1 28 153.405 -128 116.0455 0 0 1 0 1 0 -1 0 0 3023b.dat
+0 STEP
+0 // tan 1x8 brick (back wall)
+1 19 63.405 -128 126.0455 1 0 0 0 1 0 0 0 1 3008.dat
+0 // tan 1x6 tile (back wall)
+1 19 83.405 -136 126.0455 1 0 0 0 1 0 0 0 1 6636.dat
+0 STEP
+0 // green 1x2 brick with hole (left face, front, upper)
+1 2 -86.595 -120 -83.9545 0 0 1 0 1 0 -1 0 0 3700.dat
+0 // tan 1x8 brick (front wall, over the crank)
+1 19 3.405 -120 -93.9545 1 0 0 0 1 0 0 0 1 3008.dat
+0 // tan 1x3 brick (front wall)
+1 19 113.405 -120 -93.9545 1 0 0 0 1 0 0 0 1 3622.dat
+0 // green 1x2 brick with hole (right face, front, upper)
+1 2 153.405 -120 -83.9545 0 0 1 0 1 0 -1 0 0 3700.dat
+0 STEP
+0 // dark tan 1x2 plate
+1 28 153.405 -128 -83.9545 0 0 1 0 1 0 -1 0 0 3023b.dat
+0 // tan 1x1 round plate
+1 19 -86.595 -128 -73.9545 1 0 0 0 1 0 0 0 1 6141.dat
+0 // tan 1x6 plate (front wall)
+1 19 -36.595 -128 -93.9545 1 0 0 0 1 0 0 0 1 3666.dat
+0 STEP
+0 // tan 1x12 plate (rail, col 5)
+1 19 13.405 -136 16.0455 0 0 1 0 1 0 -1 0 0 60479.dat
+0 // tan 1x4 brick with groove (rail)
+1 19 13.405 -160 96.0455 0 0 -1 0 1 0 1 0 0 2653.dat
+0 // tan 1x4 brick with groove (rail)
+1 19 13.405 -160 16.0455 0 0 -1 0 1 0 1 0 0 2653.dat
+0 // tan 1x4 brick with groove (rail)
+1 19 13.405 -160 -63.9545 0 0 -1 0 1 0 1 0 0 2653.dat
+0 // tan 1x12 plate (rail, col 12)
+1 19 153.405 -136 16.0455 0 0 1 0 1 0 -1 0 0 60479.dat
+0 // tan 1x4 brick with groove (rail)
+1 19 153.405 -160 96.0455 0 0 1 0 1 0 -1 0 0 2653.dat
+0 // tan 1x4 brick with groove (rail)
+1 19 153.405 -160 16.0455 0 0 1 0 1 0 -1 0 0 2653.dat
+0 // tan 1x4 brick with groove (rail)
+1 19 153.405 -160 -63.9545 0 0 1 0 1 0 -1 0 0 2653.dat
+0 STEP
+0 // skylight: tan 1x4 plate
+1 19 83.405 -144 126.0455 1 0 0 0 1 0 0 0 1 3710.dat
+0 // skylight: red 1x6 plate
+1 4 83.405 -152 126.0455 1 0 0 0 1 0 0 0 1 3666.dat
+0 // skylight: dark grey 1x10 plate
+1 72 133.405 -144 36.0455 0 0 -1 0 1 0 1 0 0 4477.dat
+0 // skylight: dark grey 1x10 plate
+1 72 33.405 -144 36.0455 0 0 -1 0 1 0 1 0 0 4477.dat
+0 // skylight: black 1x2 plate with door rail
+1 0 133.405 -152 96.0455 0 0 -1 0 1 0 1 0 0 32028.dat
+0 // skylight: black 1x8 plate with door rail
+1 0 133.405 -152 -3.9545 0 0 -1 0 1 0 1 0 0 4510.dat
+0 // skylight: black 1x2 plate with door rail
+1 0 33.405 -152 96.0455 0 0 1 0 1 0 -1 0 0 32028.dat
+0 // skylight: black 1x8 plate with door rail
+1 0 33.405 -152 -3.9545 0 0 1 0 1 0 -1 0 0 4510.dat
+0 // skylight: tan 1x6 plate (under the rail ends)
+1 19 83.405 -144 -73.9545 1 0 0 0 1 0 0 0 1 3666.dat
+0 // skylight: dark tan 1x2 plate
+1 28 83.405 -152 -73.9545 1 0 0 0 1 0 0 0 1 3023b.dat
+0 // skylight: red 1x4 tile
+1 4 83.405 -160 126.0455 1 0 0 0 1 0 0 0 1 2431.dat
+0 // skylight: red 1x6 tile
+1 4 133.405 -160 76.0455 0 0 -1 0 1 0 1 0 0 6636.dat
+0 // skylight: red 1x6 tile
+1 4 33.405 -160 76.0455 0 0 -1 0 1 0 1 0 0 6636.dat
+0 // skylight: black 6x6 tile (skylight cover)
+1 0 83.405 -160 -43.9545 0 0 -1 0 1 0 1 0 0 10202.dat
+0 // skylight: black 2x4 brick (under the cover)
+1 0 83.405 -152 -3.9545 1 0 0 0 1 0 0 0 1 3001.dat
+0 STEP
+0 // green 1x2 brick with hole (front wall)
+1 2 123.405 -144 -93.9545 1 0 0 0 1 0 0 0 1 3700.dat
+0 // red pin with stud (front wall)
+1 4 123.405 -134 -103.9545 0 0 1 0 1 0 -1 0 0 89678.dat
+0 // green 1x4 brick (front wall)
+1 2 63.405 -144 -93.9545 1 0 0 0 1 0 0 0 1 3010.dat
+0 STEP
+0 // tan 1x6 tile (front wall)
+1 19 83.405 -152 -93.9545 1 0 0 0 1 0 0 0 1 6636.dat
+0 STEP
+0 // tan 1x8 brick (over the skylight slot)
+1 19 83.405 -184 -93.9545 1 0 0 0 1 0 0 0 1 3008.dat
+0 // green 1x4 brick (on the rail)
+1 2 13.405 -184 -43.9545 0 0 1 0 1 0 -1 0 0 3010.dat
+0 // green 1x4 brick (on the rail)
+1 2 153.405 -184 -43.9545 0 0 1 0 1 0 -1 0 0 3010.dat
+0 // tan 1x8 brick
+1 19 83.405 -184 6.0455 1 0 0 0 1 0 0 0 1 3008.dat
+0 STEP
+0 // lime 6x8 plate (roof)
+1 27 83.405 -192 -43.9545 1 0 0 0 1 0 0 0 1 3036.dat
+0 // lime 1x2 slope
+1 27 13.405 -192 -3.9545 0 0 -1 0 1 0 1 0 0 85984.dat
+0 // lime 1x2 slope
+1 27 13.405 -192 -43.9545 0 0 -1 0 1 0 1 0 0 85984.dat
+0 // lime 1x2 slope
+1 27 13.405 -192 -83.9545 0 0 -1 0 1 0 1 0 0 85984.dat
+0 STEP
+0 // window (back wall, upper)
+1 19 -36.595 -152 126.0455 -1 0 0 0 1 0 0 0 -1 60592.dat
+0 // window (back wall, upper) glass
+1 43 -36.595 -152 126.0455 -1 0 0 0 1 0 0 0 -1 60601.dat
+0 // green 1x1 round brick
+1 2 -66.595 -128 126.0455 1 0 0 0 1 0 0 0 1 3062b.dat
+0 // dark tan 1x2 plate
+1 28 -86.595 -136 -83.9545 0 0 1 0 1 0 -1 0 0 3023b.dat
+0 STEP
+0 // green 1x2 brick with hole (left face, back, upper)
+1 2 -86.595 -120 116.0455 0 0 1 0 1 0 -1 0 0 3700.dat
+0 // dark tan 1x2 plate
+1 28 -86.595 -128 116.0455 0 0 1 0 1 0 -1 0 0 3023b.dat
+0 // tan 1x1 round plate
+1 19 -86.595 -136 106.0455 1 0 0 0 1 0 0 0 1 6141.dat
+0 // bright green tooth plate
+1 10 -86.595 -136 126.0455 -1 0 0 0 1 0 0 0 -1 15070.dat
+0 STEP
+0 // tan 1x12 brick
+1 19 -66.595 -152 16.0455 0 0 1 0 1 0 -1 0 0 6112.dat
+0 // tan 1x12 brick
+1 19 -6.595 -152 16.0455 0 0 1 0 1 0 -1 0 0 6112.dat
+0 STEP
+0 // green 1x2 brick with hole (front wall)
+1 2 -36.595 -152 -93.9545 1 0 0 0 1 0 0 0 1 3700.dat
+0 // red pin with stud (front wall)
+1 4 -36.595 -142 -103.9545 0 0 1 0 1 0 -1 0 0 89678.dat
+0 STEP
+0 // tan 4x6 plate (roof)
+1 19 -36.595 -160 -43.9545 0 0 1 0 1 0 -1 0 0 3032.dat
+0 // tan 4x6 plate (roof)
+1 19 -36.595 -160 76.0455 0 0 1 0 1 0 -1 0 0 3032.dat
+0 STEP
+0 // tan 1x12 brick (left edge)
+1 19 -86.595 -160 16.0455 0 0 1 0 1 0 -1 0 0 6112.dat
+0 // green 1x1 flower plate
+1 2 -86.595 -168 -93.9545 1 0 0 0 1 0 0 0 1 24866.dat
+0 STEP
+0 // dark tan 1x2 plate
+1 28 -56.595 -168 -73.9545 1 0 0 0 1 0 0 0 1 3023b.dat
+0 // dark tan 1x2 plate
+1 28 -56.595 -176 -73.9545 1 0 0 0 1 0 0 0 1 3023b.dat
+0 // green curved slope
+1 2 -66.595 -176 -83.9545 1 0 0 0 1 0 0 0 1 11477.dat
+0 // green curved slope
+1 2 -46.595 -176 -83.9545 1 0 0 0 1 0 0 0 1 11477.dat
+0 STEP
+0 // tan 4x4 round plate (nest)
+1 19 -56.595 -168 -3.9545 1 0 0 0 1 0 0 0 1 60474.dat
+0 // gold leaves plate (nest)
+1 297 -46.595 -176 6.0455 -0.7071 0 -0.7071 0 1 0 0.7071 0 -0.7071 32607.dat
+0 // gold leaves plate (nest)
+1 297 -46.595 -176 -13.9545 0.7071 0 -0.7071 0 1 0 0.7071 0 0.7071 32607.dat
+0 // gold leaves plate (nest)
+1 297 -66.595 -176 6.0455 -0.7071 0 0.7071 0 1 0 -0.7071 0 -0.7071 32607.dat
+0 // gold leaves plate (nest)
+1 297 -66.595 -176 -13.9545 0.7071 0 0.7071 0 1 0 -0.7071 0 0.7071 32607.dat
+0 // light nougat dome (egg)
+1 78 -46.595 -176 -13.9545 1 0 0 0 1 0 0 0 1 6908.dat
+0 // gold bar with three claws (nest)
+1 297 -46.595 -176 6.0455 -0.7071 0 0.7071 0 1 0 -0.7071 0 -0.7071 68211.dat
+0 // gold bar with three claws (nest)
+1 297 -66.595 -176 6.0455 0.7071 0 0.7071 0 1 0 -0.7071 0 0.7071 68211.dat
+0 // gold bar with three claws (nest)
+1 297 -66.595 -176 -13.9545 0.7071 0 -0.7071 0 1 0 0.7071 0 0.7071 68211.dat
+0 STEP
+0 // green 1x1 flower plate
+1 2 -86.595 -168 46.0455 1 0 0 0 1 0 0 0 1 24866.dat
+0 // blue bird
+1 321 -66.595 -160 46.0455 0 0 -1 0 1 0 1 0 0 41835.dat
+0 STEP
+0 // hinge base plate
+1 71 -76.595 -168 96.0455 1 0 0 0 1 0 0 0 1 98285.dat
+0 // hinge top plate
+1 71 -76.595 -186.0797 96.6237 1 0 0 0 0.9986 0.0523 0 -0.0523 0.9986 43045.dat
+0 // grey pin (hinge)
+1 71 -76.595 -174 136.0455 1 0 0 0 0.9986 0.0523 0 -0.0523 0.9986 3673.dat
+0 // hinge base plate
+1 71 -36.595 -168 96.0455 1 0 0 0 1 0 0 0 1 98285.dat
+0 // hinge top plate
+1 71 -36.595 -186.0797 96.6237 1 0 0 0 0.9986 0.0523 0 -0.0523 0.9986 43045.dat
+0 // grey pin (hinge)
+1 71 -36.595 -174 136.0455 1 0 0 0 0.9986 0.0523 0 -0.0523 0.9986 3673.dat
+0 // black 4x10 plate (nesting canopy)
+1 0 -56.595 -197.2089 37.1246 0 0 1 -0.0523 0.9986 0 -0.9986 -0.0523 0 3030.dat
+0 // red 1x2 plate with pin hole
+1 4 -86.595 -194.4535 -63.157 0 0 1 -0.0523 0.9986 0 -0.9986 -0.0523 0 11458.dat
+0 // red 1x2 plate with pin hole
+1 4 -26.595 -194.4535 -63.157 0 0 1 -0.0523 0.9986 0 -0.9986 -0.0523 0 11458.dat
+0 // grey 2x2 plate
+1 71 -56.595 -194.4535 -63.157 1 0 0 0 0.9986 0.0523 0 -0.0523 0.9986 3022.dat
+0 // black 2x4 plate
+1 0 -56.595 -185.4177 -43.6031 1 0 0 0 0.9986 0.0523 0 -0.0523 0.9986 3020.dat
+0 // grey pin (L-liftarm)
+1 71 -16.595 -200.9686 -72.8293 1 0 0 0 0.9986 0.0523 0 -0.0523 0.9986 3673.dat
+0 // grey 3x5 L-liftarm
+1 71 -6.595 -200.9686 -72.8293 0 1 0 -0.9986 0 0.0523 0.0523 0 0.9986 32526.dat
+0 // blue axle-pin (canopy handle)
+1 1 -96.595 -200.9686 -72.8293 -1 0 0 0 0.9986 -0.0523 0 -0.0523 -0.9986 43093.dat
+0 // red 3L axle connector (canopy handle)
+1 4 -126.595 -200.9686 -72.8293 0 0 -1 0.0523 0.9986 0 0.9986 -0.0523 0 42195.dat
+0 // grey 3L axle (canopy handle)
+1 71 -166.595 -200.9686 -72.8293 1 0 0 0 0.9986 0.0523 0 -0.0523 0.9986 4519.dat
+0 // red bush (canopy handle)
+1 4 -166.595 -200.9686 -72.8293 0 0 -1 0.0523 0.9986 0 0.9986 -0.0523 0 3713.dat
+0 // red ball (canopy handle)
+1 4 -190.595 -200.9686 -72.8293 0 1 0 -0.9986 0 0.0523 0.0523 0 0.9986 32474.dat
+0 // blue bird (on the canopy)
+1 321 -86.595 -201.9192 -52.7521 0 0 -1 0.0523 0.9986 0 0.9986 -0.0523 0 41835.dat
+0 STEP
+0 // green bar with three claws (front wall)
+1 10 123.405 -134 -107.9545 1 0 0 0 0 -1 0 1 0 68211.dat
+0 // green bar with three claws (front wall)
+1 10 -36.595 -142 -107.9545 1 0 0 0 0 -1 0 1 0 68211.dat
+0 // green leaves plate (roof)
+1 2 33.405 -200 -53.9545 0 0 -1 0 1 0 1 0 0 32607.dat
+0 // green leaves plate (roof)
+1 2 93.405 -200 -73.9545 -1 0 0 0 1 0 0 0 -1 32607.dat
+0 // green leaves plate (roof)
+1 2 93.405 -200 -53.9545 1 0 0 0 1 0 0 0 1 32607.dat
+0 // yellow 1x1 flower plate (roof)
+1 14 93.405 -208 -73.9545 1 0 0 0 1 0 0 0 1 24866.dat
+0 // green leaves plate (roof)
+1 2 133.405 -200 -53.9545 0 0 -1 0 1 0 1 0 0 32607.dat
+0 // yellow 1x1 flower plate (roof)
+1 14 133.405 -208 -53.9545 1 0 0 0 1 0 0 0 1 24866.dat
+0 STEP
+0 // lime 7x11 end frame
+1 27 -106.595 -90 16.0455 0 1 0 -1 0 0 0 0 1 39794.dat
+0 // black pin (end frame foot)
+1 0 -116.595 -30 -3.9545 1 0 0 0 1 0 0 0 1 61332.dat
+0 // lime 1L liftarm (end frame foot)
+1 27 -126.595 -30 -3.9545 0 1 0 -1 0 0 0 0 1 18654.dat
+0 // black pin (end frame foot)
+1 0 -116.595 -30 116.0455 1 0 0 0 1 0 0 0 1 61332.dat
+0 // lime 1L liftarm (end frame foot)
+1 27 -126.595 -30 116.0455 0 1 0 -1 0 0 0 0 1 18654.dat
+0 // lime axle/pin cross block (lever)
+1 27 -106.595 -170 36.0455 0 0 -1 1 0 0 0 -1 0 42003.dat
+0 // grey 1x2 brick with pins (lever)
+1 71 -126.595 -180 26.0455 0 0 -1 0 1 0 1 0 0 53540.dat
+0 // yellow 1x2 tile (lever)
+1 14 -126.595 -188 26.0455 0 0 1 0 1 0 -1 0 0 3069b.dat
+0 // brown 5L axle with stop (shaft)
+1 70 -106.595 -130 56.0455 0 1 0 -1 0 0 0 0 1 15462.dat
+0 // red bush (shaft)
+1 4 -106.595 -130 56.0455 1 0 0 0 0 1 0 -1 0 3713.dat
+0 // green 2L liftarm (shaft)
+1 2 -106.595 -110 56.0455 -1 0 0 0 1 0 0 0 -1 60483.dat
+0 // brown axle joiner (shaft)
+1 70 -106.595 -80 56.0455 1 0 0 0 0 1 0 -1 0 59443.dat
+0 // brown 3L axle with stop (shaft)
+1 70 -106.595 -48 56.0455 0 1 0 1 0 0 0 0 -1 24316.dat
+0 // black pin (end frame to building)
+1 0 -96.595 -110 -83.9545 1 0 0 0 1 0 0 0 1 61332.dat
+0 // black pin (end frame to building)
+1 0 -96.595 -70 -83.9545 1 0 0 0 1 0 0 0 1 61332.dat
+0 // black pin (end frame to building)
+1 0 -96.595 -110 116.0455 1 0 0 0 1 0 0 0 1 61332.dat
+0 // black pin (end frame to building)
+1 0 -96.595 -70 116.0455 1 0 0 0 1 0 0 0 1 61332.dat
+0 STEP
+0 // lime 7x11 end frame
+1 27 173.405 -90 16.0455 0 1 0 -1 0 0 0 0 1 39794.dat
+0 // black pin (end frame foot)
+1 0 183.405 -30 -3.9545 -1 0 0 0 -1 0 0 0 1 61332.dat
+0 // lime 1L liftarm (end frame foot)
+1 27 193.405 -30 -3.9545 0 1 0 -1 0 0 0 0 1 18654.dat
+0 // black pin (end frame foot)
+1 0 183.405 -30 116.0455 -1 0 0 0 -1 0 0 0 1 61332.dat
+0 // lime 1L liftarm (end frame foot)
+1 27 193.405 -30 116.0455 0 1 0 -1 0 0 0 0 1 18654.dat
+0 // lime axle/pin cross block (lever)
+1 27 173.405 -170 36.0455 0 0 -1 1 0 0 0 -1 0 42003.dat
+0 // grey 1x2 brick with pins (lever)
+1 71 193.405 -180 26.0455 0 0 1 0 1 0 -1 0 0 53540.dat
+0 // yellow 1x2 tile (lever)
+1 14 193.405 -188 26.0455 0 0 -1 0 1 0 1 0 0 3069b.dat
+0 // brown 5L axle with stop (shaft)
+1 70 173.405 -130 56.0455 0 1 0 -1 0 0 0 0 1 15462.dat
+0 // red bush (shaft)
+1 4 173.405 -130 56.0455 -1 0 0 0 0 1 0 1 0 3713.dat
+0 // green 2L liftarm (shaft)
+1 2 173.405 -110 56.0455 1 0 0 0 -1 0 0 0 -1 60483.dat
+0 // brown axle joiner (shaft)
+1 70 173.405 -80 56.0455 -1 0 0 0 0 1 0 1 0 59443.dat
+0 // brown 3L axle with stop (shaft)
+1 70 173.405 -48 56.0455 0 1 0 1 0 0 0 0 -1 24316.dat
+0 // black pin (end frame to building)
+1 0 163.405 -110 -83.9545 -1 0 0 0 -1 0 0 0 1 61332.dat
+0 // black pin (end frame to building)
+1 0 163.405 -70 -83.9545 -1 0 0 0 -1 0 0 0 1 61332.dat
+0 // black pin (end frame to building)
+1 0 163.405 -110 116.0455 -1 0 0 0 -1 0 0 0 1 61332.dat
+0 // black pin (end frame to building)
+1 0 163.405 -70 116.0455 -1 0 0 0 -1 0 0 0 1 61332.dat
+0 STEP
+0 // dock 15x11 frame
+1 72 33.405 -10 16.0455 0 0 1 0 1 0 -1 0 0 39790.dat
+0 // black pin (dock upright)
+1 0 -116.595 -10 -63.9545 1 0 0 0 1 0 0 0 1 61332.dat
+0 // black pin (dock upright)
+1 0 -116.595 -10 16.0455 1 0 0 0 1 0 0 0 1 61332.dat
+0 // black pin (dock stop)
+1 0 -96.595 -10 56.0455 1 0 0 0 1 0 0 0 1 61332.dat
+0 // black pin (dock stop)
+1 0 -96.595 -10 96.0455 1 0 0 0 1 0 0 0 1 61332.dat
+0 // black 3L liftarm (dock stop)
+1 0 -86.595 -10 76.0455 0 1 0 -1 0 0 0 0 1 32523.dat
+0 // black 5x7 upright frame (dock)
+1 0 -126.595 -70 -23.9545 0 1 0 0 0 -1 -1 0 0 64179.dat
+0 // black pin (dock upright) (right)
+1 0 183.405 -10 -63.9545 -1 0 0 0 -1 0 0 0 1 61332.dat
+0 // black pin (dock upright) (right)
+1 0 183.405 -10 16.0455 -1 0 0 0 -1 0 0 0 1 61332.dat
+0 // black pin (dock stop) (right)
+1 0 163.405 -10 56.0455 -1 0 0 0 -1 0 0 0 1 61332.dat
+0 // black pin (dock stop) (right)
+1 0 163.405 -10 96.0455 -1 0 0 0 -1 0 0 0 1 61332.dat
+0 // black 3L liftarm (dock stop) (right)
+1 0 153.405 -10 76.0455 0 1 0 -1 0 0 0 0 1 32523.dat
+0 // black 5x7 upright frame (dock) (right)
+1 0 193.405 -70 -23.9545 0 1 0 0 0 -1 -1 0 0 64179.dat

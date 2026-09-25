@@ -1,0 +1,322 @@
+0 dock-farm
+0 Name: dock-farm.ldr
+0 Author: FLL Sim
+
+0 // right end frame (first end)
+1 0 140 -90 0 0 1 0 -1 0 0 0 0 1 39794.dat
+0 // pin (bottom beam, inside)
+1 0 130 -30 -20 1 0 0 0 1 0 0 0 1 61332.dat
+0 // blue 3L pin (bottom beam)
+1 1 140 -30 20 1 0 0 0 1 0 0 0 1 42924.dat
+0 STEP
+0 // pin (bottom corner, outside)
+1 0 150 -30 -100 1 0 0 0 1 0 0 0 1 61332.dat
+0 STEP
+0 // green 1L (dock latch)
+1 10 160 -30 20 0 1 0 0 0 1 1 0 0 18654.dat
+0 // green 1L
+1 10 160 -30 -100 0 1 0 0 0 1 1 0 0 18654.dat
+0 STEP
+0 // lever 1x2 brick with pins
+1 71 160 -180 -10 0 0 1 0 1 0 -1 0 0 53540.dat
+0 // lever yellow tile
+1 14 160 -188 -10 0 0 1 0 1 0 -1 0 0 3069b.dat
+0 // lever cross block
+1 27 140 -170 -20 0 0 -1 -1 0 0 0 1 0 42003.dat
+0 // 5L axle with stop (lever shaft)
+1 70 140 -130 -40 0 0 -1 -1 0 0 0 1 0 15462.dat
+0 STEP
+0 // bush
+1 4 140 -130 -40 1 0 0 0 0 1 0 -1 0 3713.dat
+0 STEP
+0 // 2L liftarm crank
+1 2 140 -110 -40 1 0 0 0 1 0 0 0 1 60483.dat
+0 // axle joiner
+1 70 140 -80 -40 1 0 0 0 0 1 0 -1 0 59443.dat
+0 STEP
+0 // 3L axle with stop
+1 70 140 -50 -40 0 0 1 1 0 0 0 1 0 24316.dat
+0 STEP
+0 // pin (top beam, inside)
+1 0 130 -150 -20 1 0 0 0 1 0 0 0 1 61332.dat
+0 // pin (top beam, inside)
+1 0 130 -150 20 1 0 0 0 1 0 0 0 1 61332.dat
+0 STEP
+0 // green 7L guide
+1 10 120 -90 -20 0 1 0 0 0 1 1 0 0 32524.dat
+0 // green 7L guide
+1 10 120 -90 20 0 1 0 0 0 1 1 0 0 32524.dat
+0 STEP
+0 // back side 9L
+1 72 0 -50 100 0 0 1 1 0 0 0 1 0 40490.dat
+0 // pin (9L to L-liftarm)
+1 0 -80 -50 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (9L to L-liftarm)
+1 0 -60 -50 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (9L to L-liftarm)
+1 0 60 -50 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (9L to L-liftarm)
+1 0 80 -50 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // 3x5 L-liftarm
+1 0 -60 -50 120 0 0 -1 -1 0 0 0 1 0 32526.dat
+0 // 3x5 L-liftarm
+1 0 60 -50 120 0 0 1 -1 0 0 0 -1 0 32526.dat
+0 // pin (L-liftarm to end frame)
+1 0 -140 -50 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (L-liftarm to end frame)
+1 0 -140 -90 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (L-liftarm to end frame)
+1 0 140 -50 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (L-liftarm to end frame)
+1 0 140 -90 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 STEP
+0 // left end frame (second end)
+1 0 -140 -90 0 0 1 0 -1 0 0 0 0 1 39794.dat
+0 // pin (bottom beam, inside)
+1 0 -130 -30 -20 1 0 0 0 1 0 0 0 1 61332.dat
+0 // blue 3L pin (bottom beam)
+1 1 -140 -30 20 -1 0 0 0 1 0 0 0 -1 42924.dat
+0 STEP
+0 // pin (bottom corner, outside)
+1 0 -150 -30 -100 1 0 0 0 1 0 0 0 1 61332.dat
+0 STEP
+0 // green 1L (dock latch)
+1 10 -160 -30 20 0 1 0 0 0 1 1 0 0 18654.dat
+0 // green 1L
+1 10 -160 -30 -100 0 1 0 0 0 1 1 0 0 18654.dat
+0 STEP
+0 // lever 1x2 brick with pins
+1 71 -160 -180 -10 0 0 -1 0 1 0 1 0 0 53540.dat
+0 // lever yellow tile
+1 14 -160 -188 -10 0 0 1 0 1 0 -1 0 0 3069b.dat
+0 // lever cross block
+1 27 -140 -170 -20 0 0 -1 -1 0 0 0 1 0 42003.dat
+0 // 5L axle with stop (lever shaft)
+1 70 -140 -130 -40 0 0 -1 -1 0 0 0 1 0 15462.dat
+0 STEP
+0 // bush
+1 4 -140 -130 -40 1 0 0 0 0 1 0 -1 0 3713.dat
+0 STEP
+0 // 2L liftarm crank
+1 2 -140 -110 -40 1 0 0 0 1 0 0 0 1 60483.dat
+0 // axle joiner
+1 70 -140 -80 -40 1 0 0 0 0 1 0 -1 0 59443.dat
+0 STEP
+0 // 3L axle with stop
+1 70 -140 -50 -40 0 0 1 1 0 0 0 1 0 24316.dat
+0 STEP
+0 // pin (top beam, inside)
+1 0 -130 -150 -20 1 0 0 0 1 0 0 0 1 61332.dat
+0 // pin (top beam, inside)
+1 0 -130 -150 20 1 0 0 0 1 0 0 0 1 61332.dat
+0 STEP
+0 // green 7L guide
+1 10 -120 -90 -20 0 1 0 0 0 1 1 0 0 32524.dat
+0 // green 7L guide
+1 10 -120 -90 20 0 1 0 0 0 1 1 0 0 32524.dat
+0 STEP
+0 // front side 9L
+1 72 0 -50 -100 0 0 1 1 0 0 0 1 0 40490.dat
+0 // pin (9L to L-liftarm)
+1 0 -80 -50 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (9L to L-liftarm)
+1 0 -60 -50 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (9L to L-liftarm)
+1 0 60 -50 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (9L to L-liftarm)
+1 0 80 -50 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // 3x5 L-liftarm
+1 0 -60 -50 -120 0 0 -1 -1 0 0 0 1 0 32526.dat
+0 // 3x5 L-liftarm
+1 0 60 -50 -120 0 0 1 -1 0 0 0 -1 0 32526.dat
+0 // pin (L-liftarm to end frame)
+1 0 -140 -50 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (L-liftarm to end frame)
+1 0 -140 -90 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (L-liftarm to end frame)
+1 0 140 -50 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (L-liftarm to end frame)
+1 0 140 -90 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 STEP
+0 // front 15L beam
+1 2 0 -130 -120 0 0 1 1 0 0 0 1 0 32278.dat
+0 // pin (15L to end frame)
+1 0 -140 -130 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (15L to end frame)
+1 0 140 -130 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (15L stop)
+1 0 -100 -130 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (15L stop)
+1 0 100 -130 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin joiner (tree stop)
+1 288 -100 -130 -90 0 0 -1 0 1 0 1 0 0 62462.dat
+0 // green 1L (tree stop)
+1 10 100 -130 -100 0 0 1 1 0 0 0 1 0 18654.dat
+0 // red ball pin (tree stop)
+1 4 60 -130 -110 0 0 -1 0 -1 0 -1 0 0 66906.dat
+0 // pin with towball on bar (tree stop)
+1 72 -60 -130 -110 0 1 0 0 0 -1 -1 0 0 80477.dat
+0 // back 15L beam
+1 2 0 -130 120 0 0 1 1 0 0 0 1 0 32278.dat
+0 // pin (15L to end frame)
+1 0 -140 -130 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (15L to end frame)
+1 0 140 -130 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (15L stop)
+1 0 -100 -130 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (15L stop)
+1 0 100 -130 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin joiner (tree stop)
+1 288 100 -130 90 0 0 -1 0 1 0 1 0 0 62462.dat
+0 // green 1L (tree stop)
+1 10 -100 -130 100 0 0 1 1 0 0 0 1 0 18654.dat
+0 // red ball pin (tree stop)
+1 4 -60 -130 110 0 0 1 0 -1 0 1 0 0 66906.dat
+0 // pin with towball on bar (tree stop)
+1 72 60 -130 110 0 -1 0 0 0 -1 1 0 0 80477.dat
+0 STEP
+0 // insert 5x11 panel
+1 71 0 -50 0 1 0 0 0 1 0 0 0 1 64782.dat
+0 // tan 3/4 pin (panel)
+1 19 -110 -50 0 -1 0 0 0 1 0 0 0 -1 32002.dat
+0 // tan 3/4 pin (panel)
+1 19 110 -50 0 1 0 0 0 1 0 0 0 1 32002.dat
+0 STEP
+0 // pin (panel)
+1 0 0 -50 -50 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (panel)
+1 0 0 -50 50 0 0 -1 0 1 0 1 0 0 61332.dat
+0 STEP
+0 // 3x3 block
+1 0 0 -70 -60 0 0 1 1 0 0 0 1 0 39793.dat
+0 // 3x3 block
+1 0 0 -70 60 0 0 1 1 0 0 0 1 0 39793.dat
+0 // pin (block to frame)
+1 0 -20 -100 -60 0 1 0 1 0 0 0 0 -1 61332.dat
+0 // pin (block to frame)
+1 0 20 -100 -60 0 1 0 1 0 0 0 0 -1 61332.dat
+0 // pin (block to frame)
+1 0 -20 -100 60 0 1 0 1 0 0 0 0 -1 61332.dat
+0 // pin (block to frame)
+1 0 20 -100 60 0 1 0 1 0 0 0 0 -1 61332.dat
+0 STEP
+0 // insert 7x11 frame
+1 0 0 -110 0 0 0 1 0 -1 0 1 0 0 39794.dat
+0 // tan 3/4 pin (frame)
+1 19 -110 -110 0 -1 0 0 0 1 0 0 0 -1 32002.dat
+0 // tan 3/4 pin (frame)
+1 19 110 -110 0 1 0 0 0 1 0 0 0 1 32002.dat
+0 STEP
+0 // thin 5L guide
+1 71 -115 -90 0 0 1 0 0 0 1 1 0 0 32017.dat
+0 // thin 5L guide
+1 71 115 -90 0 0 1 0 0 0 1 1 0 0 32017.dat
+0 STEP
+0 // grey pin (tree hinge)
+1 71 -80 -110 -70 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // grey pin (tree hinge)
+1 71 80 -110 70 0 0 -1 0 1 0 1 0 0 3673.dat
+0 STEP
+0 // tan 3L pin (tree hinge)
+1 19 80 -110 -80 0 0 1 0 1 0 -1 0 0 39888.dat
+0 // green 1L spacer
+1 10 80 -110 -80 0 0 1 1 0 0 0 1 0 18654.dat
+0 // tan 3L pin (tree hinge)
+1 19 -80 -110 80 0 0 -1 0 1 0 1 0 0 39888.dat
+0 // green 1L spacer
+1 10 -80 -110 80 0 0 1 1 0 0 0 1 0 18654.dat
+0 STEP
+0 // tree trunk (front-right)
+1 70 80 -170 -100 -1 0 0 0 0 1 0 1 0 32524.dat
+0 // red 1/2 pin with stud
+1 4 80 -230 -110 0 0 1 0 1 0 -1 0 0 89678.dat
+0 // red 1/2 pin with stud
+1 4 80 -190 -110 0 0 1 0 1 0 -1 0 0 89678.dat
+0 // tree trunk (back-right)
+1 70 80 -170 80 -1 0 0 0 0 1 0 1 0 32524.dat
+0 // red 1/2 pin with stud
+1 4 80 -230 70 0 0 1 0 1 0 -1 0 0 89678.dat
+0 // red 1/2 pin with stud
+1 4 80 -190 70 0 0 1 0 1 0 -1 0 0 89678.dat
+0 // tree trunk (front-left)
+1 70 -80 -170 -80 -1 0 0 0 0 1 0 1 0 32524.dat
+0 // red 1/2 pin with stud
+1 4 -80 -230 -70 0 0 -1 0 1 0 1 0 0 89678.dat
+0 // red 1/2 pin with stud
+1 4 -80 -190 -70 0 0 -1 0 1 0 1 0 0 89678.dat
+0 // tree trunk (back-left)
+1 70 -80 -170 100 -1 0 0 0 0 1 0 1 0 32524.dat
+0 // red 1/2 pin with stud
+1 4 -80 -230 110 0 0 -1 0 1 0 1 0 0 89678.dat
+0 // red 1/2 pin with stud
+1 4 -80 -190 110 0 0 -1 0 1 0 1 0 0 89678.dat
+0 STEP
+0 // 1x3 plate with rounded ends
+1 70 100 -230 -110 0 0 1 1 0 0 0 1 0 77850.dat
+0 // 3x5 cloud plate
+1 10 100 -210 -118 0 0 1 1 0 0 0 1 0 35470.dat
+0 // 1x1 round plate with leaves
+1 2 100 -230 -126 -0.7071 0 -0.7071 -0.7071 0 0.7071 0 1 0 32607.dat
+0 // 1x1 round plate with leaves
+1 4 100 -210 -126 0.7071 0 -0.7071 -0.7071 0 -0.7071 0 1 0 32607.dat
+0 // 1x3 plate with rounded ends
+1 70 100 -230 70 0 0 1 1 0 0 0 1 0 77850.dat
+0 // 3x5 cloud plate
+1 10 100 -210 62 0 0 1 1 0 0 0 1 0 35470.dat
+0 // 1x1 round plate with leaves
+1 2 100 -230 54 -0.7071 0 -0.7071 -0.7071 0 0.7071 0 1 0 32607.dat
+0 // 1x1 round plate with leaves
+1 4 100 -210 54 0.7071 0 -0.7071 -0.7071 0 -0.7071 0 1 0 32607.dat
+0 // 1x3 plate with rounded ends
+1 70 -60 -230 -70 0 0 1 -1 0 0 0 -1 0 77850.dat
+0 // 3x5 cloud plate
+1 10 -60 -210 -62 0 0 1 -1 0 0 0 -1 0 35470.dat
+0 // 1x1 round plate with leaves
+1 2 -60 -230 -54 0.7071 0 0.7071 -0.7071 0 0.7071 0 -1 0 32607.dat
+0 // 1x1 round plate with leaves
+1 27 -60 -210 -54 -0.7071 0 -0.7071 0.7071 0 -0.7071 0 -1 0 32607.dat
+0 // 1x3 plate with rounded ends
+1 70 -60 -230 110 0 0 1 -1 0 0 0 -1 0 77850.dat
+0 // 3x5 cloud plate
+1 10 -60 -210 118 0 0 1 -1 0 0 0 -1 0 35470.dat
+0 // 1x1 round plate with leaves
+1 2 -60 -230 126 0.7071 0 0.7071 -0.7071 0 0.7071 0 -1 0 32607.dat
+0 // 1x1 round plate with leaves
+1 27 -60 -210 126 -0.7071 0 -0.7071 0.7071 0 -0.7071 0 -1 0 32607.dat
+0 STEP
+0 STEP
+0 // blue axle-pin (handle)
+1 1 0 -70 -70 0 0 1 0 1 0 -1 0 0 43093.dat
+0 // handle (3L axle joiner)
+1 84 0 -70 -100 1 0 0 0 1 0 0 0 1 42195.dat
+0 // blue axle-pin (handle)
+1 1 0 -70 70 0 0 -1 0 1 0 1 0 0 43093.dat
+0 // handle (3L axle joiner)
+1 84 0 -70 100 1 0 0 0 1 0 0 0 1 42195.dat
+0 STEP
+0 // dock 11x15 frame
+1 72 0 -10 0 0 0 1 0 -1 0 1 0 0 39790.dat
+0 // pin (dock side)
+1 0 -150 -10 80 1 0 0 0 1 0 0 0 1 61332.dat
+0 // pin (dock side, centre hole)
+1 0 -150 -10 0 1 0 0 0 1 0 0 0 1 61332.dat
+0 // pin (dock side)
+1 0 150 -10 80 1 0 0 0 1 0 0 0 1 61332.dat
+0 // pin (dock side, centre hole)
+1 0 150 -10 0 1 0 0 0 1 0 0 0 1 61332.dat
+0 // pin (dock 3L)
+1 0 -130 -10 -80 1 0 0 0 1 0 0 0 1 61332.dat
+0 // pin (dock 3L)
+1 0 -130 -10 -40 1 0 0 0 1 0 0 0 1 61332.dat
+0 // dock 3L liftarm
+1 0 -120 -10 -60 0 1 0 -1 0 0 0 0 1 32523.dat
+0 // pin (dock 3L)
+1 0 130 -10 -80 1 0 0 0 1 0 0 0 1 61332.dat
+0 // pin (dock 3L)
+1 0 130 -10 -40 1 0 0 0 1 0 0 0 1 61332.dat
+0 // dock 3L liftarm
+1 0 120 -10 -60 0 1 0 -1 0 0 0 0 1 32523.dat
+0 // dock left upright
+1 0 -160 -70 40 0 1 0 0 0 1 1 0 0 64179.dat
+0 // dock right upright
+1 0 160 -70 40 0 1 0 0 0 1 1 0 0 64179.dat

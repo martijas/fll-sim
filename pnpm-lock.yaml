@@ -314,6 +314,28 @@ importers:
         specifier: ^4.20.0
         version: 4.23.15
 
+  tools/model-build:
+    dependencies:
+      '@fll-sim/assembly':
+        specifier: workspace:*
+        version: link:../../packages/assembly
+      '@fll-sim/ldraw':
+        specifier: workspace:*
+        version: link:../../packages/ldraw
+      '@fll-sim/sim':
+        specifier: workspace:*
+        version: link:../../packages/sim
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
+    devDependencies:
+      '@types/pngjs':
+        specifier: ^6.0.5
+        version: 6.0.5
+      tsx:
+        specifier: ^4.20.0
+        version: 4.23.15
+
   tools/sim-cli:
     dependencies:
       '@fll-sim/llsp3':

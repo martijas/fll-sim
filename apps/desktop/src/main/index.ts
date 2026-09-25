@@ -159,6 +159,24 @@ app.whenReady().then(() => {
     return { path: target, name: basename(target) };
   });
 
+  // Building instructions: HTML from the renderer -> PDF (or saved as HTML).
+  ipcMain.handle("export:instructions", async (_e, html: string, suggested: string) => {
+    const r = process.env.FLLSIM_SMOKE_SAVE ? { canceled: false, filePath: process.env.FLLSIM_SMOKE_SAVE } : await dialog.showSaveDialog({ defaultPath: suggested, filters: [{ name: "PDF", extensions: ["pdf"] }, { name: "Web page", extensions: ["html"] }] });
+    if (r.canceled || !r.filePath) return null;
+    if (r.filePath.toLowerCase().endsWith(".html")) {
+      await writeFile(r.filePath, html);
+      return r.filePath;
+    }
+    const tmp = join(app.getPath("temp"), `fllsim-instructions-${Date.now()}.html`);
+    await writeFile(tmp, html);
+    const w = new BrowserWindow({ show: false, width: 1123, height: 794, webPreferences: { offscreen: true } });
+    await w.loadFile(tmp);
+    const pdf = await w.webContents.printToPDF({ landscape: true, pageSize: "A4", printBackground: true, margins: { top: 0, bottom: 0, left: 0, right: 0 } });
+    w.destroy();
+    await writeFile(r.filePath, pdf);
+    return r.filePath;
+  });
+
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

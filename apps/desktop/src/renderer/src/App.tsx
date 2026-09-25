@@ -3,7 +3,7 @@ import { makeDriveBase, type FieldModel, type RobotModel, type SeasonConfig, typ
 import { ScorePanel } from "./components/ScorePanel";
 import { defaultAnswers, type Answers } from "../../../../../seasons/2026-27/scoring";
 import type { Library } from "@fll-sim/ldraw";
-import { assemble, parseModel, serializeModel, type ModelPart } from "@fll-sim/assembly";
+import { assemble, assembleMissionModel, parseModel, serializeModel, type ModelPart } from "@fll-sim/assembly";
 import { Builder } from "./components/Builder";
 import { loadLibrary, type CatalogCategory } from "./lib/ldraw";
 import { readLlsp3, writePythonLlsp3, type Llsp3Project } from "@fll-sim/llsp3";
@@ -15,7 +15,7 @@ import { Telemetry } from "./components/Telemetry";
 import { RobotPanel } from "./components/RobotPanel";
 import { loadRobotConfig, saveRobotConfig, toDriveBaseOptions, type RobotConfig } from "./lib/robotConfig";
 import { SimController } from "./lib/simController";
-import { loadDefaultMat, loadMatImage, loadSeason, type LoadedMat } from "./lib/assets";
+import { loadBundledMissions, loadDefaultMat, loadMatImage, loadSeason, type BundledMission, type LoadedMat } from "./lib/assets";
 import { playHubEvents } from "./lib/audio";
 import { DEFAULT_PROGRAM } from "./lib/samples";
 import type { Frame } from "./worker/protocol";
@@ -66,6 +66,9 @@ export function App() {
       return {};
     }
   });
+  /** Mission models shipped with the season (real parts, placed on their mat marks). */
+  const [bundled, setBundled] = useState<Record<string, BundledMission>>({});
+  const [realMissions, setRealMissions] = useState(() => localStorage.getItem("fllsim.realMissions") !== "off");
   /** Sim time (ms) when the current match started, or null. */
   const [matchStart, setMatchStart] = useState<number | null>(null);
   const field = useRef<FieldViewHandle>(null);
@@ -84,6 +87,7 @@ export function App() {
         const s = await loadSeason(SEASON_ID);
         setSeason(s);
         setMat(await loadDefaultMat(s));
+        setBundled(await loadBundledMissions(SEASON_ID));
       } catch (e) {
         setBootError(String(e));
       }
@@ -137,26 +141,47 @@ export function App() {
     }
   }, [answers, missionLdr]);
 
-  // Real-part mission models on their wireframe footprints; the heaviest body resting on the
-  // mat is held by Dual Lock, everything else moves freely.
+  // Real-part mission models: the season's bundled ones on their mat marks, replaced by the
+  // team's own builds where they made one (see assembleMissionModel for Dual Lock and gluing).
   const fieldModels: FieldModel[] = useMemo(() => {
     if (!season || !ldraw) return [];
     const out: FieldModel[] = [];
-    for (const [id, text] of Object.entries(missionLdr)) {
+    const ids = new Set([...(realMissions ? Object.keys(bundled) : []), ...Object.keys(missionLdr)]);
+    for (const id of ids) {
       const spec = season.missionModels.find((m) => m.id === id);
-      if (!spec) continue;
+      const text = missionLdr[id] ?? bundled[id]?.text;
+      const f = spec?.shape;
+      const pose = bundled[id]?.pose ?? (f ? { xMm: f.cx, yMm: f.cy, headingDeg: f.kind === "rect" ? f.rot : 0 } : null);
+      if (!text || !pose) continue;
       try {
-        const { robot: model } = assemble(ldraw.lib, parseModel(ldraw.lib, text).parts, { name: spec.name, autoPorts: false });
-        const lowest = (b: RobotModel["bodies"][number]) => Math.min(...b.shapes.map((sh) => sh.posMm.y - (sh.kind === "box" ? sh.sizeMm.y / 2 : sh.radiusMm)));
-        const grounded = model.bodies.filter((b) => lowest(b) < 3).sort((a, b) => b.massKg - a.massKg);
-        const f = spec.shape;
-        out.push({ id, model, pose: { xMm: f.cx, yMm: f.cy, headingDeg: f.kind === "rect" ? f.rot : 0 }, fixedBodies: grounded.slice(0, 1).map((b) => b.id) });
+        const { robot: model, fixedBodies } = assembleMissionModel(ldraw.lib, parseModel(ldraw.lib, text).parts, { name: spec?.name ?? id, fixed: missionLdr[id] ? true : bundled[id]?.fixed });
+        out.push({ id, model, pose, fixedBodies });
       } catch (e) {
-        console.error(e);
+        console.error(`mission model ${id}:`, e);
       }
     }
     return out;
-  }, [season, ldraw, missionLdr]);
+  }, [season, ldraw, missionLdr, bundled, realMissions]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("fllsim.realMissions", realMissions ? "on" : "off");
+    } catch {
+      /* ignore */
+    }
+  }, [realMissions]);
+
+  /** Display names of the season's mission models, plus bundled models that have no footprint (e.g. "m01-stand"). */
+  const missionNames = useMemo(() => {
+    if (!season) return [];
+    const label = (m: SeasonConfig["missionModels"][number]) => `M${m.missions.map((n) => String(n).padStart(2, "0")).join("/")} ${m.name}`;
+    const out = season.missionModels.map((m) => ({ id: m.id, name: label(m) }));
+    for (const id of Object.keys(bundled).sort()) {
+      if (out.some((m) => m.id === id)) continue;
+      const base = season.missionModels.find((m) => id.startsWith(m.id + "-"));
+      out.push({ id, name: base ? `${label(base)} (${id.slice(base.id.length + 1)})` : id });
+    }
+    return out;
+  }, [season, bundled]);
 
   const robotVisuals = useMemo(() => {
     const v: Record<string, VisualSpec[]> = {};
@@ -415,12 +440,13 @@ export function App() {
           parts={buildParts}
           onChange={setBuildParts}
           log={log}
-          missionModels={season.missionModels.map((m) => ({ id: m.id, name: `M${m.missions.map((n) => String(n).padStart(2, "0")).join("/")} ${m.name}`, built: !!missionLdr[m.id] }))}
+          missionModels={missionNames.map((m) => ({ ...m, built: !!missionLdr[m.id] }))}
+          bundledMissions={missionNames.filter((m) => bundled[m.id]).map((m) => ({ ...m, text: bundled[m.id].text }))}
           onUseAsMissionModel={(id, p) => {
             if (!p.length) {
               const { [id]: _removed, ...rest } = missionLdr;
               setMissionLdr(rest);
-              log(`Mission model ${id} reset to its stand-in block`, "info");
+              log(`Mission model ${id} reset to ${bundled[id] ? "the standard model" : "its stand-in block"}`, "info");
               return;
             }
             setMissionLdr({ ...missionLdr, [id]: serializeModel(p, `${id}.ldr`) });
@@ -447,6 +473,11 @@ export function App() {
               <button onClick={() => setFootprints(!footprints)} disabled={running} title="Mission models without a real-part build are shown as blocks at their wireframe positions">
                 {footprints ? "Hide" : "Show"} mission blocks
               </button>
+              {Object.keys(bundled).length > 0 && (
+                <button onClick={() => setRealMissions(!realMissions)} disabled={running} title="The season's mission models built from real LEGO parts (off = simple blocks, faster)">
+                  Mission models: {realMissions ? "LEGO" : "blocks"}
+                </button>
+              )}
             </div>
             <div className="status">
               {frame ? `t = ${(frame.timeMs / 1000).toFixed(2)} s · (${frame.pose.xMm.toFixed(0)}, ${frame.pose.yMm.toFixed(0)}) mm · ${frame.pose.headingDeg.toFixed(1)}°` : "starting…"}

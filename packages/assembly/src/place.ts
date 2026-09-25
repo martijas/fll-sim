@@ -1,13 +1,19 @@
 // Snap-to-snap placement: position a part so one of its snaps lines up with a target snap.
 import { type Library, type Mat4, type Snap, flatten, mul } from "@fll-sim/ldraw";
 
-/** Orthonormalize a snap frame (drop scale), keeping its position. */
+/**
+ * Orthonormalize a snap frame (drop scale), keeping its position. Frames inherited from mirrored
+ * subfiles are left-handed: flipping their X column keeps the connection axis (Y) and makes every
+ * placement a proper rotation instead of a mirror image.
+ */
 export function snapFrame(m: Mat4): Mat4 {
   const r = new Float64Array(m);
   for (let c = 0; c < 3; c++) {
     const l = Math.hypot(r[c], r[4 + c], r[8 + c]) || 1;
     r[c] /= l; r[4 + c] /= l; r[8 + c] /= l;
   }
+  const det = r[0] * (r[5] * r[10] - r[6] * r[9]) - r[1] * (r[4] * r[10] - r[6] * r[8]) + r[2] * (r[4] * r[9] - r[5] * r[8]);
+  if (det < 0) { r[0] = -r[0]; r[4] = -r[4]; r[8] = -r[8]; }
   return r;
 }
 

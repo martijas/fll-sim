@@ -1,0 +1,20 @@
+{
+  "name": "@fll-sim/model-build",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build-model": "tsx src/run.ts",
+    "field-check": "tsx src/field-check.ts"
+  },
+  "dependencies": {
+    "@fll-sim/ldraw": "workspace:*",
+    "@fll-sim/assembly": "workspace:*",
+    "pngjs": "^7.0.0",
+    "@fll-sim/sim": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.0",
+    "@types/pngjs": "^6.0.5"
+  }
+}

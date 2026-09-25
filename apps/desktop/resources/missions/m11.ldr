@@ -1,0 +1,263 @@
+0 m11
+0 Name: m11.ldr
+0 Author: FLL Sim
+
+0 // door: red 1x2 plate
+1 4 84.388 -171.5476 219.5982 0 -0.9659 -0.2588 0 0.2588 -0.9659 1 0 0 3023b.dat
+0 // door: red 1x4 tile
+1 4 92.1154 -173.6182 199.5982 0 -0.9659 -0.2588 0 0.2588 -0.9659 1 0 0 2431.dat
+0 STEP
+0 // door: red 1x12 plate
+1 4 84.388 -171.5476 79.5982 0 -0.9659 -0.2588 0 0.2588 -0.9659 1 0 0 60479.dat
+0 STEP
+0 // door: black 2x4 tile (sign)
+1 0 94.7036 -163.9589 119.5982 0 -0.9659 -0.2588 0 0.2588 -0.9659 1 0 0 87079.dat
+0 STEP
+0 // door: brown 6x10 plate
+1 70 102.5053 -103.9328 59.5982 0 -0.9659 -0.2588 0 0.2588 -0.9659 1 0 0 3033.dat
+0 STEP
+0 // door: dark orange 1x3 tile (sign post)
+1 484 107.6445 -115.6626 129.5982 0.2588 -0.9659 0 0.9659 0.2588 0 0 0 1 63864.dat
+0 STEP
+0 // door: red 1x4 plate
+1 4 76.6606 -169.4771 199.5982 0 -0.9659 -0.2588 0 0.2588 -0.9659 1 0 0 3710.dat
+0 // door: brown 1x3 round-end plate (right)
+1 70 81.837 -150.1585 149.5982 0.2588 -0.9659 0 0.9659 0.2588 0 0 0 1 77850.dat
+0 // door: brown 1x3 round-end plate (left)
+1 70 81.837 -150.1585 -30.4018 0.2588 -0.9659 0 0.9659 0.2588 0 0 0 1 77850.dat
+0 // door: black 1x1 round plate with clip (stud in a 6x10 tube)
+1 0 84.4251 -140.4993 59.5982 0 -0.9659 -0.2588 0 0.2588 -0.9659 1 0 0 5264.dat
+0 STEP
+0 // door: shovel (in the clip)
+1 72 74.7659 -137.9111 45.5982 -0.2588 0 -0.9659 -0.9659 0 0.2588 0 1 0 3837.dat
+0 // door: green 1x2 round-end plate
+1 2 107.7189 -53.566 59.5982 0 -0.9659 -0.2588 0 0.2588 -0.9659 1 0 0 35480.dat
+0 STEP
+0 // door: hinge plate top (43045)
+1 71 105.1307 -63.2252 99.5982 0 -0.9659 0.2588 0 0.2588 0.9659 -1 0 0 43045.dat
+0 // door: hinge plate top (43045)
+1 71 105.1307 -63.2252 19.5982 0 -0.9659 0.2588 0 0.2588 0.9659 -1 0 0 43045.dat
+0 // base: hinge plate base (43056)
+1 71 65.8242 -16 99.5982 0 0 1 0 1 0 -1 0 0 43056.dat
+0 // base: hinge plate base (43056)
+1 71 65.8242 -16 19.5982 0 0 1 0 1 0 -1 0 0 43056.dat
+0 // hinge pin (light grey, no friction)
+1 71 105.8242 -22 99.5982 0 0 1 0 1 0 -1 0 0 3673.dat
+0 // hinge pin (light grey, no friction)
+1 71 105.8242 -22 19.5982 0 0 1 0 1 0 -1 0 0 3673.dat
+0 STEP
+0 // base: brown 1x10 plate
+1 70 35.8242 -8 59.5982 0 0 1 0 1 0 -1 0 0 4477.dat
+0 // base: brown 2x10 plate
+1 70 65.8242 -8 59.5982 0 0 1 0 1 0 -1 0 0 3832.dat
+0 STEP
+0 // base: green 1x2 slope
+1 2 75.8242 -8 139.5982 0 0 -1 0 1 0 1 0 0 85984.dat
+0 // base: green 1x2 slope
+1 2 75.8242 -8 -20.4018 0 0 -1 0 1 0 1 0 0 85984.dat
+0 STEP
+0 // base: brown 2x6 plate
+1 70 25.8242 -16 59.5982 -1 0 0 0 1 0 0 0 -1 3795.dat
+0 STEP
+0 // base: brown 6x10 plate
+1 70 -34.1758 -8 59.5982 0 0 1 0 1 0 -1 0 0 3033.dat
+0 STEP
+0 // base: rock panel (left wall)
+1 70 -54.1758 -152 139.5982 -1 0 0 0 1 0 0 0 -1 47847.dat
+0 // base: rock panel (right wall)
+1 70 -54.1758 -152 -20.4018 1 0 0 0 1 0 0 0 1 47847.dat
+0 // base: rock panel (left wall)
+1 70 25.8242 -152 139.5982 -1 0 0 0 1 0 0 0 -1 47847.dat
+0 // base: rock panel (right wall)
+1 70 25.8242 -152 -20.4018 1 0 0 0 1 0 0 0 1 47847.dat
+0 STEP
+0 // base: trans-clear 1x1 brick
+1 47 -84.1758 -152 129.5982 0 0 1 0 1 0 -1 0 0 3005.dat
+0 // base: trans-clear 1x2 brick
+1 47 -14.1758 -152 129.5982 -1 0 0 0 1 0 0 0 -1 3065.dat
+0 // base: trans-clear 1x1 brick
+1 47 55.8242 -152 129.5982 0 0 1 0 1 0 -1 0 0 3005.dat
+0 // base: trans-clear 1x1 brick
+1 47 -84.1758 -152 -10.4018 0 0 1 0 1 0 -1 0 0 3005.dat
+0 // base: trans-clear 1x2 brick
+1 47 -14.1758 -152 -10.4018 -1 0 0 0 1 0 0 0 -1 3065.dat
+0 // base: trans-clear 1x1 brick
+1 47 55.8242 -152 -10.4018 0 0 1 0 1 0 -1 0 0 3005.dat
+0 STEP
+0 // back 2x8 plate with holes
+1 10 45.8242 -160 59.5982 0 0 1 0 1 0 -1 0 0 3738.dat
+0 // green 2x2 round plate
+1 2 45.8242 -168 19.5982 0 0 1 0 1 0 -1 0 0 4032a.dat
+0 STEP
+0 // bright green 2x2x2 cone
+1 10 45.8242 -216 19.5982 0 0 1 0 1 0 -1 0 0 3942c.dat
+0 STEP
+0 // yellow 3L axle
+1 14 45.8242 -176 19.5982 0 0 -1 1 0 0 0 -1 0 4519.dat
+0 // tan 45-degree curved tube (root)
+1 19 45.8242 -152 19.5982 0 0 1 0 -1 0 1 0 0 7324.dat
+0 // red 2L axle
+1 4 45.8242 -91.8645 46.5337 0 0 1 0.7071 -0.7071 0 0.7071 0.7071 0 32062.dat
+0 STEP
+0 // brown 2x2 round brick (stand-in for the 2x2 round brick with four points)
+1 70 45.8242 -74.8941 63.504 0 0 1 -0.7071 -0.7071 0 0.7071 -0.7071 0 3941.dat
+0 // brown 2x2 round plate with centre stud
+1 70 45.8242 -69.2373 69.1608 0 0 1 -0.7071 -0.7071 0 0.7071 -0.7071 0 18674.dat
+0 // tan bar with six stems (bar in the hollow stud)
+1 19 45.8242 -66.4089 71.9892 0 0 1 -0.7071 -0.7071 0 0.7071 -0.7071 0 19119.dat
+0 STEP
+0 // bright green 4x8 plate
+1 10 -14.1758 -160 59.5982 0 0 1 0 1 0 -1 0 0 3035.dat
+0 // brown 2x2x2 inverted cone (hanging under the 4x8)
+1 70 -14.1758 -152 59.5982 0 0 1 0 1 0 -1 0 0 49309.dat
+0 STEP
+0 // white 3L bar
+1 15 -14.1758 -130 59.5982 0 0 1 0 1 0 -1 0 0 87994.dat
+0 // tan 1x1 round plate with open stud
+1 19 -14.1758 -100 59.5982 0 0 1 0 1 0 -1 0 0 85861.dat
+0 // brown 1x1 brick with studs on four sides
+1 70 -14.1758 -92 59.5982 0 0 1 0 1 0 -1 0 0 4733.dat
+0 // tan 1x1 round plate with open stud
+1 19 -14.1758 -68 59.5982 0 0 1 0 1 0 -1 0 0 85861.dat
+0 // tan bar with six stems (stems down)
+1 19 -14.1758 -60 59.5982 0 0 -1 0 -1 0 -1 0 0 19119.dat
+0 // tan bar with three prongs (in a side stud; bar-in-stud not in snap data)
+1 19 -14.1758 -82 46.5982 1 0 0 0 0 -1 0 1 0 68211.dat
+0 // tan bar with three prongs (in a side stud; bar-in-stud not in snap data)
+1 19 -1.1758 -82 59.5982 0 -1 0 0 0 -1 1 0 0 68211.dat
+0 // tan bar with three prongs (in a side stud; bar-in-stud not in snap data)
+1 19 -14.1758 -82 72.5982 -1 0 0 0 0 -1 0 -1 0 68211.dat
+0 // tan bar with three prongs (in a side stud; bar-in-stud not in snap data)
+1 19 -27.1758 -82 59.5982 0 1 0 0 0 -1 -1 0 0 68211.dat
+0 STEP
+0 STEP
+0 // green 1x2 brick with axle hole
+1 2 -34.1758 -184 -10.4018 -1 0 0 0 1 0 0 0 -1 32064a.dat
+0 STEP
+0 // front 2x8 plate with holes
+1 10 -74.1758 -160 59.5982 0 0 1 0 1 0 -1 0 0 3738.dat
+0 // white 1x2 round-end plate
+1 15 -84.1758 -168 -0.4018 0 0 1 0 1 0 -1 0 0 35480.dat
+0 STEP
+0 // green 2x2 round plate
+1 2 -74.1758 -168 39.5982 0 0 1 0 1 0 -1 0 0 4032a.dat
+0 // brown 2x2 dome top
+1 70 -74.1758 -192 39.5982 0 0 1 0 1 0 -1 0 0 3262.dat
+0 STEP
+0 // black 4L axle (upright)
+1 0 -74.1758 -144 39.5982 0 0 -1 1 0 0 0 -1 0 3705.dat
+0 // tan 2x2x2 cone (upside down)
+1 19 -74.1758 -104 39.5982 0 0 -1 0 -1 0 -1 0 0 3942c.dat
+0 STEP
+0 // sand green 2x2 round plate with 4 bars (upside down)
+1 378 -74.1758 -96 39.5982 0 0 -1 0 -1 0 -1 0 0 98284.dat
+0 // sand green flower stem (bar in the plate's hole)
+1 378 -74.1758 -80 39.5982 0 0 -1 0 -1 0 -1 0 0 24855.dat
+0 // sand green flower stem (stems offset from the first)
+1 378 -74.1758 -68 39.5982 -0.866 0 -0.5 0 -1 0 -0.5 0 0.866 24855.dat
+0 STEP
+0 STEP
+0 // green 1x4 brick
+1 2 -34.1758 -184 9.5982 -1 0 0 0 1 0 0 0 -1 3010.dat
+0 STEP
+0 // green 2x2 corner plate
+1 2 -44.1758 -192 9.5982 -1 0 0 0 1 0 0 0 -1 2420.dat
+0 // green 2x2 corner plate
+1 2 -24.1758 -192 9.5982 0 0 1 0 1 0 -1 0 0 2420.dat
+0 STEP
+0 // white 1x1 cone
+1 15 -84.1758 -192 -10.4018 0 0 1 0 1 0 -1 0 0 59900.dat
+0 // medium azure 2x2 round tile
+1 322 -84.1758 -200 -10.4018 0 0 1 0 1 0 -1 0 0 14769.dat
+0 STEP
+0 // brown 2x2 round brick (stand-in for the 2x2 round brick with four points)
+1 70 -54.1758 -184 99.5982 0 0 1 0 1 0 -1 0 0 3941.dat
+0 // brown 2x2 round plate with 4 upright bars
+1 70 -54.1758 -192 99.5982 0 0 1 0 1 0 -1 0 0 98284.dat
+0 // brown 2x2 round tile, tree stump pattern
+1 70 -54.1758 -200 99.5982 0 0 1 0 1 0 -1 0 0 14769p83.dat
+0 STEP
+0 // green 1x1 round plate with three leaves
+1 2 -4.1758 -168 129.5982 0.7071 0 0.7071 0 1 0 -0.7071 0 0.7071 32607.dat
+0 // green 1x1 round plate with three leaves
+1 2 -44.1758 -200 -10.4018 0.7071 0 -0.7071 0 1 0 0.7071 0 0.7071 32607.dat
+0 STEP
+0 // bright green 1x1 round plate with leaf (stand-in; on a stump bar)
+1 10 -84.1758 -209 99.5982 -0.7071 0 0.7071 0 1 0 -0.7071 0 -0.7071 32607.dat
+0 // green 1x1 plate with five petals
+1 2 -84.1758 -217 99.5982 0 0 1 0 1 0 -1 0 0 24866.dat
+0 // bright green 1x1 round plate with leaf (stand-in; on a stump bar)
+1 10 -54.1758 -209 129.5982 -0.7071 0 -0.7071 0 1 0 0.7071 0 -0.7071 32607.dat
+0 // green 1x1 plate with five petals
+1 2 -54.1758 -217 129.5982 0 0 1 0 1 0 -1 0 0 24866.dat
+0 STEP
+0 // dark green 1x2 round-end plate (leaf plate stand-in)
+1 288 5.8242 -168 69.5982 -1 0 0 0 1 0 0 0 -1 35480.dat
+0 // dark green 1x2 round-end plate (leaf plate stand-in)
+1 288 5.8242 -176 69.5982 -1 0 0 0 1 0 0 0 -1 35480.dat
+0 // dark green 1x1 round plate with swirl (curly stem stand-in)
+1 288 15.8242 -176 69.5982 0 0 1 0 1 0 -1 0 0 15470.dat
+0 // pale yellow frog
+1 226 -4.1758 -176 69.5982 0 0 1 0 1 0 -1 0 0 33320.dat
+0 STEP
+0 // green 1x1 round plate with three leaves
+1 2 35.8242 -168 109.5982 0.7071 0 0.7071 0 1 0 -0.7071 0 0.7071 32607.dat
+0 // red 1x1 flower
+1 4 35.8242 -151 109.5982 0.7071 0 0.7071 0 1 0 -0.7071 0 0.7071 5904.dat
+0 STEP
+0 // pink 1x1 round plate with open stud
+1 5 -74.1758 -200 39.5982 0 0 1 0 1 0 -1 0 0 85861.dat
+0 // pink elephant trunk (bar in the open stud)
+1 5 -74.1758 -208 39.5982 0.7071 0.7071 0 0 0 -1 -0.7071 0.7071 0 80497.dat
+0 // lavender 6x5 plant leaves (point to the back right)
+1 31 -28.921 -256 84.853 -0.7071 0 -0.7071 0 1 0 0.7071 0 -0.7071 2417.dat
+0 // pink 1x1 round plate with open stud
+1 5 -28.921 -264 84.853 -0.7071 0 -0.7071 0 1 0 0.7071 0 -0.7071 85861.dat
+0 STEP
+0 // brown 1x1 cone
+1 70 45.8242 -240 19.5982 0 0 1 0 1 0 -1 0 0 59900.dat
+0 // bright green sea grass (bar in the cone's hollow stud)
+1 10 45.8242 -248 19.5982 0 0 1 0 1 0 -1 0 0 30093.dat
+0 // yellow 1x1 cone (bud, on a stem)
+1 14 45.8242 -279 49.5982 0 0 -1 0 -1 0 -1 0 0 59900.dat
+0 // pink 1x1 round plate (bud)
+1 5 45.8242 -303 49.5982 0 0 -1 0 -1 0 -1 0 0 85861.dat
+0 // yellow 1x1 cone (bud, on a stem)
+1 14 45.8242 -314 -10.4018 0 0 -1 0 -1 0 -1 0 0 59900.dat
+0 // pink 1x1 round plate (bud)
+1 5 45.8242 -338 -10.4018 0 0 -1 0 -1 0 -1 0 0 85861.dat
+0 // yellow 1x1 round plate with open stud (on a stem)
+1 14 45.8242 -363 9.5982 0 0 -1 0 -1 0 -1 0 0 85861.dat
+0 // pink 1x1 round plate with open stud
+1 5 45.8242 -371 9.5982 0 0 -1 0 -1 0 -1 0 0 85861.dat
+0 // yellow 1x1 cone (large flower, on a stem)
+1 14 45.8242 -334 29.5982 0 0 -1 0 -1 0 -1 0 0 59900.dat
+0 // light orange 2x2 round brick with four petals
+1 191 45.8242 -358 29.5982 0 0 -1 0 -1 0 -1 0 0 15469.dat
+0 // dark pink 2x2 dish
+1 26 45.8242 -374 29.5982 0 0 -1 0 -1 0 -1 0 0 2654a.dat
+0 STEP
+0 STEP
+0 // brown curved bar (axle in the brick's axle hole)
+1 70 -34.1758 -174 -20.4018 1 0 0 0 0 -1 0 1 0 4042.dat
+0 STEP
+0 // nut: brown 1x1 cone
+1 70 -34.1758 -246.6855 -187.7284 0 0 -1.0001 -0.9239 -0.3827 0 -0.3827 0.9239 0 59900.dat
+0 // nut: brown 2L bar with stop
+1 70 -34.1758 -243.6239 -195.1196 0 0 -1.0001 -0.9239 -0.3827 0 -0.3827 0.9239 0 78258.dat
+0 // nut: brown 1x1 brick with studs on four sides
+1 70 -34.1758 -232.9083 -220.9888 0 0 -1.0001 -0.9239 -0.3827 0 -0.3827 0.9239 0 4733.dat
+0 // nut: tan 1x1 pyramid
+1 19 -34.1758 -232.9083 -220.9888 0 0 -1.0001 -0.9239 -0.3827 0 -0.3827 0.9239 0 22388.dat
+0 // nut: tan 1x1 plate with tooth (tooth down)
+1 19 -34.1758 -253.3655 -218.6384 -1.0001 0 0 0 0.9239 0.3827 0 0.3827 -0.9239 49668.dat
+0 // nut: tan 1x1 plate with tooth (tooth down)
+1 19 -52.1767 -236.7353 -211.7497 0 1.0001 0 0.9239 0 0.3827 0.3827 0 -0.9239 49668.dat
+0 // nut: tan 1x1 plate with tooth (tooth down)
+1 19 -34.1758 -220.1051 -204.8611 1.0001 0 0 0 -0.9239 0.3827 0 -0.3827 -0.9239 49668.dat
+0 // nut: tan 1x1 plate with tooth (tooth down)
+1 19 -16.1749 -236.7353 -211.7497 0 -1.0001 0 -0.9239 0 0.3827 -0.3827 0 -0.9239 49668.dat
+0 // nut: red 2L axle
+1 4 -34.1758 -259.6973 -156.3158 0 0 1.0001 -0.3827 -0.9239 0 0.9239 -0.3827 0 32062.dat
+0 // nut: red angle connector #1 (pin hole on the curved bar's tip)
+1 4 -34.1758 -271.561 -127.6748 0 1.0001 0 -0.9239 0 -0.3827 -0.3827 0 0.9239 32013.dat

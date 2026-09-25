@@ -17,7 +17,7 @@ Current season pack: **2026-27 BIOGLOW**.
 | M4 Sensors — colour (samples the mat), distance, IMU; telemetry panel | 🟡 force sensor + calibration UI pending |
 | M5 Word Blocks + `.llsp3` | 🟡 Word Blocks `.llsp3` compile + run (FIRST's BIOGLOW guided mission runs); visual blocks editor pending |
 | M6 LEGO builder (LDraw parts, snapping, connectivity) | 🟡 real-part builder, connection → physics (rigid groups, hinges, motor axles), real-parts SPIKE drive base; gears and part thumbnails pending |
-| M7 BIOGLOW mission models + scoring | 🟡 official scoresheet + auto total (incl. Challenge Update 01), 2:30 match mode, auto equipment inspection, all 15 mission models placed from the wireframe as blocks; real-part models built in the Build tab replace them — models still to be built |
+| M7 BIOGLOW mission models + scoring | 🟡 official scoresheet + auto total (incl. Challenge Update 01), 2:30 match mode, auto equipment inspection, all 13 mission books built from real LEGO parts and placed on their mat marks (see below); exact orientation of M08/09 still to confirm on a real table |
 | M8 Real-robot calibration, replay, polish | ⏳ |
 
 See `PLAN.md` for the full design.
@@ -70,12 +70,38 @@ Rebrickable CSV dumps in `~/.cache/fll-sim/rebrickable`).
 
 ## Missions and scoring (BIOGLOW)
 
-Every mission model sits on its wireframe footprint as a labelled block (heights estimated), so
-robots collide with the field like on a real table. Build a mission model from the official
-building instructions in the **Build** tab and choose **Use as mission model…**: it replaces the
-block, its heaviest part on the mat is held by Dual Lock, and everything else (levers, hinges,
-loose pieces) moves under physics. **⏱ Match** runs your program for 2:30 and stops it; the
-**Score** tab is the official scoresheet with the total calculated as you answer.
+All 13 BIOGLOW mission books ship as real-LEGO models (`apps/desktop/resources/missions/*.ldr`,
+poses in `seasons/2026-27/mission-models.json`), scripted part by part from the official building
+instructions and placed on the mat by matching their footprint against the wireframe marks.
+On the field:
+
+- the heaviest body resting on the mat is held by Dual Lock; hinges, levers and game pieces move
+  under physics; parts whose connection isn't in the snap data (flexible hoses, clips, some
+  decorations) are glued to what they touch;
+- game pieces are tagged in their part labels (`[loose:<piece>]`) so they stay free;
+- a model stays frozen exactly as set up until the robot comes near it (fast, and like the
+  friction that holds a real model still), then all its parts come alive.
+
+**Mission models: LEGO / blocks** switches to simple blocks (faster). Your own build replaces a
+model via **Use as mission model…** in the Build tab (**Reset … to default** restores it). The
+Build tab's **Examples…** menu opens every mission model, e.g. to print its instructions.
+**⏱ Match** runs your program for 2:30 and stops it; the **Score** tab is the official scoresheet
+with the total calculated as you answer.
+
+### Building instructions
+
+**Instructions…** in the Build tab exports any model (your robot, attachments, a mission model)
+as a LEGO-style building guide (PDF or HTML): a cover, the parts list with quantities and colours,
+and numbered steps with a parts callout and the new parts outlined. Steps come from the builder's
+step control (**+ New step**); models without steps get one part per step.
+
+### Maintaining the mission models (`tools/model-build`)
+
+- `models/<id>.ts` rebuild a book: `pnpm --filter @fll-sim/model-build run build-model <id> -- --views`
+  (needs the building instructions in `resources/`, see `tools/model-build/MODEL_GUIDE.md`).
+- `pnpm exec tsx src/publish.ts [book ...]` (in `tools/model-build`) splits books into field
+  models, finds their pose on the mat and writes the app's mission files.
+- `pnpm run field-check [id] [--wake] [--render]` checks the models' physics on the field.
 
 ## Season materials and the mat
 

@@ -8,6 +8,7 @@ import { analyzePart, assemble, partSnaps, placeOnSnap, serializeModel, parseMod
 import { PORTS, type Port } from "@fll-sim/sim";
 import type { CatalogCategory, CatalogPart } from "../lib/ldraw";
 import { partObject } from "../three/ldrawMesh";
+import { autoSteps, buildInstructions } from "../lib/instructions";
 
 interface Props {
   lib: Library;
@@ -16,6 +17,8 @@ interface Props {
   onChange(parts: ModelPart[]): void;
   onUseAsRobot(parts: ModelPart[]): void;
   missionModels: { id: string; name: string; built: boolean }[];
+  /** The season's real-part mission models, openable as examples (e.g. to print their instructions). */
+  bundledMissions: { id: string; name: string; text: string }[];
   /** Put the current build on the field as a mission model (empty parts = remove). */
   onUseAsMissionModel(id: string, parts: ModelPart[]): void;
   log(text: string, kind?: "out" | "err" | "info"): void;
@@ -37,7 +40,7 @@ function hexOf(lib: Library, code: number) {
   return "#" + lib.color(code).rgb.map((v) => v.toString(16).padStart(2, "0")).join("");
 }
 
-export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionModels, onUseAsMissionModel, log }: Props) {
+export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionModels, bundledMissions, onUseAsMissionModel, log }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const [catId, setCatId] = useState(catalog[0]?.id ?? "");
   const [query, setQuery] = useState("");
@@ -45,6 +48,11 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
   const [ghost, setGhost] = useState<Ghost | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [report, setReport] = useState<AssemblyReport | null>(null);
+  const [exporting, setExporting] = useState<string | null>(null);
+  const [modelName, setModelName] = useState("My robot");
+  /** Step that newly placed parts go into (building instructions). */
+  const maxStep = parts.reduce((m, p) => Math.max(m, p.step ?? 0), 0);
+  const [step, setStep] = useState(Math.max(1, maxStep));
   const undo = useRef<ModelPart[][]>([]);
   const redo = useRef<ModelPart[][]>([]);
   const st = useRef<{ renderer: THREE.WebGLRenderer; scene: THREE.Scene; camera: THREE.PerspectiveCamera; controls: OrbitControls; root: THREE.Group; ghostObj: THREE.Object3D | null; selBox: THREE.Box3Helper } | null>(null);
@@ -52,6 +60,7 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
   partsRef.current = parts;
   const ghostRef = useRef(ghost);
   ghostRef.current = ghost;
+  const stepRef = useRef(1);
 
   const commit = (next: ModelPart[]) => {
     undo.current.push(partsRef.current);
@@ -232,7 +241,7 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
       if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4 || e.button !== 0) return; // orbit drag
       const g = ghostRef.current;
       if (g) {
-        commit([...partsRef.current, { file: g.file, color: g.color, m: g.m }]);
+        commit([...partsRef.current, { file: g.file, color: g.color, m: g.m, step: stepRef.current }]);
         setSelected(partsRef.current.length);
         return;
       }
@@ -306,6 +315,26 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
     return [...set].filter((c) => lib.colors.has(c)).sort((a, b) => a - b);
   }, [catalog, lib]);
 
+  stepRef.current = step;
+
+  const exportInstructions = async (name: string) => {
+    if (!parts.length) return;
+    // Builds made before steps existed get automatic steps.
+    const steps = autoSteps(lib, parts);
+    const stepped = parts.map((p, i) => ({ ...p, step: steps[i] }));
+    try {
+      setExporting("Rendering…");
+      const html = await buildInstructions(lib, stepped, { title: name, onProgress: (d, t) => setExporting(`Rendering step ${d}/${t}…`) });
+      setExporting("Saving…");
+      const path = await window.fllsim.exportInstructions(html, `${name.replace(/[^\w -]+/g, "_")}.pdf`);
+      if (path) log(`Building instructions saved: ${path}`, "info");
+    } catch (e) {
+      log(`Could not export instructions: ${e}`, "err");
+    } finally {
+      setExporting(null);
+    }
+  };
+
   const check = () => {
     if (!parts.length) return;
     const r = assemble(lib, parts);
@@ -354,6 +383,13 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
           <select value="" onChange={async (e) => {
             const file = e.target.value;
             if (!file) return;
+            const mission = bundledMissions.find((m) => "mission:" + m.id === file);
+            if (mission) {
+              const r = parseModel(lib, mission.text);
+              commit(r.parts);
+              setModelName(mission.name);
+              return log(`Loaded mission model: ${mission.name} (${r.parts.length} parts)`, "info");
+            }
             const bytes = await window.fllsim.readAsset(`apps/desktop/resources/robots/${file}`);
             if (!bytes) return log(`Example ${file} not found`, "err");
             const r = parseModel(lib, new TextDecoder("latin1").decode(bytes));
@@ -362,9 +398,20 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
           }}>
             <option value="">Examples…</option>
             <option value="spike-drivebase.ldr">SPIKE drive base (real parts)</option>
+            {bundledMissions.length > 0 && (
+              <optgroup label="Mission models">
+                {bundledMissions.map((m) => <option key={m.id} value={"mission:" + m.id}>{m.name}</option>)}
+              </optgroup>
+            )}
           </select>
           <button onClick={save} disabled={!parts.length}>Save .ldr…</button>
           <button onClick={check} disabled={!parts.length}>Check connections</button>
+          <span className="step-ctl" title="New parts go into this building-instruction step">
+            Step <b>{step}</b>
+            <button onClick={() => setStep(Math.max(maxStep, step) + 1)} disabled={!parts.some((p) => (p.step ?? 1) === step)}>+ New step</button>
+          </span>
+          <input className="model-name" value={modelName} onChange={(e) => setModelName(e.target.value)} title="Model name (used for instructions and files)" />
+          <button onClick={() => exportInstructions(modelName.trim() || "My model")} disabled={!parts.length || !!exporting}>{exporting ?? "Instructions…"}</button>
           <button className="primary" onClick={() => onUseAsRobot(parts)} disabled={!parts.length}>Use as robot ▶</button>
           <select value="" disabled={!parts.length} onChange={(e) => {
             const v = e.target.value;
@@ -374,7 +421,7 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, missionMo
           }} title="Place this build on the field as one of the mission models">
             <option value="">Use as mission model…</option>
             {missionModels.map((m) => <option key={m.id} value={m.id}>{m.name}{m.built ? " (replace)" : ""}</option>)}
-            {missionModels.filter((m) => m.built).map((m) => <option key={"r" + m.id} value={"reset:" + m.id}>Reset {m.name} to block</option>)}
+            {missionModels.filter((m) => m.built).map((m) => <option key={"r" + m.id} value={"reset:" + m.id}>Reset {m.name} to default</option>)}
           </select>
           <span className="hint">{ghost ? "Click to place · Tab: next connection · R: rotate · F: flip · [ ]: slide · Esc: cancel" : "Pick a part on the left · click a part to select · Del: delete · M: move · Ctrl+Z: undo"}</span>
         </div>

@@ -39,3 +39,27 @@ export async function loadDefaultMat(season: SeasonConfig): Promise<LoadedMat | 
   const bytes = await window.fllsim.readAsset(rel);
   return bytes ? loadMatImage(bytes) : null;
 }
+
+/** A real-part mission model shipped with the season: its .ldr and its pose on the mat. */
+export interface BundledMission {
+  id: string;
+  text: string;
+  pose: { xMm: number; yMm: number; headingDeg: number };
+  /** false = not held by Dual Lock */
+  fixed?: boolean;
+}
+
+/** The season's published mission models (seasons/<id>/mission-models.json), empty if none. */
+export async function loadBundledMissions(id: string): Promise<Record<string, BundledMission>> {
+  const bytes = await window.fllsim.readAsset(`seasons/${id}/mission-models.json`);
+  if (!bytes) return {};
+  const index = JSON.parse(new TextDecoder().decode(bytes)) as Record<string, { file: string; pose: BundledMission["pose"]; fixed?: boolean }>;
+  const out: Record<string, BundledMission> = {};
+  await Promise.all(
+    Object.entries(index).map(async ([mid, e]) => {
+      const ldr = await window.fllsim.readAsset(e.file);
+      if (ldr) out[mid] = { id: mid, text: new TextDecoder("latin1").decode(ldr), pose: e.pose, fixed: e.fixed };
+    }),
+  );
+  return out;
+}

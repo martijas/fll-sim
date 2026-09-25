@@ -4,5 +4,13 @@
   "private": true,
   "type": "module",
   "main": "src/index.ts",
-  "dependencies": { "@fll-sim/ldraw": "workspace:*", "@fll-sim/sim": "workspace:*", "@fll-sim/units": "workspace:*" }
+  "dependencies": {
+    "@fll-sim/ldraw": "workspace:*",
+    "@fll-sim/sim": "workspace:*",
+    "@fll-sim/units": "workspace:*"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./fit": "./src/fit.ts"
+  }
 }

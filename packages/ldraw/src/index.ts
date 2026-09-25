@@ -119,6 +119,7 @@ export function parseColors(ldconfig: string): Map<number, LDColor> {
 // ---- library -------------------------------------------------------------------------------
 export class Library {
   private cache = new Map<string, ParsedFile | null>();
+  private localCache = new WeakMap<Map<string, string>, Map<string, ParsedFile>>();
   private shadowCache = new Map<string, string[]>();
   readonly colors: Map<number, LDColor>;
 
@@ -134,9 +135,11 @@ export class Library {
   get(name: string, local?: Map<string, string>): ParsedFile | null {
     const n = normName(name);
     if (local?.has(n)) {
-      const key = "local:" + n;
-      if (!this.cache.has(key)) this.cache.set(key, parseLines(local.get(n)!, n));
-      return this.cache.get(key)!;
+      // Model-internal files are cached per model (names like "model.ldr" repeat across models).
+      let lc = this.localCache.get(local);
+      if (!lc) this.localCache.set(local, (lc = new Map()));
+      if (!lc.has(n)) lc.set(n, parseLines(local.get(n)!, n));
+      return lc.get(n)!;
     }
     if (this.cache.has(n)) return this.cache.get(n)!;
     let found: ParsedFile | null = null;
@@ -382,27 +385,33 @@ export function parseSnap(line: string, m: Mat4): Snap[] | null {
   });
   const grid = attr(line, "grid");
   if (!grid) return [mk(base)];
-  // grid=[C] cx [C] cz sx sz : count along local X and Z with spacing; C = centered.
+  // grid=[C] cx [C] cz sx sz (2D, local X and Z) or [C] cx [C] cy [C] cz sx sy sz (3D);
+  // C = centred on the snap's origin.
   const g = grid.split(/\s+/);
+  const dims = g.filter((t) => t !== "C").length === 6 ? [0, 1, 2] : [0, 2];
   let i = 0;
-  const readAxis = () => {
+  const axes = dims.map(() => {
     let centered = false;
     if (g[i] === "C") {
       centered = true;
       i++;
     }
     return { n: Number(g[i++]), centered };
-  };
-  const ax = readAxis();
-  const az = readAxis();
-  const sx = Number(g[i++]), sz = Number(g[i++]);
+  });
+  const sp = dims.map(() => Number(g[i++]));
   const out: Snap[] = [];
-  for (let a = 0; a < ax.n; a++)
-    for (let b = 0; b < az.n; b++) {
-      const ox = (ax.centered ? a - (ax.n - 1) / 2 : a) * sx;
-      const oz = (az.centered ? b - (az.n - 1) / 2 : b) * sz;
-      out.push(mk(mul(base, new Float64Array([1, 0, 0, ox, 0, 1, 0, 0, 0, 0, 1, oz]))));
-    }
+  const idx = axes.map(() => 0);
+  const total = axes.reduce((t, a) => t * a.n, 1);
+  for (let c = 0; c < total; c++) {
+    let r = c;
+    axes.forEach((a, k) => {
+      idx[k] = r % a.n;
+      r = Math.floor(r / a.n);
+    });
+    const o = [0, 0, 0];
+    dims.forEach((d, k) => (o[d] = (axes[k].centered ? idx[k] - (axes[k].n - 1) / 2 : idx[k]) * sp[k]));
+    out.push(mk(mul(base, new Float64Array([1, 0, 0, o[0], 0, 1, 0, o[1], 0, 0, 1, o[2]]))));
+  }
   return out;
 }
 

@@ -6,6 +6,7 @@ import { HubState } from "./hub";
 import { FRICTION, type Port, type RobotModel, type SensorType, type ShapeSpec } from "./model";
 import { MotorController } from "./motor";
 import { type MatImage, type SeasonConfig, matPlacement } from "./season";
+import { shapeBounds } from "./shapes";
 import { type ColorCalibration, DEFAULT_CALIBRATION, colorReading, parseHexColor, sampleMat, spotRadiusMm, type RGB } from "./sensors";
 
 let rapierReady: Promise<void> | null = null;
@@ -77,6 +78,14 @@ export class Simulation {
   readonly hub: HubState;
   readonly motors = new Map<Port, MotorBinding>();
   readonly sensors = new Map<Port, SensorBinding>();
+  /** Mission models whose moving parts are still frozen: bodies + bounding circle (m, world). */
+  private frozen: { bodies: RAPIER.RigidBody[]; x: number; z: number; rM: number }[] = [];
+  /** Collider pairs that never touch (see excludePair). */
+  private excluded = new Map<number, Set<number>>();
+  private hooks: RAPIER.PhysicsHooks = {
+    filterContactPair: (c1, c2) => (this.excluded.get(c1)?.has(c2) ? null : RAPIER.SolverFlags.COMPUTE_IMPULSE),
+    filterIntersectionPair: () => true,
+  };
   readonly bodies: { id: string; body: RAPIER.RigidBody; kind: "robot" | "field" | "model" }[] = [];
   readonly scene: SceneBody[] = [];
   private colliderColor = new Map<number, RGB>();
@@ -183,13 +192,17 @@ export class Simulation {
     const origin = matToWorld({ x: pose.xMm, y: pose.yMm }, this.matPlacement, 0);
     const rot = quatFromAxisAngle({ x: 0, y: 1, z: 0 }, degToRad(pose.headingDeg));
     const byId = new Map<string, RAPIER.RigidBody>();
+    const shapesOf = new Map(m.bodies.map((b) => [b.id, b.shapes]));
     for (const b of m.bodies) {
+      // Moving parts start frozen (fixed): the model stays exactly as set up, as friction
+      // holds it on a real table, until the robot comes near (see wakeModels).
       const desc = (fixed.has(b.id) ? RAPIER.RigidBodyDesc.fixed() : RAPIER.RigidBodyDesc.dynamic()).setTranslation(origin.x, origin.y + 0.0003, origin.z).setRotation(rot);
       const body = this.world.createRigidBody(desc);
       byId.set(b.id, body);
-      const vols = b.shapes.map(shapeVolume);
+      const shapes = shapesOf.get(b.id)!;
+      const vols = shapes.map(shapeVolume);
       const vt = vols.reduce((x, y) => x + y, 0) || 1;
-      b.shapes.forEach((s, i) => {
+      shapes.forEach((s, i) => {
         const cd = colliderDesc(s)
           .setMass(s.massKg ?? (b.massKg * vols[i]) / vt)
           .setFriction(FRICTION[s.material ?? "plastic"])
@@ -204,9 +217,72 @@ export class Simulation {
     }
     for (const j of m.freeJoints) {
       const a = { x: mmToM(j.anchorMm.x), y: mmToM(j.anchorMm.y), z: mmToM(j.anchorMm.z) };
-      const joint = this.world.createImpulseJoint(RAPIER.JointData.revolute(a, a, j.axis), byId.get(j.a)!, byId.get(j.b)!, true) as RAPIER.RevoluteImpulseJoint;
+      const joint = this.world.createImpulseJoint(RAPIER.JointData.revolute(a, a, j.axis), byId.get(j.a)!, byId.get(j.b)!, false) as RAPIER.RevoluteImpulseJoint;
       joint.setContactsEnabled(false);
       if (j.friction) joint.configureMotorVelocity(0, 0.002);
+    }
+    // Colliders of one model that already overlap as built (pins through holes, parts nested in
+    // each other, voxel slack) must not push each other apart; everything else keeps colliding,
+    // so hinged parts still rest on their stops. Filtered per collider pair by a contact hook.
+    const all: { body: number; handle: number; bounds: ReturnType<typeof shapeBounds> }[] = [];
+    m.bodies.forEach((b, bi) => {
+      const body = byId.get(b.id)!;
+      shapesOf.get(b.id)!.forEach((sh, si) => all.push({ body: bi, handle: body.collider(si).handle, bounds: shapeBounds(sh) }));
+    });
+    const hit = (x: ReturnType<typeof shapeBounds>, y: ReturnType<typeof shapeBounds>) =>
+      x.max.x - y.min.x > 0.2 && y.max.x - x.min.x > 0.2 && x.max.y - y.min.y > 0.2 && y.max.y - x.min.y > 0.2 && x.max.z - y.min.z > 0.2 && y.max.z - x.min.z > 0.2;
+    for (let i = 0; i < all.length; i++)
+      for (let k = i + 1; k < all.length; k++) {
+        const x = all[i], y = all[k];
+        if (x.body === y.body || (fixed.has(m.bodies[x.body].id) && fixed.has(m.bodies[y.body].id)) || !hit(x.bounds, y.bounds)) continue;
+        this.excludePair(x.handle, y.handle);
+      }
+    const moving = m.bodies.filter((b) => !fixed.has(b.id)).map((b) => byId.get(b.id)!);
+    if (moving.length) {
+      let r = 0;
+      for (const b of m.bodies) for (const sh of shapesOf.get(b.id)!) {
+        const bb = shapeBounds(sh);
+        r = Math.max(r, Math.hypot(Math.max(Math.abs(bb.min.x), Math.abs(bb.max.x)), Math.max(Math.abs(bb.min.z), Math.abs(bb.max.z))));
+      }
+      // frozen = fixed (created dynamic first so their mass properties are computed)
+      for (const b of moving) b.setBodyType(RAPIER.RigidBodyType.Fixed, false);
+      this.frozen.push({ bodies: moving, x: origin.x, z: origin.z, rM: mmToM(r) });
+    }
+  }
+
+  private unfreeze(b: RAPIER.RigidBody) {
+    b.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
+    b.recomputeMassPropertiesFromColliders();
+    b.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    b.setAngvel({ x: 0, y: 0, z: 0 }, true);
+  }
+
+  /** Unfreeze all mission models (tests). */
+  unfreezeModels() {
+    for (const f of this.frozen) for (const b of f.bodies) this.unfreeze(b);
+    this.frozen = [];
+  }
+
+  /** Unfreeze every mission model the robot has come close to (all its moving parts at once). */
+  private wakeModels() {
+    const p = this.hubBody.translation();
+    const reach = mmToM(Math.hypot(this.robot.footprintMm.w, this.robot.footprintMm.l) / 2 + 60);
+    this.frozen = this.frozen.filter((f) => {
+      if (Math.hypot(p.x - f.x, p.z - f.z) > f.rM + reach) return true;
+      for (const b of f.bodies) this.unfreeze(b);
+      return false;
+    });
+  }
+
+  /** Never generate contacts between these two colliders. */
+  private excludePair(a: number, b: number) {
+    for (const [p, q] of [[a, b], [b, a]]) {
+      let set = this.excluded.get(p);
+      if (!set) {
+        this.excluded.set(p, (set = new Set()));
+        this.world.getCollider(p).setActiveHooks(RAPIER.ActiveHooks.FILTER_CONTACT_PAIRS);
+      }
+      set.add(q);
     }
   }
 
@@ -282,7 +358,9 @@ export class Simulation {
       m.output.applyTorqueImpulse({ x: -axisW.x * imp, y: -axisW.y * imp, z: -axisW.z * imp }, true);
       m.housing.applyTorqueImpulse({ x: axisW.x * imp, y: axisW.y * imp, z: axisW.z * imp }, true);
     }
-    this.world.step();
+    if (this.frozen.length && this.timeMs % 5 === 0) this.wakeModels();
+    if (this.excluded.size) this.world.step(undefined, this.hooks);
+    else this.world.step();
     this.timeMs += 1;
     // IMU specific force (accelerometer): a - g, in world frame.
     const v = toV(this.hubBody.linvel());

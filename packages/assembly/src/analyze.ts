@@ -215,6 +215,16 @@ export function analyzePart(lib: Library, file: string): PartInfo {
     sphere = { r: Math.max(...ext) / 2, c };
   }
 
+  // An open/hollow stud (stud tube) is also a normal stud for anti-studs above it.
+  for (const sn of [...full.snaps]) {
+    if (!/stud tube|hollow stud|open stud/i.test(title)) break; // only real stud tubes, not anti-studs
+    if (sn.kind !== "cyl" || sn.gender !== "F" || sn.caps !== "one") continue;
+    const m = sn.secs.trim().match(/^R\s+6\s+([\d.]+)$/);
+    if (m && Number(m[1]) <= 6 && !full.snaps.some((o) => o !== sn && o.gender === "M" && Math.hypot(o.m[3] - sn.m[3], o.m[7] - sn.m[7], o.m[11] - sn.m[11]) < 0.5)) {
+      full.snaps.push({ ...sn, gender: "M", id: "studTube", secs: "R 6 4" });
+    }
+  }
+
   const massKg = MASS[f] ?? Math.max(0.0002, solidVol * LDU3_TO_MM3 * ABS_KG_PER_MM3 * FILL);
   const info: PartInfo = { file: f, title, min: bb.min, max: bb.max, boxes, rotorBoxes, cylinder, sphere, massKg, snaps: full.snaps, electronics: el, connector, friction, rubber };
   m.set(f, info);

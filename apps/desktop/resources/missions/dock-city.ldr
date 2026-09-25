@@ -1,0 +1,288 @@
+0 dock-city
+0 Name: dock-city.ldr
+0 Author: FLL Sim
+
+0 // end 1: black 11x7 frame
+1 0 140 -92 0 0 -1 0 1 0 0 0 0 1 39794.dat
+0 // end 1: pin (bottom beam, outer face)
+1 0 150 -32 100 1 0 0 0 1 0 0 0 1 61332.dat
+0 // end 1: green 1L beam
+1 10 160 -32 100 0 1 0 0 0 1 1 0 0 18654.dat
+0 // end 1: pin (bottom beam, outer face)
+1 0 150 -32 -60 1 0 0 0 1 0 0 0 1 61332.dat
+0 // end 1: green 1L beam
+1 10 160 -32 -60 0 1 0 0 0 1 1 0 0 18654.dat
+0 STEP
+0 // end 1: pin (under 3x3 block)
+1 0 140 -42 -80 0 1 0 1 0 0 0 0 -1 61332.dat
+0 // end 1: pin (under 3x3 block)
+1 0 140 -42 -40 0 1 0 1 0 0 0 0 -1 61332.dat
+0 // end 1: dark grey 3x3 block
+1 72 140 -72 -60 0 -1 0 1 0 0 0 0 1 39793.dat
+0 STEP
+0 // end 1: lime cross block (latch handle)
+1 27 140 -172 60 0 0 1 -1 0 0 0 -1 0 42003.dat
+0 // end 1: grey 1x2 brick with 2 pins
+1 71 160 -182 50 0 0 1 0 1 0 -1 0 0 53540.dat
+0 // end 1: yellow 1x2 tile
+1 14 160 -190 50 0 0 1 0 1 0 -1 0 0 3069b.dat
+0 // end 1: brown 5L axle w/ stop (latch column)
+1 70 140 -134 80 0 1 0 -1 0 0 0 0 1 15462.dat
+0 STEP
+0 // end 1: red bush
+1 4 140 -132 80 1 0 0 0 0 1 0 -1 0 3713.dat
+0 STEP
+0 // end 1: green 2L latch arm
+1 2 140 -112 80 -1 0 0 0 1 0 0 0 -1 60483.dat
+0 // end 1: brown 2L axle joiner
+1 70 140 -82 80 1 0 0 0 0 1 0 -1 0 59443.dat
+0 STEP
+0 // end 1: brown 3L axle w/ stop
+1 70 140 -50 80 0 1 0 1 0 0 0 0 -1 24316.dat
+0 STEP
+0 // side 1: green 3x5 L beam (left)
+1 2 -60 -52 -120 0 0 -1 -1 0 0 0 1 0 32526.dat
+0 // side 1: green 3x5 L beam (right)
+1 2 60 -52 -120 0 0 1 -1 0 0 0 -1 0 32526.dat
+0 // side 1: pin (9L to L beam)
+1 0 -80 -52 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 1: pin (9L to L beam)
+1 0 -60 -52 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 1: pin (9L to L beam)
+1 0 60 -52 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 1: pin (9L to L beam)
+1 0 80 -52 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 1: bright green 9L beam
+1 10 0 -52 -100 0 0 1 1 0 0 0 1 0 40490.dat
+0 // side 1: pin (L beam to end frame)
+1 0 -140 -52 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 1: pin (L beam to end frame)
+1 0 -140 -92 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 1: pin (L beam to end frame)
+1 0 140 -52 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 1: pin (L beam to end frame)
+1 0 140 -92 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 STEP
+0 // end 2: black 11x7 frame
+1 0 -140 -92 0 0 -1 0 1 0 0 0 0 1 39794.dat
+0 // end 2: pin (bottom beam, outer face)
+1 0 -150 -32 100 1 0 0 0 1 0 0 0 1 61332.dat
+0 // end 2: green 1L beam
+1 10 -160 -32 100 0 1 0 0 0 1 1 0 0 18654.dat
+0 // end 2: pin (bottom beam, outer face)
+1 0 -150 -32 -60 1 0 0 0 1 0 0 0 1 61332.dat
+0 // end 2: green 1L beam
+1 10 -160 -32 -60 0 1 0 0 0 1 1 0 0 18654.dat
+0 STEP
+0 // end 2: pin (under 3x3 block)
+1 0 -140 -42 -80 0 1 0 1 0 0 0 0 -1 61332.dat
+0 // end 2: pin (under 3x3 block)
+1 0 -140 -42 -40 0 1 0 1 0 0 0 0 -1 61332.dat
+0 // end 2: dark grey 3x3 block
+1 72 -140 -72 -60 0 -1 0 1 0 0 0 0 1 39793.dat
+0 STEP
+0 // end 2: lime cross block (latch handle)
+1 27 -140 -172 60 0 0 1 -1 0 0 0 -1 0 42003.dat
+0 // end 2: grey 1x2 brick with 2 pins
+1 71 -160 -182 50 0 0 -1 0 1 0 1 0 0 53540.dat
+0 // end 2: yellow 1x2 tile
+1 14 -160 -190 50 0 0 -1 0 1 0 1 0 0 3069b.dat
+0 // end 2: brown 5L axle w/ stop (latch column)
+1 70 -140 -134 80 0 1 0 -1 0 0 0 0 1 15462.dat
+0 STEP
+0 // end 2: red bush
+1 4 -140 -132 80 1 0 0 0 0 1 0 -1 0 3713.dat
+0 STEP
+0 // end 2: green 2L latch arm
+1 2 -140 -112 80 -1 0 0 0 1 0 0 0 -1 60483.dat
+0 // end 2: brown 2L axle joiner
+1 70 -140 -82 80 1 0 0 0 0 1 0 -1 0 59443.dat
+0 STEP
+0 // end 2: brown 3L axle w/ stop
+1 70 -140 -50 80 0 1 0 1 0 0 0 0 -1 24316.dat
+0 STEP
+0 STEP
+0 // side 2: green 3x5 L beam (left)
+1 2 -60 -52 120 0 0 -1 -1 0 0 0 1 0 32526.dat
+0 // side 2: green 3x5 L beam (right)
+1 2 60 -52 120 0 0 1 -1 0 0 0 -1 0 32526.dat
+0 // side 2: pin (9L to L beam)
+1 0 -80 -52 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 2: pin (9L to L beam)
+1 0 -60 -52 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 2: pin (9L to L beam)
+1 0 60 -52 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 2: pin (9L to L beam)
+1 0 80 -52 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 2: bright green 9L beam
+1 10 0 -52 100 0 0 1 1 0 0 0 1 0 40490.dat
+0 // side 2: pin (L beam to end frame)
+1 0 -140 -52 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 2: pin (L beam to end frame)
+1 0 -140 -92 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 2: pin (L beam to end frame)
+1 0 140 -52 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // side 2: pin (L beam to end frame)
+1 0 140 -92 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 STEP
+0 // pin (15L to end frame)
+1 0 -140 -132 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (15L to end frame)
+1 0 140 -132 -110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // brown 15L beam (front)
+1 70 0 -132 -120 0 0 1 1 0 0 0 1 0 32278.dat
+0 // grey pin (swing pivot)
+1 71 -100 -132 -110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // grey pin (swing pivot)
+1 71 -60 -132 -110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // grey pin (swing pivot)
+1 71 -20 -132 -110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // grey pin (swing pivot)
+1 71 20 -132 -110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // grey pin (swing pivot)
+1 71 60 -132 -110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // grey pin (swing pivot)
+1 71 100 -132 -110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // pin (15L to end frame)
+1 0 -140 -132 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // pin (15L to end frame)
+1 0 140 -132 110 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // brown 15L beam (back)
+1 70 0 -132 120 0 0 1 1 0 0 0 1 0 32278.dat
+0 // grey pin (swing pivot)
+1 71 -100 -132 110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // grey pin (swing pivot)
+1 71 -60 -132 110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // grey pin (swing pivot)
+1 71 -20 -132 110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // grey pin (swing pivot)
+1 71 20 -132 110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // grey pin (swing pivot)
+1 71 60 -132 110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 // grey pin (swing pivot)
+1 71 100 -132 110 0 0 -1 0 1 0 1 0 0 3673.dat
+0 STEP
+0 // rod swing: brown 3L (back)
+1 70 -100 -112 100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 -100 -92 62 0 0 -1 0 1 0 1 0 0 15462.dat
+0 // rod swing: nougat 3L axle joiner
+1 84 -100 -92 0 1 0 0 0 1 0 0 0 1 42195.dat
+0 // rod swing: brown 3L (front)
+1 70 -100 -112 -100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 -100 -92 -62 0 0 1 0 1 0 -1 0 0 15462.dat
+0 // rod swing: brown 3L (back)
+1 70 -60 -112 100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 -60 -92 62 0 0 -1 0 1 0 1 0 0 15462.dat
+0 // rod swing: nougat 3L axle joiner
+1 84 -60 -92 0 1 0 0 0 1 0 0 0 1 42195.dat
+0 // rod swing: brown 3L (front)
+1 70 -60 -112 -100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 -60 -92 -62 0 0 1 0 1 0 -1 0 0 15462.dat
+0 // rod swing: brown 3L (back)
+1 70 -20 -112 100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 -20 -92 62 0 0 -1 0 1 0 1 0 0 15462.dat
+0 // rod swing: nougat 3L axle joiner
+1 84 -20 -92 0 1 0 0 0 1 0 0 0 1 42195.dat
+0 // rod swing: brown 3L (front)
+1 70 -20 -112 -100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 -20 -92 -62 0 0 1 0 1 0 -1 0 0 15462.dat
+0 // rod swing: brown 3L (back)
+1 70 20 -112 100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 20 -92 62 0 0 -1 0 1 0 1 0 0 15462.dat
+0 // rod swing: nougat 3L axle joiner
+1 84 20 -92 0 1 0 0 0 1 0 0 0 1 42195.dat
+0 // rod swing: brown 3L (front)
+1 70 20 -112 -100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 20 -92 -62 0 0 1 0 1 0 -1 0 0 15462.dat
+0 // rod swing: brown 3L (back)
+1 70 60 -112 100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 60 -92 62 0 0 -1 0 1 0 1 0 0 15462.dat
+0 // rod swing: nougat 3L axle joiner
+1 84 60 -92 0 1 0 0 0 1 0 0 0 1 42195.dat
+0 // rod swing: brown 3L (front)
+1 70 60 -112 -100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 60 -92 -62 0 0 1 0 1 0 -1 0 0 15462.dat
+0 // rod swing: brown 3L (back)
+1 70 100 -112 100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 100 -92 62 0 0 -1 0 1 0 1 0 0 15462.dat
+0 // rod swing: nougat 3L axle joiner
+1 84 100 -92 0 1 0 0 0 1 0 0 0 1 42195.dat
+0 // rod swing: brown 3L (front)
+1 70 100 -112 -100 -1 0 0 0 0 1 0 1 0 32523.dat
+0 // rod swing: brown 5L axle w/ stop
+1 70 100 -92 -62 0 0 1 0 1 0 -1 0 0 15462.dat
+0 STEP
+0 // long swing: grey pin (end 2)
+1 71 -130 -152 -20 1 0 0 0 1 0 0 0 1 3673.dat
+0 // long swing: brown 3L (end 2)
+1 70 -120 -132 -20 0 1 0 0 0 1 1 0 0 32523.dat
+0 // long swing: brown 5L axle w/ stop
+1 70 -82 -112 -20 -1 0 0 0 1 0 0 0 -1 15462.dat
+0 // long swing: brown 2L axle joiner
+1 70 -30 -112 -20 0 0 1 0 1 0 -1 0 0 59443.dat
+0 // long swing: red 2L axle
+1 4 -10 -112 -20 1 0 0 0 1 0 0 0 1 32062.dat
+0 // long swing: dark green 3L axle joiner
+1 288 20 -112 -20 0 0 1 0 1 0 -1 0 0 42195.dat
+0 // long swing: grey pin (end 1)
+1 71 130 -152 -20 1 0 0 0 1 0 0 0 1 3673.dat
+0 // long swing: brown 3L (end 1)
+1 70 120 -132 -20 0 1 0 0 0 1 1 0 0 32523.dat
+0 // long swing: brown 5L axle w/ stop
+1 70 82 -112 -20 1 0 0 0 1 0 0 0 1 15462.dat
+0 // long swing: grey pin (end 2)
+1 71 -130 -152 20 1 0 0 0 1 0 0 0 1 3673.dat
+0 // long swing: brown 3L (end 2)
+1 70 -120 -132 20 0 1 0 0 0 1 1 0 0 32523.dat
+0 // long swing: brown 5L axle w/ stop
+1 70 -82 -112 20 -1 0 0 0 1 0 0 0 -1 15462.dat
+0 // long swing: brown 2L axle joiner
+1 70 -30 -112 20 0 0 1 0 1 0 -1 0 0 59443.dat
+0 // long swing: red 2L axle
+1 4 -10 -112 20 1 0 0 0 1 0 0 0 1 32062.dat
+0 // long swing: dark green 3L axle joiner
+1 288 20 -112 20 0 0 1 0 1 0 -1 0 0 42195.dat
+0 // long swing: grey pin (end 1)
+1 71 130 -152 20 1 0 0 0 1 0 0 0 1 3673.dat
+0 // long swing: brown 3L (end 1)
+1 70 120 -132 20 0 1 0 0 0 1 1 0 0 32523.dat
+0 // long swing: brown 5L axle w/ stop
+1 70 82 -112 20 1 0 0 0 1 0 0 0 1 15462.dat
+0 STEP
+0 // dock: dark grey 15x11 frame
+1 72 0 -10 0 0 0 -1 0 1 0 1 0 0 39790.dat
+0 // dock: pin (outer side)
+1 0 -150 -10 80 1 0 0 0 1 0 0 0 1 61332.dat
+0 // dock: pin (outer side)
+1 0 -150 -10 0 1 0 0 0 1 0 0 0 1 61332.dat
+0 // dock: pin (inner side)
+1 0 -130 -10 -80 1 0 0 0 1 0 0 0 1 61332.dat
+0 // dock: pin (inner side)
+1 0 -130 -10 -40 1 0 0 0 1 0 0 0 1 61332.dat
+0 // dock: black 3L beam (front corner)
+1 0 -120 -10 -60 0 1 0 -1 0 0 0 0 1 32523.dat
+0 // dock: black 5x7 upright frame
+1 0 -160 -70 40 0 -1 0 0 0 1 -1 0 0 64179.dat
+0 // dock: pin (outer side)
+1 0 150 -10 80 1 0 0 0 1 0 0 0 1 61332.dat
+0 // dock: pin (outer side)
+1 0 150 -10 0 1 0 0 0 1 0 0 0 1 61332.dat
+0 // dock: pin (inner side)
+1 0 130 -10 -80 1 0 0 0 1 0 0 0 1 61332.dat
+0 // dock: pin (inner side)
+1 0 130 -10 -40 1 0 0 0 1 0 0 0 1 61332.dat
+0 // dock: black 3L beam (front corner)
+1 0 120 -10 -60 0 1 0 -1 0 0 0 0 1 32523.dat
+0 // dock: black 5x7 upright frame
+1 0 160 -70 40 0 1 0 0 0 1 1 0 0 64179.dat
