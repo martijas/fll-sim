@@ -6,6 +6,17 @@ and read its sensors — away from the physical robot. Runs on Debian/Ubuntu (an
 
 Current season pack: **2026-27 BIOGLOW**.
 
+![The simulator: the BIOGLOW table with every mission model built from real LEGO parts, the SPIKE drive base after a run (its path in orange), the Python editor and live telemetry](docs/images/simulate.png)
+
+| Build robots from real LEGO parts | Every mission model, part by part |
+|---|---|
+| ![Builder with the SPIKE Prime drive base](docs/images/builder-robot.png) | ![Builder showing the M02 Exploding Seeds mission model](docs/images/builder-mission.png) |
+| **Export LEGO-style building instructions** | **Official scoresheet with live total** |
+| ![Instruction booklet: cover, parts list and numbered steps](docs/images/instructions.png) | ![Score tab with the robot's automatic equipment inspection](docs/images/score.png) |
+
+*(Screenshots show a plain mat: FIRST's mat artwork is copyrighted and isn't part of this
+repository. Load your own copy with **Mat image…**; see "Season materials and the mat".)*
+
 ## Status
 
 | Milestone | State |
