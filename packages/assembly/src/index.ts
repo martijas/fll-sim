@@ -182,8 +182,8 @@ export const JOINT_FRICTION = {
   frictionPin: 0.006, freePin: 0.0002, axleInRoundHole: 0.0003,
   /** a bar in a clip turns stiffly and holds its angle */
   clip: 0.01,
-  /** a bar in an axle hole: snug */
-  barInAxleHole: 0.002,
+  /** a bar in an axle hole, hollow stud or cone: snug */
+  barInAxleHole: 0.005,
   /** click hinges / hinge bricks hold their angle (clicks) */
   clickHinge: 0.03,
 };
@@ -241,7 +241,7 @@ export function findConnections(snaps: WSnap[]): Connection[] {
         continue;
       }
       // Section by section: what actually sits inside the hole?
-      let axleInAxle = 0, roundIn = 0, pinInRound = 0, barInAxle = 0, bad = 0;
+      let axleInAxle = 0, roundIn = 0, pinInRound = 0, barInAxle = 0, barSnug = 0, bad = 0;
       if (!(m.stud || f.stud)) {
         for (const ms of m.secs) {
           const a0 = mo + Math.min(ms.t0 * s, ms.t1 * s), a1 = mo + Math.max(ms.t0 * s, ms.t1 * s);
@@ -259,6 +259,7 @@ export function findConnections(snaps: WSnap[]): Connection[] {
             else if (fShape === "R") {
               roundIn += ov;
               if (mShape === "R") pinInRound += ov;
+              if (mShape === "R" && ms.r <= 4.5 && Math.abs(ms.r - fs.r) < 0.6) barSnug += ov; // a bar in a hollow stud / cone
             }
             else bad += ov; // round pin in an axle hole
           }
@@ -273,7 +274,7 @@ export function findConnections(snaps: WSnap[]): Connection[] {
       const mid = addv(f.o, scalev(f.a, (Math.max(m0, f.t0) + Math.min(m1, f.t1)) / 2));
       // friction only where a friction pin's pin section (not its axle end) turns in the hole
       const friction = (m.friction && pinInRound >= 0.9) || (f.friction && roundIn >= 0.9 && !m.stud);
-      const frictionNm = f.clip || m.clip ? JOINT_FRICTION.clip : barInAxle >= 0.9 ? JOINT_FRICTION.barInAxleHole : friction ? JOINT_FRICTION.frictionPin : pinInRound >= 0.9 ? JOINT_FRICTION.freePin : JOINT_FRICTION.axleInRoundHole;
+      const frictionNm = f.clip || m.clip ? JOINT_FRICTION.clip : barInAxle >= 0.9 || barSnug >= 0.9 ? JOINT_FRICTION.barInAxleHole : friction ? JOINT_FRICTION.frictionPin : pinInRound >= 0.9 ? JOINT_FRICTION.freePin : JOINT_FRICTION.axleInRoundHole;
       const slides = !rigid && !m.stud && !f.stud && !m.clip && !f.clip && pinInRound < 0.9 && barInAxle < 0.9 && roundIn >= 0.9;
       out.push({ a: m.node, b: f.node, kind: rigid ? "rigid" : "revolute", point: mid, axis: f.a, friction, frictionNm, slides, stud: m.stud || f.stud, depth: m.stud || f.stud ? overlap : axleInAxle + roundIn });
     }
@@ -320,6 +321,8 @@ export interface AssembleOptions {
    * bodies with a breakable hold (STUD_CLUTCH_N per stud) instead of joining the rest.
    */
   breakable?: boolean;
+  /** Bars in clips, cones and hollow studs don't turn (a mission model's decorations hold firm). */
+  lockBars?: boolean;
   /** Parts with the same key become one rigid body (e.g. a game piece), whatever connects them. */
   rigidGroup?: (part: ModelPart) => string | null;
   /** Fewer, bigger colliders: mostly solid parts become a single box (for large field models). */
@@ -367,6 +370,12 @@ export function assemble(lib: Library, parts: ModelPart[], o: AssembleOptions = 
     }
   });
   let conns = findConnections(snaps);
+  // "[locked]" in a part's label: it stands in for a part with axle holes (LDraw lacks the real
+  // one), so what turns in its round holes is held fast instead.
+  const locked = (n: number) => /\[locked\]/.test(parts[nodes[n].part].label ?? "");
+  // (lockBars: bars in clips, cones and hollow studs hold firm, e.g. a mission model's decorations)
+  const barJoint = (c: Connection) => c.frictionNm === JOINT_FRICTION.clip || c.frictionNm === JOINT_FRICTION.barInAxleHole;
+  conns = conns.map((c) => (c.kind === "revolute" && (locked(c.a) || locked(c.b) || (o.lockBars && barJoint(c))) ? { ...c, kind: "rigid" as const, slides: false } : c));
 
   // Rigid unions, never merging a motor's housing with its own rotor.
   const dsu = new DSU(nodes.length);
@@ -1104,6 +1113,7 @@ export function assembleMissionModel(lib: Library, parts: ModelPart[], o: { name
     name: o.name,
     autoPorts: false,
     coarse: true,
+    lockBars: true,
     // (mission models are built sturdy: only their game pieces come off, see the holds below)
     glue: () => true,
     glueTo: (a, b) => looseTag(a) === looseTag(b),

@@ -183,7 +183,7 @@ export function build(lib: Library) {
   b.put(RBRICK, TAN, at(0, -192, 0), 1, "2x2 round brick (trunk)");
   b.put(RTILE, TAN, at(0, -200, 0), 1, "2x2 round tile with hole (trunk)");
   // bent cylinder: top face at the front, pointing up (45 degrees)
-  const elbow = b.place("65473.dat", TAN, at(0, -200, 0, rot("y", 90)), "2x2 round brick curved 45 (trunk top)");
+  const elbow = b.place("65473.dat", TAN, at(0, -200, 0, rot("y", 90)), "2x2 round brick curved 45 (trunk top) [locked]"); // the book's elbow (5489) has axle holes
   // 9.5 leaves plates on the front and back bars, leaves pointing out
   for (const s of [-1, 1]) {
     const bar: V3 = [0, -168, 30 * s];

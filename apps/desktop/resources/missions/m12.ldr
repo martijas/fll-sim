@@ -66,7 +66,7 @@
 1 19 0 -192 0 -1 0 0 0 1 0 0 0 -1 3941.dat
 0 // 2x2 round tile with hole (trunk)
 1 19 0 -200 0 -1 0 0 0 1 0 0 0 -1 15535.dat
-0 // 2x2 round brick curved 45 (trunk top)
+0 // 2x2 round brick curved 45 (trunk top) [locked]
 1 19 0 -200 0 0 0 -1 0 1 0 1 0 0 65473.dat
 0 // leaves plate on a trunk bar
 1 2 0 -164 30 0.7071 0 0.7071 0 -1 0 0.7071 0 -0.7071 32607.dat
