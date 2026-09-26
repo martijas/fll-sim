@@ -259,6 +259,42 @@ export function App() {
   const robotModel: RobotModel = useMemo(() => loadout?.robot ?? makeDriveBase(toDriveBaseOptions(robot)), [loadout, robot]);
   const robotModelRef = useRef(robotModel);
   robotModelRef.current = robotModel;
+  /** The robot's drive motor ports (left, right), when known. */
+  const drivePorts = robotSource === "drivebase" ? robot.leftPort + robot.rightPort : preset?.drive ?? null;
+  /** What is plugged into each port of the robot, e.g. "A motor, B colour sensor, …". */
+  const portsSummary = useMemo(() => {
+    const kind = new Map<string, string>();
+    for (const m of robotModel.motors) kind.set(m.port, drivePorts?.includes(m.port) ? `motor (${m.port === drivePorts[0] ? "left" : "right"} drive)` : "motor");
+    for (const x of robotModel.sensors) kind.set(x.port, x.type === "color" ? "colour sensor" : `${x.type} sensor`);
+    return "ABCDEF".split("").map((p) => `${p}: ${kind.get(p) ?? "nothing"}`).join(", ");
+  }, [robotModel, drivePorts]);
+  const portsRef = useRef(portsSummary);
+  portsRef.current = portsSummary;
+  /** Movement-motor pairs the blocks program sets ("set movement motors to …"). */
+  const programPairs = useMemo(() => {
+    if (!blocksProject) return [];
+    const out = new Set<string>();
+    for (const t of blocksProject.targets)
+      for (const b of Object.values(t.blocks)) {
+        const x = b as { opcode?: string; fields?: Record<string, unknown[]> };
+        if (x.opcode === "flippermove_movement-port-selector") out.add(String(x.fields?.["field_flippermove_movement-port-selector"]?.[0] ?? ""));
+      }
+    return [...out].filter(Boolean);
+  }, [blocksProject]);
+  const pairMismatch = drivePorts && programPairs.some((p) => p !== drivePorts);
+  /** Point the program's "set movement motors" blocks at the robot's drive motors. */
+  const useDrivePorts = () => {
+    if (!blocksProject || !drivePorts) return;
+    const p = JSON.parse(JSON.stringify(blocksProject)) as ScratchProject;
+    for (const t of p.targets)
+      for (const b of Object.values(t.blocks)) {
+        const x = b as { opcode?: string; fields?: Record<string, unknown[]> };
+        if (x.opcode === "flippermove_movement-port-selector" && x.fields) x.fields["field_flippermove_movement-port-selector"] = [drivePorts, null];
+      }
+    setBlocksProject(p);
+    setBlocksKey(`ports:${Date.now()}`);
+    log(`Movement motors set to ${drivePorts[0]} + ${drivePorts[1]} (this robot's drive motors).`, "info");
+  };
   /** The robot the simulator starts with; during a match, tool changes swap the robot in place instead. */
   const [bootRobot, setBootRobot] = useState<RobotModel>(robotModel);
   useEffect(() => {
@@ -415,7 +451,7 @@ export function App() {
           else {
             log(`✖ ${r.errorType ?? "Error"}`, "err");
             setError({ line: r.errorLine, text: r.error ?? "" });
-            if (/ENODEV/.test(r.error ?? "")) log("Hint: that port has nothing plugged in, or the wrong kind of device (e.g. a sensor where the block expects a motor). Check the port letters in your program and the robot's Ports….", "info");
+            if (/ENODEV/.test(r.error ?? "")) log(`Hint: that port has nothing plugged in, or the wrong kind of device (e.g. a sensor where the block expects a motor). On this robot: ${portsRef.current}.`, "info");
             const bid = r.errorLine ? blocksRef.current?.lineToBlock[r.errorLine] : undefined;
             if (bid) {
               log("The block that caused it is selected in the editor.", "info");
@@ -837,7 +873,7 @@ export function App() {
           <label>X <input type="number" value={start.xMm} step={5} disabled={running} onChange={(e) => applyStart({ ...start, xMm: Number(e.target.value) })} /></label>
           <label>Y <input type="number" value={start.yMm} step={5} disabled={running} onChange={(e) => applyStart({ ...start, yMm: Number(e.target.value) })} /></label>
           <label>Heading <input type="number" value={start.headingDeg} step={5} disabled={running} onChange={(e) => applyStart({ ...start, headingDeg: Number(e.target.value) })} /></label>
-          <select value={robotSource} disabled={running || !!(match && match.phase !== "over")} onChange={(e) => setRobotSource(e.target.value)} title="Which robot to simulate">
+          <select value={robotSource} disabled={running || !!(match && match.phase !== "over")} onChange={(e) => setRobotSource(e.target.value)} title={`Which robot to simulate. Ports: ${portsSummary}`}>
             <option value="drivebase">Robot: standard drive base</option>
             {presetRobots.map((p) => <option key={p.id} value={`preset:${p.id}`}>Robot: {p.name}</option>)}
             <option value="ldraw" disabled={!buildParts.length}>Robot: my build ({buildParts.length} parts)</option>
@@ -997,6 +1033,12 @@ export function App() {
                 <button className={codeView === "python" ? "on" : ""} onClick={() => setCodeView("python")} title="The Python the simulator runs for these blocks (read-only)">Python view</button>
               </span>
               {blocks.warnings.map((w) => <span key={w} className="warn">⚠ {w}</span>)}
+              {pairMismatch && (
+                <span className="warn">
+                  ⚠ This robot drives with {drivePorts![0]} + {drivePorts![1]}, but your program's movement motors are {programPairs.join(", ")}.{" "}
+                  <button onClick={useDrivePorts}>Use {drivePorts}</button>
+                </span>
+              )}
               {codeView === "python" && <button onClick={convertToPython} title="Continue in Python (the blocks file is not changed)">Convert to Python</button>}
             </div>
           )}
