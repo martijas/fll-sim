@@ -41,11 +41,14 @@ SUDO=""
 
 # ---- 1. system packages ------------------------------------------------------------------------
 step "System packages"
-ASOUND=libasound2
-apt-cache show libasound2t64 >/dev/null 2>&1 && ASOUND=libasound2t64 # (Ubuntu 24.04+ / Debian 13)
-PKGS=(git curl ca-certificates xz-utils libgtk-3-0 libnss3 libxss1 libgbm1 libxshmfence1 libdrm2 "$ASOUND" libnotify4 xdg-utils)
+PKGS=(git curl ca-certificates xz-utils libgtk-3-0 libnss3 libxss1 libgbm1 libxshmfence1 libdrm2 libasound2 libnotify4 xdg-utils)
+installed() { dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "ok installed"; }
 MISSING=()
-for p in "${PKGS[@]}"; do dpkg -s "$p" >/dev/null 2>&1 || MISSING+=("$p"); done
+for p in "${PKGS[@]}"; do
+  # (Ubuntu 24.04+ / Debian 13 renamed some libraries with a "t64" suffix)
+  if installed "$p" || installed "${p}t64"; then continue; fi
+  if apt-cache show "${p}t64" >/dev/null 2>&1; then MISSING+=("${p}t64"); else MISSING+=("$p"); fi
+done
 if [ ${#MISSING[@]} -gt 0 ]; then
   echo "Installing: ${MISSING[*]}"
   $SUDO apt-get update
