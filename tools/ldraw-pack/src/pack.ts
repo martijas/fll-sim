@@ -152,7 +152,7 @@ if (existsSync(pdf)) {
 
 // Extras every builder needs.
 const extras = { id: "extra", name: "Common Technic & bricks", entries: new Map<string, Entry>() };
-for (const f of ["2780.dat", "3673.dat", "61332.dat", "43093.dat", "6558.dat", "32054.dat", "3749.dat", "4519.dat", "3705.dat", "32073.dat", "3706.dat", "3707.dat", "3737.dat", "6536.dat", "32184.dat", "3713.dat", "4265c.dat", "66906.dat", "3001.dat", "3003.dat", "3004.dat", "3010.dat", "3020.dat", "3022.dat", "3023.dat", "3024.dat", "3068b.dat", "3069b.dat", "3070b.dat", "3700.dat", "3701.dat", "3702.dat", "3894.dat", "32009.dat", "32278.dat", "64179.dat", "39790.dat", "39789.dat"]) {
+for (const f of ["2780.dat", "3673.dat", "61332.dat", "43093.dat", "6558.dat", "32054.dat", "3749.dat", "4519.dat", "3705.dat", "32073.dat", "3706.dat", "3707.dat", "3737.dat", "6536.dat", "32184.dat", "3713.dat", "4265c.dat", "66906.dat", "3001.dat", "3003.dat", "3004.dat", "3010.dat", "3020.dat", "3022.dat", "3023.dat", "3024.dat", "3068b.dat", "3069b.dat", "3070b.dat", "3700.dat", "3701.dat", "3702.dat", "3894.dat", "32009.dat", "32278.dat", "64179.dat", "39790.dat", "39789.dat", "3647.dat", "94925.dat", "3648b.dat", "4716.dat", "3937.dat", "3938.dat", "4073.dat"]) {
   if (lib.get(f)) extras.entries.set(f, { file: f, name: lib.get(f)!.title, colors: { 15: 1, 0: 1, 71: 1, 4: 1 }, rb: [] });
 }
 categories.push(extras);
