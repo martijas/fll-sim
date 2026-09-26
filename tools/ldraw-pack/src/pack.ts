@@ -168,6 +168,8 @@ const want = (name: string) => {
     const t = src.read(path);
     if (t === null) continue;
     files.set(path, t);
+    // (the low-resolution version of a primitive, for the low graphics detail)
+    if (dir === "p/" && !n.includes("/")) want("8/" + n);
     const s = shadow?.read(path);
     if (s) shadowFiles.set(path, s);
     for (const l of parseLines(t).lines) if (l.t === 1) want(l.file);

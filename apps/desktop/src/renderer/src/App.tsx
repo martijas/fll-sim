@@ -913,12 +913,13 @@ export function App() {
               <select
                 value={graphics}
                 onChange={(e) => setGraphics(e.target.value as GraphicsQuality)}
-                title={`3D detail. Graphics: ${gfxInfo?.renderer || "unknown"}${gfxInfo?.software ? " (software rendering: no usable GPU, so Auto uses Low)" : ""}. Low draws the mission models as simple shapes (as the physics sees them).`}
+                title={`3D detail. Graphics: ${gfxInfo?.renderer || "unknown"}${gfxInfo?.software ? " (software rendering: no usable GPU, so Auto uses Low)" : ""}. Only the drawing changes, never the physics. Medium: no shadows or outlines. Low: also simpler lighting and less-round LEGO shapes. Lowest: mission models drawn as their collision blocks.`}
               >
                 <option value="auto">Graphics: Auto ({gfxInfo?.quality ?? "…"})</option>
                 <option value="high">Graphics: High</option>
                 <option value="medium">Graphics: Medium</option>
                 <option value="low">Graphics: Low</option>
+                <option value="lowest">Graphics: Lowest (blocks)</option>
               </select>
               <button onClick={() => setFootprints(!footprints)} disabled={running} title="Mission models without a real-part build are shown as blocks at their wireframe positions">
                 {footprints ? "Hide" : "Show"} mission blocks

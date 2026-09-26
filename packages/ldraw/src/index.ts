@@ -280,6 +280,8 @@ export interface FlattenOptions {
   geometry?: boolean;
   /** MPD-internal files. */
   local?: Map<string, string>;
+  /** Use LDraw's low-resolution primitives (p/8/: 8 instead of 16 segments round) where there are any: same shapes, fewer triangles. */
+  lowRes?: boolean;
 }
 
 export interface PlacedPart {
@@ -340,7 +342,8 @@ export function flatten(lib: Library, name: string, color = 16, o: FlattenOption
 
   const visit = (fileName: string, m: Mat4, cur: number, depth: number, topLevel: boolean, snapsOn = true) => {
     if (depth > 40) return;
-    const f = lib.get(fileName, o.local);
+    const low = o.lowRes && depth > 0 && !fileName.includes("/") && !fileName.includes("\\") ? lib.get("8/" + fileName, o.local) : null;
+    const f = low ?? lib.get(fileName, o.local);
     if (!f) {
       missing.add(fileName);
       return;

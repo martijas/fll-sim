@@ -4,7 +4,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { SceneBody, SeasonConfig, ShapeSpec, VisualSpec } from "@fll-sim/sim";
 import type { Library } from "@fll-sim/ldraw";
-import { mat4From3x4, partObject } from "./ldrawMesh";
+import { mergedParts, mat4From3x4, partObject } from "./ldrawMesh";
 
 export type CameraMode = "orbit" | "top" | "follow" | "free";
 
@@ -18,8 +18,13 @@ export interface FieldViewHandle {
   setGhosts(ghosts: { id: string; color: string; pts: { xMm: number; yMm: number; headingDeg: number }[] }[]): void;
 }
 
-/** Graphics detail: auto = low on software rendering (no usable GPU), else high. */
-export type GraphicsQuality = "auto" | "high" | "medium" | "low";
+/**
+ * Graphics detail (drawing only: the physics is the same at every level):
+ * high = shadows, outlines, full resolution; medium = no shadows or outlines; low = also simpler
+ * lighting and LDraw's low-resolution round shapes (the same LEGO models, fewer triangles);
+ * lowest = mission models drawn as their collision shapes. Auto measures and picks.
+ */
+export type GraphicsQuality = "auto" | "high" | "medium" | "low" | "lowest";
 
 interface Props {
   season: SeasonConfig;
@@ -354,7 +359,9 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     const high = q === "high";
     s.renderer.shadowMap.enabled = high;
     s.sun.castShadow = high;
-    s.renderer.setPixelRatio(q === "high" ? window.devicePixelRatio : Math.min(window.devicePixelRatio, 1) * (q === "low" ? 0.75 : 1));
+    // (software rendering is limited by pixels: fewer of them at the low levels)
+    const lowScale = isSoftwareGl(gpu) ? 0.5 : 0.75;
+    s.renderer.setPixelRatio(q === "high" ? window.devicePixelRatio : Math.min(window.devicePixelRatio, 1) * (q === "low" || q === "lowest" ? lowScale : 1));
     const el = host.current!;
     s.renderer.setSize(el.clientWidth, el.clientHeight);
     s.scene.traverse((o) => {
@@ -514,10 +521,15 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       g.userData.kind = spec?.kind ?? "field";
       g.userData.id = id;
       const vis = visuals?.[id];
-      const lego = lib && vis?.length && (qRef.current !== "low" || spec?.kind === "robot");
-      if (lego) {
+      const lego = lib && vis?.length && (qRef.current !== "lowest" || spec?.kind === "robot");
+      if (lego && (qRef.current === "low" || qRef.current === "lowest")) {
+        // (one mesh per body: far fewer draw calls)
+        const m = mergedParts(lib!, vis!, 0.001);
+        if (m) g.add(m);
+      } else if (lego) {
+        const q = qRef.current;
         for (const v of vis!) {
-          const o = partObject(lib!, v.file, v.color, qRef.current === "high");
+          const o = partObject(lib!, v.file, v.color, q === "high", q === "low" || q === "lowest");
           o.matrix.copy(mat4From3x4(v.m, 0.001));
           g.add(o);
         }
@@ -568,7 +580,8 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     };
     const ms = bench();
     const cur = autoQ;
-    const next = ms > 45 && cur === "high" ? "medium" : ms > 45 && cur === "medium" ? "low" : null; // (under ~22 fps: less detail)
+    const steps: Exclude<GraphicsQuality, "auto">[] = ["high", "medium", "low", "lowest"];
+    const next = ms > 45 && cur !== "lowest" ? steps[steps.indexOf(cur) + 1] : null; // (under ~22 fps: less detail)
     console.log(`[graphics] ${gpu}: ${ms.toFixed(0)} ms per frame at ${cur}${next ? ` -> ${next}` : ""}`);
     try {
       localStorage.setItem("fllsim.autoGraphics", JSON.stringify({ gpu, q: next ?? cur }));
