@@ -54,7 +54,16 @@ app starts, loads every mission model and runs a program.
 
 ## Running from source
 
-Requires Node.js 22+ and pnpm (`corepack enable`).
+On a fresh Debian/Ubuntu machine (or WSL2), one command installs everything (system libraries,
+Node.js 22 and pnpm in `~/.local/node`, the code in `~/fll-sim`), builds the app, adds **FLL Sim**
+to the app menu and starts it:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/martijas/fll-sim/main/setup.sh | bash
+```
+
+(Run `./setup.sh` again in the checkout to update; `--no-launch` skips starting the app.)
+By hand: Node.js 22+ and pnpm (`corepack enable`), then:
 
 ```sh
 pnpm install
