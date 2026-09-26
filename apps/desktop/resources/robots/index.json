@@ -5,6 +5,12 @@
     "file": "spike-drivebase.ldr"
   },
   {
+    "id": "driving-base-1",
+    "name": "Driving Base 1",
+    "file": "driving-base-1.ldr",
+    "note": "FIRST robot guide: drive C (left) + D (right), accessory motor E"
+  },
+  {
     "id": "driving-base-3",
     "name": "Driving Base 3",
     "file": "driving-base-3.ldr",
