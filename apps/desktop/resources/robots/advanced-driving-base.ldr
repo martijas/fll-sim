@@ -1,0 +1,400 @@
+0 Advanced Driving Base
+0 Name: Advanced_Driving_Base.ldr
+0 Author: FLL Sim (scripted from the official building instructions)
+0 !LICENSE Model data for simulation use
+
+0 // front: 9L beam
+1 0 0 -48.7646 -140 0 0 1 1 0 0 0 1 0 40490.dat
+0 // front: pin
+1 0 -20 -48.7646 -150 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // front: pin
+1 0 20 -48.7646 -150 0 0 -1 0 1 0 1 0 0 61332.dat
+0 STEP
+0 // front: 1x3 pin block
+1 71 60 -48.7646 -120 0 1 0 -1 0 0 0 0 1 48989.dat
+0 // front: 1x3 pin block
+1 71 -60 -48.7646 -120 0 1 0 -1 0 0 0 0 1 48989.dat
+0 STEP
+0 // front: pin up
+1 0 80 -68.7646 -120 0 1 0 -1 0 0 0 0 1 61332.dat
+0 // front: pin up
+1 0 -80 -68.7646 -120 0 1 0 -1 0 0 0 0 1 61332.dat
+0 STEP
+0 // front: 15x11 frame
+1 322 0 -48.7646 0 0 0 1 0 1 0 -1 0 0 39790.dat
+0 STEP
+0 // front: side pin
+1 0 150 -48.7646 -80 1 0 0 0 -1 0 0 0 -1 61332.dat
+0 // front: side pin
+1 0 150 -48.7646 -40 1 0 0 0 -1 0 0 0 -1 61332.dat
+0 // front: side pin
+1 0 -150 -48.7646 -80 -1 0 0 0 1 0 0 0 -1 61332.dat
+0 // front: side pin
+1 0 -150 -48.7646 -40 -1 0 0 0 1 0 0 0 -1 61332.dat
+0 // front: inner pin
+1 0 40 -48.7646 -90 0 0 -1 0 1 0 1 0 0 61332.dat
+0 STEP
+0 // front: white cross block
+1 15 120 -68.7646 -100 0 1 0 1 0 0 0 0 -1 32184.dat
+0 // front: blue axle pin
+1 1 100 -58.7646 -100 0 -1 0 -1 0 0 0 0 -1 43093.dat
+0 // front: white cross block
+1 15 -120 -68.7646 -100 0 1 0 1 0 0 0 0 -1 32184.dat
+0 // front: blue axle pin
+1 1 -100 -58.7646 -100 0 -1 0 -1 0 0 0 0 -1 43093.dat
+0 // front: pin up
+1 0 140 -68.7646 100 0 0 1 -1 0 0 0 -1 0 61332.dat
+0 // front: pin up
+1 0 140 -68.7646 60 0 1 0 -1 0 0 0 0 1 61332.dat
+0 // front: pin up
+1 0 140 -68.7646 -60 0 -1 0 -1 0 0 0 0 -1 61332.dat
+0 // front: pin up
+1 0 -140 -68.7646 100 0 0 -1 -1 0 0 0 1 0 61332.dat
+0 // front: pin up
+1 0 -140 -68.7646 60 0 1 0 -1 0 0 0 0 1 61332.dat
+0 // front: pin up
+1 0 -140 -68.7646 -60 0 -1 0 -1 0 0 0 0 -1 61332.dat
+0 STEP
+0 // front: medium motor D
+0 !FLLSIM PORT D
+1 15 60 -88.7646 -120 0 0 -1 0 1 0 1 0 0 54696p01.dat
+0 // front: motor D axle pin
+1 1 80 -68.7646 -89 0 0 -1 0 1 0 1 0 0 43093.dat
+0 // front: motor D cable clip
+1 1 80 -68.7646 -79 1 0 0 0 -1 0 0 0 -1 49283.dat
+0 // front: motor D axle pin
+1 1 -80 -68.7646 -89 0 -1 0 0 0 -1 1 0 0 43093.dat
+0 // front: motor D cable clip
+1 2 -80 -68.7646 -79 0 1 0 1 0 0 0 0 -1 49283.dat
+0 STEP
+0 // front: grey H (front)
+1 71 0 -88.7646 -160 1 0 0 0 0 -1 0 1 0 14720.dat
+0 // front: magenta 3x3 block
+1 26 0 -128.7646 -120 0 0 -1 0 1 0 1 0 0 39793.dat
+0 // front: pin
+1 0 -20 -128.7646 -150 0 0 -1 0 -1 0 -1 0 0 61332.dat
+0 // front: pin
+1 0 -20 -128.7646 -89 0 0 -1 0 1 0 1 0 0 61332.dat
+0 // front: pin
+1 0 20 -128.7646 -150 0 0 1 0 1 0 -1 0 0 61332.dat
+0 // front: pin
+1 0 20 -128.7646 -89 0 0 1 0 -1 0 1 0 0 61332.dat
+0 // front: grey H (back)
+1 71 0 -88.7646 -80 1 0 0 0 0 -1 0 1 0 14720.dat
+0 // front: grey H axle pin
+1 1 10 -88.7646 -80 1 0 0 0 0 1 0 -1 0 43093.dat
+0 // front: grey H cable clip
+1 4 20 -88.7646 -80 0 0 1 -1 0 0 0 -1 0 49283.dat
+0 STEP
+0 // front: colour sensor
+0 !FLLSIM PORT F
+1 15 -80 -68.7646 -180 1 0 0 0 0 -1 0 1 0 37308.dat
+0 // front: blue long pin
+1 1 -100 -89.7646 -180 0 -1 0 -1 0 0 0 0 -1 6558.dat
+0 // front: blue long pin
+1 1 -60 -89.7646 -180 0 1 0 -1 0 0 0 0 1 6558.dat
+0 // front: 1x3 pin block
+1 71 -120 -68.7646 -180 0 0 1 1 0 0 0 1 0 48989.dat
+0 // front: azure H with ball socket
+1 322 -140 -68.7646 -160 1 0 0 0 1 0 0 0 1 39370.dat
+0 // front: pin
+1 0 -150 -88.7646 -120 -1 0 0 0 0 -1 0 -1 0 61332.dat
+0 // front: pin
+1 0 -150 -68.7646 -120 -1 0 0 0 0 -1 0 -1 0 61332.dat
+0 // front: azure 3x5 L beam
+1 322 -160 -48.7646 -40 0 -1 0 -1 0 0 0 0 -1 32526.dat
+0 STEP
+0 // front: colour sensor
+0 !FLLSIM PORT B
+1 15 80 -68.7646 -180 1 0 0 0 0 -1 0 1 0 37308.dat
+0 // front: blue long pin
+1 1 60 -89.7646 -180 0 -1 0 -1 0 0 0 0 -1 6558.dat
+0 // front: blue long pin
+1 1 100 -89.7646 -180 0 1 0 -1 0 0 0 0 1 6558.dat
+0 // front: 1x3 pin block
+1 71 120 -68.7646 -180 0 0 1 1 0 0 0 1 0 48989.dat
+0 // front: azure H with ball socket
+1 322 140 -68.7646 -160 1 0 0 0 1 0 0 0 1 39370.dat
+0 // front: pin
+1 0 150 -88.7646 -120 -1 0 0 0 0 -1 0 -1 0 61332.dat
+0 // front: pin
+1 0 150 -68.7646 -120 -1 0 0 0 0 -1 0 -1 0 61332.dat
+0 // front: azure 3x5 L beam
+1 322 160 -48.7646 -40 0 -1 0 -1 0 0 0 0 -1 32526.dat
+0 STEP
+0 // front: 15L beam
+1 0 0 -88.7646 -180 0 0 -1 0 1 0 1 0 0 32278.dat
+0 STEP
+0 // front: yellow 2x4 brick
+1 14 -120 -142.7646 -180 1 0 0 0 1 0 0 0 1 39789.dat
+0 // front: red axle pin
+1 4 -120 -103.7646 -180 0 1 0 -1 0 0 0 0 1 11214.dat
+0 // front: red axle pin
+1 4 -140 -103.7646 -180 0 1 0 -1 0 0 0 0 1 11214.dat
+0 // front: black 1L beam
+1 0 -100 -108.7646 -180 1 0 0 0 1 0 0 0 1 18654.dat
+0 // front: yellow 2x4 brick
+1 14 120 -142.7646 -180 1 0 0 0 1 0 0 0 1 39789.dat
+0 // front: red axle pin
+1 4 120 -103.7646 -180 0 1 0 -1 0 0 0 0 1 11214.dat
+0 // front: red axle pin
+1 4 140 -103.7646 -180 0 1 0 -1 0 0 0 0 1 11214.dat
+0 // front: black 1L beam
+1 0 100 -108.7646 -180 1 0 0 0 1 0 0 0 1 18654.dat
+0 STEP
+0 // front: magenta 3x3 block (upright)
+1 26 -40 -128.7646 -180 0 0 1 1 0 0 0 1 0 39793.dat
+0 // front: pin up
+1 0 -20 -159.7646 -180 0 0 1 -1 0 0 0 -1 0 61332.dat
+0 // front: pin up
+1 0 -60 -159.7646 -180 0 0 -1 -1 0 0 0 1 0 61332.dat
+0 // front: magenta 3x3 block (upright)
+1 26 40 -128.7646 -180 0 0 1 1 0 0 0 1 0 39793.dat
+0 // front: pin up
+1 0 20 -159.7646 -180 0 0 -1 -1 0 0 0 1 0 61332.dat
+0 // front: pin up
+1 0 60 -159.7646 -180 0 0 1 -1 0 0 0 -1 0 61332.dat
+0 STEP
+0 // front: 28t gear on motor D
+1 71 60 -148.7646 -120 1 0 0 0 0 1 0 -1 0 46372.dat
+0 // front: gear pin
+1 0 60 -138.7646 -140 0 1 0 -1 0 0 0 0 1 61332.dat
+0 // front: gear pin
+1 0 60 -138.7646 -100 0 -1 0 -1 0 0 0 0 -1 61332.dat
+0 STEP
+0 // left: large motor A
+0 !FLLSIM PORT A
+1 15 120 -109.7646 80 0 -1 0 -1 0 0 0 0 -1 54675.dat
+0 // left: front-face pin
+1 0 120 -69.7646 101 0 1 0 0 0 1 1 0 0 61332.dat
+0 // left: front-face pin
+1 0 120 -149.7646 101 0 -1 0 0 0 -1 1 0 0 61332.dat
+0 // left: 7x5 frame
+1 0 120 -109.7646 151 0 -1 0 0 0 -1 1 0 0 64179.dat
+0 // left: rotor pin
+1 0 161 -89.7646 80 1 0 0 0 0 -1 0 1 0 61332.dat
+0 // left: rotor pin
+1 0 161 -129.7646 80 1 0 0 0 0 1 0 -1 0 61332.dat
+0 // left: grey axle pin
+1 71 130 -49.7646 111 1 0 0 0 0 1 0 -1 0 3749.dat
+0 // left: blue long pin
+1 1 120 -109.7646 211 0 -1 0 0 0 1 -1 0 0 6558.dat
+0 // left: blue long pin
+1 1 120 -149.7646 211 0 -1 0 0 0 1 -1 0 0 6558.dat
+0 STEP
+0 // left: wheel
+1 322 181 -109.7646 80 0 0 -1 0 -1 0 -1 0 0 49295p01.dat
+0 STEP
+0 // left: blue long pin (wheel)
+1 1 181 -109.7646 100 1 0 0 0 1 0 0 0 1 6558.dat
+0 // left: blue long pin (wheel)
+1 1 181 -109.7646 60 -1 0 0 0 1 0 0 0 -1 6558.dat
+0 // left: magenta 3x3 block (wheel)
+1 26 201 -109.7646 80 0 -1 0 -1 0 0 0 0 -1 39793.dat
+0 STEP
+0 // left: 1x3 pin block (arch)
+1 71 220 -109.7646 100 -1 0 0 0 0 -1 0 -1 0 48989.dat
+0 // left: double bent liftarm (arch)
+1 0 220 -89.7646 200 -1 0 0 0 -1 0 0 0 1 32009.dat
+0 // left: double bent liftarm (arch)
+1 0 220 -129.7646 200 -1 0 0 0 -1 0 0 0 1 32009.dat
+0 // left: 5L axle
+1 71 140 -109.7646 200 0 0 1 1 0 0 0 1 0 32073.dat
+0 // left: 1x2 cross block
+1 71 140 -69.7646 200 0 1 0 -1 0 0 0 0 1 6536.dat
+0 // left: 1x2 cross block
+1 71 140 -149.7646 200 0 1 0 -1 0 0 0 0 1 6536.dat
+0 // left: pin with stop bush
+1 71 160 -69.7646 220 0 0 -1 0 -1 0 -1 0 0 32054.dat
+0 // left: yellow 3L axle
+1 14 220 -69.7646 40 0 -1 0 1 0 0 0 0 1 4519.dat
+0 STEP
+0 // left: 4L axle with stop (into the motor)
+1 72 190 -109.7646 80 1 0 0 0 -1 0 0 0 -1 87083.dat
+0 STEP
+0 // left: back-face pin
+1 0 120 -69.7646 -61 0 0 -1 0 -1 0 -1 0 0 61332.dat
+0 // left: back-face pin
+1 0 120 -149.7646 -61 0 0 -1 0 -1 0 -1 0 0 61332.dat
+0 // left: grey H (motor back)
+1 71 120 -109.7646 -71 -1 0 0 0 0 -1 0 -1 0 14720.dat
+0 // left: double bent liftarm (back arm)
+1 0 220 -49.7646 -120 -1 0 0 0 1 0 0 0 -1 32009.dat
+0 // left: blue long pin (back arm)
+1 1 180 -49.7646 -120 0 -1 0 -1 0 0 0 0 -1 6558.dat
+0 // left: blue long pin (back arm)
+1 1 160 -49.7646 -120 0 0 1 1 0 0 0 1 0 6558.dat
+0 // left: 1x3 axle/pin/pin cross block
+1 71 160 -29.7646 -120 0 1 0 0 0 1 1 0 0 42003.dat
+0 // left: 1x3 axle/pin/pin cross block
+1 71 160 -69.7646 -120 0 1 0 0 0 1 1 0 0 42003.dat
+0 // left: yellow 3L beam
+1 14 140 -49.7646 -91 -1 0 0 0 0 -1 0 -1 0 32523.dat
+0 // left: red axle pin
+1 4 140 -29.7646 -100 0 -1 0 0 0 1 -1 0 0 11214.dat
+0 // left: red axle pin
+1 4 140 -69.7646 -91 0 -1 0 0 0 1 -1 0 0 11214.dat
+0 // left: blue axle pin (clip)
+1 1 89 -149.7646 80 -1 0 0 0 1 0 0 0 -1 43093.dat
+0 // left: magenta cable clip
+1 26 79 -149.7646 80 0 0 1 0 -1 0 1 0 0 49283.dat
+0 STEP
+0 // right: large motor E
+0 !FLLSIM PORT E
+1 15 -120 -109.7646 80 0 1 0 1 0 0 0 0 -1 54675.dat
+0 // right: front-face pin
+1 0 -120 -69.7646 101 0 1 0 0 0 1 1 0 0 61332.dat
+0 // right: front-face pin
+1 0 -120 -149.7646 101 0 -1 0 0 0 -1 1 0 0 61332.dat
+0 // right: 7x5 frame
+1 0 -120 -109.7646 151 0 1 0 0 0 1 1 0 0 64179.dat
+0 // right: rotor pin
+1 0 -161 -89.7646 80 -1 0 0 0 0 -1 0 -1 0 61332.dat
+0 // right: rotor pin
+1 0 -161 -129.7646 80 -1 0 0 0 0 1 0 1 0 61332.dat
+0 // right: grey axle pin
+1 71 -130 -49.7646 111 -1 0 0 0 0 1 0 1 0 3749.dat
+0 // right: blue long pin
+1 1 -120 -109.7646 211 0 1 0 0 0 -1 -1 0 0 6558.dat
+0 // right: blue long pin
+1 1 -120 -149.7646 211 0 1 0 0 0 -1 -1 0 0 6558.dat
+0 STEP
+0 // right: wheel
+1 322 -181 -109.7646 80 0 0 1 0 -1 0 1 0 0 49295p01.dat
+0 STEP
+0 // right: blue long pin (wheel)
+1 1 -181 -109.7646 100 -1 0 0 0 -1 0 0 0 1 6558.dat
+0 // right: blue long pin (wheel)
+1 1 -181 -109.7646 60 1 0 0 0 -1 0 0 0 -1 6558.dat
+0 // right: magenta 3x3 block (wheel)
+1 26 -201 -109.7646 80 0 1 0 1 0 0 0 0 -1 39793.dat
+0 STEP
+0 // right: 1x3 pin block (arch)
+1 71 -220 -109.7646 100 1 0 0 0 0 1 0 -1 0 48989.dat
+0 // right: double bent liftarm (arch)
+1 0 -220 -89.7646 200 1 0 0 0 1 0 0 0 1 32009.dat
+0 // right: double bent liftarm (arch)
+1 0 -220 -129.7646 200 1 0 0 0 1 0 0 0 1 32009.dat
+0 // right: 5L axle
+1 71 -140 -109.7646 200 0 0 -1 -1 0 0 0 1 0 32073.dat
+0 // right: 1x2 cross block
+1 71 -140 -69.7646 200 0 -1 0 1 0 0 0 0 1 6536.dat
+0 // right: 1x2 cross block
+1 71 -140 -149.7646 200 0 -1 0 1 0 0 0 0 1 6536.dat
+0 // right: pin with stop bush
+1 71 -160 -69.7646 220 0 0 1 0 1 0 -1 0 0 32054.dat
+0 // right: yellow 3L axle
+1 14 -220 -69.7646 40 0 1 0 -1 0 0 0 0 1 4519.dat
+0 STEP
+0 // right: 4L axle with stop (into the motor)
+1 72 -190 -109.7646 80 -1 0 0 0 1 0 0 0 -1 87083.dat
+0 STEP
+0 // right: back-face pin
+1 0 -120 -69.7646 -61 0 0 1 0 1 0 -1 0 0 61332.dat
+0 // right: back-face pin
+1 0 -120 -149.7646 -61 0 0 1 0 1 0 -1 0 0 61332.dat
+0 // right: grey H (motor back)
+1 71 -120 -109.7646 -71 1 0 0 0 0 1 0 -1 0 14720.dat
+0 // right: double bent liftarm (back arm)
+1 0 -220 -49.7646 -120 1 0 0 0 -1 0 0 0 -1 32009.dat
+0 // right: blue long pin (back arm)
+1 1 -180 -49.7646 -120 0 1 0 1 0 0 0 0 -1 6558.dat
+0 // right: blue long pin (back arm)
+1 1 -160 -49.7646 -120 0 0 1 1 0 0 0 1 0 6558.dat
+0 // right: 1x3 axle/pin/pin cross block
+1 71 -160 -29.7646 -120 0 -1 0 0 0 -1 1 0 0 42003.dat
+0 // right: 1x3 axle/pin/pin cross block
+1 71 -160 -69.7646 -120 0 -1 0 0 0 -1 1 0 0 42003.dat
+0 // right: yellow 3L beam
+1 14 -140 -49.7646 -91 1 0 0 0 0 1 0 -1 0 32523.dat
+0 // right: red axle pin
+1 4 -140 -29.7646 -100 0 1 0 0 0 -1 -1 0 0 11214.dat
+0 // right: red axle pin
+1 4 -140 -69.7646 -91 0 1 0 0 0 -1 -1 0 0 11214.dat
+0 // right: blue axle pin (clip)
+1 1 -89 -149.7646 80 1 0 0 0 -1 0 0 0 -1 43093.dat
+0 // right: magenta cable clip
+1 26 -79 -149.7646 80 0 0 -1 0 1 0 1 0 0 49283.dat
+0 STEP
+0 // hub pin
+1 0 100 -160.7646 -20 0 -1 0 -1 0 0 0 0 -1 61332.dat
+0 // hub pin
+1 0 100 -160.7646 -60 0 0 1 -1 0 0 0 -1 0 61332.dat
+0 // hub pin
+1 0 -100 -160.7646 -20 0 -1 0 -1 0 0 0 0 -1 61332.dat
+0 // hub pin
+1 0 -100 -160.7646 -60 0 0 1 -1 0 0 0 -1 0 61332.dat
+0 STEP
+0 // hub
+1 14 0 -161.7646 -40 0 0 -1 0 1 0 1 0 0 45601c01.dat
+0 STEP
+0 // rear: azure 7L beam (upright)
+1 322 120 -129.7646 211 1 0 0 0 0 -1 0 1 0 32524.dat
+0 // rear: azure 7L beam (upright)
+1 322 -120 -129.7646 211 1 0 0 0 0 -1 0 1 0 32524.dat
+0 // rear: azure 13L beam
+1 322 0 -109.7646 231 0 0 -1 -1 0 0 0 1 0 41239.dat
+0 // rear: azure 13L beam
+1 322 0 -149.7646 231 0 0 -1 -1 0 0 0 1 0 41239.dat
+0 STEP
+0 // rear: medium motor C
+0 !FLLSIM PORT C
+1 15 -60 -89.7646 190 0 0 1 0 1 0 -1 0 0 54696p01.dat
+0 // rear: blue long pin (motor C to 13L)
+1 1 -80 -109.7646 221 0 0 1 0 -1 0 1 0 0 6558.dat
+0 // rear: blue long pin (motor C to 13L)
+1 1 80 -109.7646 221 0 1 0 0 0 1 1 0 0 6558.dat
+0 // rear: pin
+1 0 -80 -109.7646 169 0 0 1 0 1 0 -1 0 0 61332.dat
+0 // rear: pin
+1 0 80 -109.7646 169 0 -1 0 0 0 1 -1 0 0 61332.dat
+0 // rear: 9L beam
+1 0 0 -109.7646 159 0 0 -1 -1 0 0 0 1 0 40490.dat
+0 // rear: pin
+1 0 -80 -69.7646 169 0 0 1 0 1 0 -1 0 0 61332.dat
+0 // rear: pin
+1 0 80 -69.7646 169 0 1 0 0 0 -1 -1 0 0 61332.dat
+0 // rear: 9L beam
+1 0 0 -69.7646 159 0 0 -1 -1 0 0 0 1 0 40490.dat
+0 STEP
+0 // rear: 28t gear on motor C
+1 71 -60 -149.7646 190 1 0 0 0 0 1 0 -1 0 46372.dat
+0 // rear: gear pin
+1 0 -60 -139.7646 170 0 1 0 -1 0 0 0 0 1 61332.dat
+0 // rear: gear pin
+1 0 -60 -139.7646 210 0 -1 0 -1 0 0 0 0 -1 61332.dat
+0 STEP
+0 // rear: 1x2 cross block
+1 71 80 -149.7646 210 0 1 0 0 0 1 1 0 0 6536.dat
+0 // rear: 2L axle
+1 72 80 -149.7646 220 0 -1 0 0 0 -1 1 0 0 32062.dat
+0 // rear: 1x2 cross block
+1 71 -80 -149.7646 210 0 -1 0 0 0 -1 1 0 0 6536.dat
+0 // rear: 2L axle
+1 72 -80 -149.7646 221 0 0 -1 0 1 0 1 0 0 32062.dat
+0 // rear: magenta 11x7 frame (tool mount)
+1 26 0 -169.7646 190 0 0 -1 0 1 0 1 0 0 39794.dat
+0 // rear: blue long pin (frame)
+1 1 100 -149.7646 210 0 1 0 -1 0 0 0 0 1 6558.dat
+0 // rear: blue long pin (frame)
+1 1 -100 -149.7646 210 0 0 1 -1 0 0 0 -1 0 6558.dat
+0 // rear: red pin with stop bush (tool lock)
+1 4 40 -169.7646 250 0 0 -1 0 -1 0 -1 0 0 32054.dat
+0 // rear: red pin with stop bush (tool lock)
+1 4 -40 -169.7646 250 0 0 1 0 1 0 -1 0 0 32054.dat
+0 // rear: 4L axle into the side frame
+1 72 120 -169.7646 190 -1 0 0 0 1 0 0 0 -1 3705.dat
+0 // rear: 4L axle into the side frame
+1 72 -120 -169.7646 190 -1 0 0 0 1 0 0 0 -1 3705.dat
+0 // rear
+1 16 0 -169.7646 190 -1 0 0 0 1 0 0 0 -1 fllsim-mount.dat
+0 STEP
+0 // front: magenta 11x7 frame (tool mount)
+1 26 0 -168.7646 -120 0 0 -1 0 1 0 1 0 0 39794.dat
+0 // front: red pin with stop bush (tool lock)
+1 4 40 -168.7646 -180 0 0 -1 0 1 0 1 0 0 32054.dat
+0 // front: red pin with stop bush (tool lock)
+1 4 -40 -168.7646 -180 0 0 1 0 -1 0 1 0 0 32054.dat
+0 // front
+1 16 0 -168.7646 -120 1 0 0 0 1 0 0 0 1 fllsim-mount.dat
+0 STEP
