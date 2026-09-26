@@ -19,7 +19,6 @@ const lib = loadLib();
 const ldr = (rel: string) => readFileSync(join(repo, "apps/desktop/resources", rel), "latin1");
 const TOOLS = { arm: buildArm, force: buildForce, distance: buildDistance };
 const FILES = { robot: "robots/driving-base-2.ldr", arm: "tools/db2-arm.ldr", force: "tools/db2-force.ldr", distance: "tools/db2-distance.ldr" };
-// (the scripts' parts: parseModel leaves the virtual mount parts out, see the first test)
 const robotParts = buildRobot(lib).parts;
 const toolCache = new Map<string, ModelPart[]>();
 const toolParts = (name: keyof typeof TOOLS) => toolCache.get(name) ?? toolCache.set(name, TOOLS[name](lib).parts).get(name)!;
@@ -49,14 +48,13 @@ describe("Driving Base 2", () => {
       const text = ldr(file);
       const { parts, missing } = parseModel(lib, text);
       expect(missing).toEqual([]);
-      // parseModel drops the virtual mount parts (Library.isPart doesn't know built-in parts):
-      // compare the real parts, and find the mount lines in the file itself
-      const real = scripted.filter((p) => p.file !== MOUNT_PART);
+      // (mount points are parts too)
+      const real = scripted;
       const key = (p: ModelPart) => `${p.file}@${[p.m[3], p.m[7], p.m[11]].map((v) => Math.round(v)).join(",")}`;
       expect(parts.map(key).sort()).toEqual(real.map(key).sort());
       expect(parts.map((p) => p.port ?? "").join("")).toBe(real.map((p) => p.port ?? "").join(""));
-      expect(text.split("\n").filter((l) => l.trim().endsWith(MOUNT_PART)).length).toBe(scripted.length - real.length);
-      expect(parts.filter((p) => !packed.has(p.file)).map((p) => p.file)).toEqual([]);
+      expect(parts.filter((p) => p.file === MOUNT_PART).length).toBeGreaterThan(0);
+      expect(parts.filter((p) => !packed.has(p.file) && p.file !== MOUNT_PART).map((p) => p.file)).toEqual([]);
     };
     check(FILES.robot, robotParts);
     for (const n of Object.keys(TOOLS) as (keyof typeof TOOLS)[]) check(FILES[n], toolParts(n));
