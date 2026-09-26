@@ -1,0 +1,56 @@
+0 DB2 arm
+0 Name: DB2_arm.ldr
+0 Author: FLL Sim (scripted from the official building instructions)
+0 !LICENSE Model data for simulation use
+
+0 // white cross block
+1 15 -40 -110 -120 1 0 0 0 1 0 0 0 1 32184.dat
+0 // white cross block
+1 15 40 -110 -120 1 0 0 0 1 0 0 0 1 32184.dat
+0 // pin
+1 0 -40 -110 -110 0 0 -1 0 -1 0 -1 0 0 2780.dat
+0 // pin
+1 0 40 -110 -110 0 0 1 0 1 0 -1 0 0 2780.dat
+0 STEP
+0 // magenta 5L beam
+1 26 -20 -90 -120 0 1 0 0 0 1 1 0 0 32316.dat
+0 // azure L beam
+1 322 0 -50 -120 0 1 0 0 0 -1 -1 0 0 32526.dat
+0 // magenta 5L beam
+1 26 20 -90 -120 0 1 0 0 0 1 1 0 0 32316.dat
+0 // blue 3L pin
+1 1 0 -50 -120 -1 0 0 0 0 -1 0 -1 0 6558.dat
+0 // blue 3L pin
+1 1 0 -110 -120 1 0 0 0 0 1 0 -1 0 6558.dat
+0 STEP
+0 // 5L axle
+1 71 0 -90 -120 -1 0 0 0 0 -1 0 -1 0 32073.dat
+0 // 5L axle
+1 71 0 -130 -120 -1 0 0 0 0 -1 0 -1 0 32073.dat
+0 STEP
+0 // 7L arm axle
+1 14 0 -130 -160 -1 0 0 0 -1 0 0 0 1 44294.dat
+0 STEP
+0 // 12T double bevel gear
+1 0 -60 -130 -160 0 0 1 1 0 0 0 1 0 32270.dat
+0 // double-bent liftarm
+1 0 -40 -181.423 -221.2836 0 -1 0 0.6428 0 -0.766 0.766 0 0.6428 32009.dat
+0 // azure 2L liftarm
+1 322 -20 -130 -160 0 1 0 -0.766 0 -0.6428 -0.6428 0 0.766 60483.dat
+0 // azure 2L liftarm
+1 322 20 -130 -160 0 1 0 -0.766 0 -0.6428 -0.6428 0 0.766 60483.dat
+0 // double-bent liftarm
+1 0 40 -181.423 -221.2836 0 -1 0 0.6428 0 -0.766 0.766 0 0.6428 32009.dat
+0 // bush
+1 71 60 -130 -160 0 0 -1 0 1 0 1 0 0 3713.dat
+0 STEP
+0 // 9L axle
+1 71 0 -58.8559 -324.1296 1 0 0 0 0.6428 -0.766 0 0.766 0.6428 60485.dat
+0 // angle connector
+1 15 -80 -58.8559 -324.1296 0 0 -1 0.6428 0.766 0 0.766 -0.6428 0 32192.dat
+0 // angle connector
+1 15 80 -58.8559 -324.1296 0 0 1 0.6428 -0.766 0 0.766 0.6428 0 32192.dat
+0 STEP
+0 // db2-arm
+1 16 40 -110 -110 1 0 0 0 1 0 0 0 1 fllsim-mount.dat
+0 STEP

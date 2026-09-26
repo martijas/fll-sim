@@ -1,0 +1,21 @@
+0 DB2 force sensor
+0 Name: DB2_force_sensor.ldr
+0 Author: FLL Sim (scripted from the official building instructions)
+0 !LICENSE Model data for simulation use
+
+0 // axle pin (cable clip)
+1 19 -100 -120 -160 0 -1 0 -1 0 0 0 0 -1 3749.dat
+0 STEP
+0 // pin
+1 0 -100 -50 -191 0 0 1 0 1 0 -1 0 0 2780.dat
+0 // pin
+1 0 -60 -50 -191 0 0 1 0 1 0 -1 0 0 2780.dat
+0 // force sensor
+0 !FLLSIM PORT A
+1 15 -80 -50 -240 1 0 0 0 1 0 0 0 1 37312.dat
+0 // cable clip
+1 26 -100 -140 -160 0 1 0 0 0 1 1 0 0 49283.dat
+0 STEP
+0 // db2-force
+1 16 -100 -50 -190 1 0 0 0 1 0 0 0 1 fllsim-mount.dat
+0 STEP
