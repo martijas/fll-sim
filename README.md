@@ -38,9 +38,9 @@ See `PLAN.md` for the full design.
 Build the packages once (`pnpm dist:linux`, output in `apps/desktop/release/`), then on each
 laptop (Debian 12+ / Ubuntu 22.04+, 64-bit):
 
-- **.deb:** `sudo apt install ./fll-sim_0.2.0_amd64.deb`, then start **FLL Sim** from the
+- **.deb:** `sudo apt install ./fll-sim_0.2.1_amd64.deb`, then start **FLL Sim** from the
   applications menu (or run `fll-sim`).
-- **AppImage** (no install, no admin rights): `chmod +x fll-sim-0.2.0-x86_64.AppImage` and
+- **AppImage** (no install, no admin rights): `chmod +x fll-sim-0.2.1-x86_64.AppImage` and
   double-click it. On systems without FUSE 2 run it with `--appimage-extract-and-run`.
 
 **First start: load the mat.** FIRST's mat artwork can't be shipped with the app. Copy your
@@ -71,7 +71,7 @@ pnpm dev            # launch the app with hot reload
 pnpm test           # physics + Python conformance tests
 pnpm typecheck
 pnpm dist:linux     # build apps/desktop/release/fll-sim_<ver>_amd64.deb and an AppImage
-sudo apt install ./apps/desktop/release/fll-sim_0.2.0_amd64.deb
+sudo apt install ./apps/desktop/release/fll-sim_0.2.1_amd64.deb
 ```
 
 **WSL (Windows):** needs Windows 11 (or 10 with WSLg) so Linux windows can open, plus the
