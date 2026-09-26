@@ -2,24 +2,28 @@
   {
     "id": "spike-drivebase",
     "name": "SPIKE drive base (real parts)",
-    "file": "spike-drivebase.ldr"
+    "file": "spike-drivebase.ldr",
+    "drive": "AB"
   },
   {
     "id": "driving-base-1",
     "name": "Driving Base 1",
     "file": "driving-base-1.ldr",
-    "note": "FIRST robot guide: drive C (left) + D (right), accessory motor E"
+    "note": "FIRST robot guide: drive C (left) + D (right), accessory motor E",
+    "drive": "CD"
   },
   {
     "id": "driving-base-2",
     "name": "Driving Base 2",
     "file": "driving-base-2.ldr",
-    "note": "FIRST robot guide: drive C (left) + D (right), accessory motor E; takes its arm, force sensor (A) and distance sensor (F) accessories"
+    "note": "FIRST robot guide: drive C (left) + D (right), accessory motor E; takes its arm, force sensor (A) and distance sensor (F) accessories",
+    "drive": "CD"
   },
   {
     "id": "driving-base-3",
     "name": "Driving Base 3",
     "file": "driving-base-3.ldr",
-    "note": "FIRST robot guide: drive C (left) + D (right), accessory motor E, colour sensor B"
+    "note": "FIRST robot guide: drive C (left) + D (right), accessory motor E, colour sensor B",
+    "drive": "CD"
   }
 ]

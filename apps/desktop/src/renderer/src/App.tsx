@@ -725,7 +725,8 @@ export function App() {
     setFileName("Untitled.llsp3");
     setError(null);
     if (kind === "blocks") {
-      setBlocksProject(starterBlocks(robot));
+      // (the drive ports of the robot in use)
+      setBlocksProject(starterBlocks(preset?.drive ? { leftPort: preset.drive[0], rightPort: preset.drive[1] } : robot));
       setBlocksKey(`new:${Date.now()}`);
       setCodeView("blocks");
     } else {

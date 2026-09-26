@@ -174,6 +174,8 @@ export class Simulation {
     const { hubBody, hubRot } = this.buildRobot(o.start);
     this.hubBody = hubBody;
     this.hubRot = hubRot;
+    // the hub zeroes its yaw when it powers on, however it is mounted and the robot faces
+    this.yawOffsetDeg = this.rawYaw();
   }
 
   static async create(o: SimOptions): Promise<Simulation> {

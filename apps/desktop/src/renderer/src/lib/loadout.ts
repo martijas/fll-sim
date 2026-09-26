@@ -5,17 +5,17 @@ import type { Library } from "@fll-sim/ldraw";
 import { assemble, attachTool, findMounts, parseModel, type ModelPart } from "@fll-sim/assembly";
 import type { RobotModel, SeasonConfig, StartPose } from "@fll-sim/sim";
 
-export interface CatalogEntry { id: string; name: string; text: string; note?: string }
+export interface CatalogEntry { id: string; name: string; text: string; note?: string; /** drive motor ports, left then right (robots) */ drive?: string }
 
 /** Index files list the bundled models: [{ id, name, file, note? }]. */
 async function loadIndex(dir: string): Promise<CatalogEntry[]> {
   const bytes = await window.fllsim.readAsset(`apps/desktop/resources/${dir}/index.json`);
   if (!bytes) return [];
-  const list = JSON.parse(new TextDecoder().decode(bytes)) as { id: string; name: string; file: string; note?: string }[];
+  const list = JSON.parse(new TextDecoder().decode(bytes)) as { id: string; name: string; file: string; note?: string; drive?: string }[];
   const out: CatalogEntry[] = [];
   for (const e of list) {
     const b = await window.fllsim.readAsset(`apps/desktop/resources/${dir}/${e.file}`);
-    if (b) out.push({ id: e.id, name: e.name, note: e.note, text: new TextDecoder("latin1").decode(b) });
+    if (b) out.push({ id: e.id, name: e.name, note: e.note, drive: e.drive, text: new TextDecoder("latin1").decode(b) });
   }
   return out;
 }
