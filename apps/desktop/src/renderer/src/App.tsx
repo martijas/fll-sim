@@ -10,7 +10,7 @@ import { loadLibrary, type CatalogCategory } from "./lib/ldraw";
 import { readLlsp3, writeBlocksLlsp3, writePythonLlsp3, type Llsp3Project, type ScratchProject } from "@fll-sim/llsp3";
 import { compileBlocks } from "@fll-sim/runtime-blocks";
 import { BlocksEditor, type BlocksEditorHandle } from "./components/BlocksEditor";
-import { FieldView, type CameraMode, type FieldViewHandle } from "./three/FieldView";
+import { FieldView, type CameraMode, type FieldViewHandle, type GraphicsQuality } from "./three/FieldView";
 import { CodeEditor } from "./components/CodeEditor";
 import { HubPanel } from "./components/HubPanel";
 import { Telemetry } from "./components/Telemetry";
@@ -127,6 +127,17 @@ export function App() {
     }
   });
   const [footprints, setFootprints] = useState(true);
+  /** 3D detail (auto: low on software rendering) and what the graphics driver turned out to be */
+  const [graphics, setGraphics] = useState<GraphicsQuality>(() => (localStorage.getItem("fllsim.graphics") as GraphicsQuality | null) ?? "auto");
+  const [gfxInfo, setGfxInfo] = useState<{ renderer: string; software: boolean; quality: string } | null>(null);
+  const onGraphics = useCallback((i: { renderer: string; software: boolean; quality: string }) => setGfxInfo(i), []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("fllsim.graphics", graphics);
+    } catch {
+      /* ignore */
+    }
+  }, [graphics]);
   /** The last automatic scoring from the simulated field (shown as badges on the sheet). */
   const [auto, setAuto] = useState<AutoScore | null>(null);
   /** Fill in the score sheet from the field (only the questions the field settles); returns the total. */
@@ -891,7 +902,7 @@ export function App() {
         <section className="left">
           <div className="field-wrap">
             <GlBoundary what="3D field">
-              <FieldView ref={field} season={season} matCanvas={mat?.canvas ?? null} />
+              <FieldView ref={field} season={season} matCanvas={mat?.canvas ?? null} quality={graphics} onGraphics={onGraphics} />
             </GlBoundary>
             <div className="cam-buttons">
               {(["orbit", "top", "follow", "free"] as CameraMode[]).map((m) => (
@@ -899,6 +910,16 @@ export function App() {
                   {m === "orbit" ? "3D" : m === "top" ? "Top" : m === "follow" ? "Follow" : "Free"}
                 </button>
               ))}
+              <select
+                value={graphics}
+                onChange={(e) => setGraphics(e.target.value as GraphicsQuality)}
+                title={`3D detail. Graphics: ${gfxInfo?.renderer || "unknown"}${gfxInfo?.software ? " (software rendering: no usable GPU, so Auto uses Low)" : ""}. Low draws the mission models as simple shapes (as the physics sees them).`}
+              >
+                <option value="auto">Graphics: Auto ({gfxInfo?.quality ?? "…"})</option>
+                <option value="high">Graphics: High</option>
+                <option value="medium">Graphics: Medium</option>
+                <option value="low">Graphics: Low</option>
+              </select>
               <button onClick={() => setFootprints(!footprints)} disabled={running} title="Mission models without a real-part build are shown as blocks at their wireframe positions">
                 {footprints ? "Hide" : "Show"} mission blocks
               </button>

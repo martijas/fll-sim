@@ -1,6 +1,7 @@
-import { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
+import { useEffect, useImperativeHandle, useMemo, useRef, useState, forwardRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { SceneBody, SeasonConfig, ShapeSpec, VisualSpec } from "@fll-sim/sim";
 import type { Library } from "@fll-sim/ldraw";
 import { mat4From3x4, partObject } from "./ldrawMesh";
@@ -17,10 +18,31 @@ export interface FieldViewHandle {
   setGhosts(ghosts: { id: string; color: string; pts: { xMm: number; yMm: number; headingDeg: number }[] }[]): void;
 }
 
+/** Graphics detail: auto = low on software rendering (no usable GPU), else high. */
+export type GraphicsQuality = "auto" | "high" | "medium" | "low";
+
 interface Props {
   season: SeasonConfig;
   matCanvas: HTMLCanvasElement | null;
+  quality?: GraphicsQuality;
+  /** the graphics driver and the detail used (auto resolved) */
+  onGraphics?(info: { renderer: string; software: boolean; quality: Exclude<GraphicsQuality, "auto"> }): void;
 }
+
+/** The WebGL2 driver, found with a throwaway context ("" if there is none). */
+function probeGl(): string {
+  try {
+    const gl = document.createElement("canvas").getContext("webgl2");
+    if (!gl) return "";
+    const ext = gl.getExtension("WEBGL_debug_renderer_info");
+    const r = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
+    return r;
+  } catch {
+    return "";
+  }
+}
+export const isSoftwareGl = (r: string) => /swiftshader|llvmpipe|softpipe|software|basic render/i.test(r);
 
 const mm = (v: number) => v / 1000;
 
@@ -44,6 +66,39 @@ function labelSprite(text: string): THREE.Sprite {
   sp.scale.set((w / 40) * 0.028, 0.028, 1);
   sp.renderOrder = 10;
   return sp;
+}
+
+const mergedMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.05 });
+
+/** All of a body's shapes as one mesh (one draw call; coarser round shapes): for low detail. */
+function mergedShapes(shapes: ShapeSpec[]): THREE.Mesh | null {
+  const geos: THREE.BufferGeometry[] = [];
+  for (const s of shapes) {
+    let g: THREE.BufferGeometry;
+    if (s.kind === "box") g = new THREE.BoxGeometry(mm(s.sizeMm.x), mm(s.sizeMm.y), mm(s.sizeMm.z));
+    else if (s.kind === "cylinder") {
+      g = new THREE.CylinderGeometry(mm(s.radiusMm), mm(s.radiusMm), mm(s.lengthMm), 12);
+      if (s.axis === "x") g.rotateZ(Math.PI / 2);
+      else if (s.axis === "z") g.rotateX(Math.PI / 2);
+    } else if (s.kind === "sphere") g = new THREE.SphereGeometry(mm(s.radiusMm), 12, 8);
+    else continue;
+    if (s.kind === "box" && s.rot) g.applyQuaternion(new THREE.Quaternion(s.rot.x, s.rot.y, s.rot.z, s.rot.w));
+    g.translate(mm(s.posMm.x), mm(s.posMm.y), mm(s.posMm.z));
+    g = g.index ? g.toNonIndexed() : g;
+    g.deleteAttribute("uv");
+    const c = new THREE.Color(s.color); // (linear, as the material expects)
+    const n = g.getAttribute("position").count;
+    const col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) col.set([c.r, c.g, c.b], i * 3);
+    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    geos.push(g);
+  }
+  if (!geos.length) return null;
+  const merged = mergeGeometries(geos);
+  for (const g of geos) g.dispose();
+  const m = new THREE.Mesh(merged, mergedMat);
+  m.castShadow = m.receiveShadow = true;
+  return m;
 }
 
 function shapeMesh(s: ShapeSpec): THREE.Mesh {
@@ -72,7 +127,33 @@ function shapeMesh(s: ShapeSpec): THREE.Mesh {
   return mesh;
 }
 
-export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({ season, matCanvas }, ref) {
+/** The graphics driver behind a WebGL renderer (e.g. "SwiftShader" = software, slow). */
+export function glRenderer(r: THREE.WebGLRenderer): string {
+  const gl = r.getContext();
+  const ext = gl.getExtension("WEBGL_debug_renderer_info");
+  return String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+}
+
+export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({ season, matCanvas, quality = "auto", onGraphics }, ref) {
+  const gpu = useMemo(() => probeGl(), []);
+  // Auto: start from a guess (low on software rendering), then measure the real field once and
+  // step down while frames are slow; remembered per graphics driver.
+  const [autoQ, setAutoQ] = useState<Exclude<GraphicsQuality, "auto">>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("fllsim.autoGraphics") ?? "null") as { gpu: string; q: Exclude<GraphicsQuality, "auto"> } | null;
+      if (saved?.gpu === gpu) return saved.q;
+    } catch {
+      /* ignore */
+    }
+    return isSoftwareGl(gpu) ? "low" : "high";
+  });
+  const measured = useRef(false);
+  const q: Exclude<GraphicsQuality, "auto"> = quality === "auto" ? autoQ : quality;
+  const qRef = useRef(q);
+  qRef.current = q;
+  useEffect(() => onGraphics?.({ renderer: gpu, software: isSoftwareGl(gpu), quality: q }), [gpu, q, onGraphics]);
+  /** the last scene, to build it again when the detail changes */
+  const lastScene = useRef<Parameters<FieldViewHandle["setScene"]> | null>(null);
   const host = useRef<HTMLDivElement>(null);
   const st = useRef<{
     renderer: THREE.WebGLRenderer;
@@ -90,6 +171,10 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     look: { yaw: number; pitch: number };
     /** follow camera distance factor (Ctrl + / −) */
     followScale: number;
+    sun: THREE.DirectionalLight;
+    /** something changed: draw a new frame (frames are drawn only when needed) */
+    dirty: boolean;
+    lastCam: THREE.Matrix4;
   } | null>(null);
   /** keys held down while the field view has focus (free camera) */
   const keys = useRef(new Set<string>());
@@ -100,13 +185,29 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
 
   useEffect(() => {
     const el = host.current!;
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: qRef.current === "high" });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     el.appendChild(renderer.domElement);
 
+    // (for measuring: draw calls and triangles of the last frame)
+    Object.assign(window, {
+      __fieldInfo: () => ({ ...renderer.info.render, gl: glRenderer(renderer) }),
+      // ms per rendered frame (waits for the GPU each time)
+      __fieldBench: (n = 5) => {
+        const gl = renderer.getContext(), px = new Uint8Array(4);
+        renderer.render(scene, camera);
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+        const t0 = performance.now();
+        for (let i = 0; i < n; i++) {
+          renderer.render(scene, camera);
+          gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+        }
+        return (performance.now() - t0) / n;
+      },
+    });
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("#1b1e24");
     const camera = new THREE.PerspectiveCamera(40, 1, 0.005, 50);
@@ -162,7 +263,7 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     const ghosts = new THREE.Group();
     scene.add(ghosts);
 
-    st.current = { renderer, scene, camera, controls, bodies: [], dynamic, trail, trailPts: [], ghosts, mode: "orbit", matMesh, look: { yaw: 0, pitch: 0 }, followScale: 1 };
+    st.current = { renderer, scene, camera, controls, bodies: [], dynamic, trail, trailPts: [], ghosts, mode: "orbit", matMesh, look: { yaw: 0, pitch: 0 }, followScale: 1, sun, dirty: true, lastCam: new THREE.Matrix4() };
     setCam("orbit");
 
     const ro = new ResizeObserver(() => {
@@ -170,6 +271,7 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       renderer.setSize(w, h);
       camera.aspect = w / Math.max(1, h);
       camera.updateProjectionMatrix();
+      if (st.current) st.current.dirty = true;
     });
     ro.observe(el);
 
@@ -211,6 +313,12 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
         }
       }
       if (s.mode !== "free") controls.update();
+      // draw only when something changed (the scene or the camera): an idle field costs nothing,
+      // which keeps the rest of the app quick on slow graphics
+      camera.updateMatrixWorld();
+      if (!s.dirty && s.lastCam.equals(camera.matrixWorld)) return;
+      s.lastCam.copy(camera.matrixWorld);
+      s.dirty = false;
       renderer.render(scene, camera);
     };
     loop();
@@ -235,7 +343,28 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       m.map = tex;
     } else m.map = null;
     m.needsUpdate = true;
+    s.dirty = true;
   }, [matCanvas]);
+
+  // graphics detail: shadows and outlines (high), resolution, and LEGO parts or simple shapes
+  // for the mission models (low)
+  useEffect(() => {
+    const s = st.current;
+    if (!s) return;
+    const high = q === "high";
+    s.renderer.shadowMap.enabled = high;
+    s.sun.castShadow = high;
+    s.renderer.setPixelRatio(q === "high" ? window.devicePixelRatio : Math.min(window.devicePixelRatio, 1) * (q === "low" ? 0.75 : 1));
+    const el = host.current!;
+    s.renderer.setSize(el.clientWidth, el.clientHeight);
+    s.scene.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+      for (const x of Array.isArray(m) ? m : m ? [m] : []) x.needsUpdate = true;
+    });
+    if (lastScene.current) build(...lastScene.current);
+    s.dirty = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
 
   function setCam(mode: CameraMode) {
     const s = st.current!;
@@ -375,48 +504,100 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     };
   }, []);
 
-  useImperativeHandle(ref, () => ({
-    setScene(bodies, ids, lib, visuals) {
-      const s = st.current!;
-      s.dynamic.clear();
-      s.bodies = ids.map((id) => {
-        const g = new THREE.Group();
-        const spec = bodies.find((b) => b.id === id);
-        g.userData.kind = spec?.kind ?? "field";
-        g.userData.id = id;
-        const vis = visuals?.[id];
-        if (lib && vis?.length) {
-          for (const v of vis) {
-            const o = partObject(lib, v.file, v.color);
-            o.matrix.copy(mat4From3x4(v.m, 0.001));
-            g.add(o);
-          }
-        } else spec?.shapes.forEach((sh) => {
-          const mesh = shapeMesh(sh);
-          if (spec.translucent) {
-            const m = mesh.material as THREE.MeshStandardMaterial;
-            m.transparent = true;
-            m.opacity = 0.55;
-            mesh.castShadow = false;
-          }
-          g.add(mesh);
-        });
-        if (spec?.label) {
-          const top = Math.max(...spec.shapes.map((sh) => sh.posMm.y + (sh.kind === "box" ? sh.sizeMm.y / 2 : sh.kind === "cylinder" ? sh.lengthMm / 2 : sh.radiusMm)));
-          const sp = labelSprite(spec.label);
-          sp.position.set(0, mm(top) + 0.03, 0);
-          g.add(sp);
+  /** Build the scene's bodies: LEGO parts (outlined at high detail), or simple shapes for the mission models at low detail. */
+  function build(bodies: SceneBody[], ids: string[], lib?: Library | null, visuals?: Record<string, VisualSpec[]>) {
+    const s = st.current!;
+    s.dynamic.clear();
+    s.bodies = ids.map((id) => {
+      const g = new THREE.Group();
+      const spec = bodies.find((b) => b.id === id);
+      g.userData.kind = spec?.kind ?? "field";
+      g.userData.id = id;
+      const vis = visuals?.[id];
+      const lego = lib && vis?.length && (qRef.current !== "low" || spec?.kind === "robot");
+      if (lego) {
+        for (const v of vis!) {
+          const o = partObject(lib!, v.file, v.color, qRef.current === "high");
+          o.matrix.copy(mat4From3x4(v.m, 0.001));
+          g.add(o);
         }
-        s.dynamic.add(g);
-        return g;
+      } else if (spec && !spec.translucent && qRef.current !== "high") {
+        const m = mergedShapes(spec.shapes);
+        if (m) g.add(m);
+      } else spec?.shapes.forEach((sh) => {
+        const mesh = shapeMesh(sh);
+        if (spec.translucent) {
+          const m = mesh.material as THREE.MeshStandardMaterial;
+          m.transparent = true;
+          m.opacity = 0.55;
+          mesh.castShadow = false;
+        }
+        g.add(mesh);
       });
+      if (spec?.label) {
+        const top = Math.max(...spec.shapes.map((sh) => sh.posMm.y + (sh.kind === "box" ? sh.sizeMm.y / 2 : sh.kind === "cylinder" ? sh.lengthMm / 2 : sh.radiusMm)));
+        const sp = labelSprite(spec.label);
+        sp.position.set(0, mm(top) + 0.03, 0);
+        g.add(sp);
+      }
+      s.dynamic.add(g);
+      return g;
+    });
+    // (rebuilt for another detail level: put the bodies back where they are)
+    if (lastT.current && lastT.current.length === s.bodies.length * 7) applyT(lastT.current);
+    s.dirty = true;
+    // Auto detail: once the whole field is there, time a few frames
+    if (quality === "auto" && !measured.current && lib && ids.length > 100) {
+      measured.current = true;
+      setTimeout(measureAuto, 800);
+    }
+  }
+  function measureAuto() {
+    const s = st.current;
+    if (!s) return;
+    const bench = () => {
+      const gl = s.renderer.getContext(), px = new Uint8Array(4);
+      s.renderer.render(s.scene, s.camera);
+      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      const t0 = performance.now();
+      for (let i = 0; i < 2; i++) {
+        s.renderer.render(s.scene, s.camera);
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      }
+      return (performance.now() - t0) / 2;
+    };
+    const ms = bench();
+    const cur = autoQ;
+    const next = ms > 45 && cur === "high" ? "medium" : ms > 45 && cur === "medium" ? "low" : null; // (under ~22 fps: less detail)
+    console.log(`[graphics] ${gpu}: ${ms.toFixed(0)} ms per frame at ${cur}${next ? ` -> ${next}` : ""}`);
+    try {
+      localStorage.setItem("fllsim.autoGraphics", JSON.stringify({ gpu, q: next ?? cur }));
+    } catch {
+      /* ignore */
+    }
+    if (next) {
+      measured.current = false; // measure again at the new level
+      setAutoQ(next);
+    }
+  }
+  const lastT = useRef<Float32Array | null>(null);
+  function applyT(t: Float32Array) {
+    const s = st.current!;
+    s.bodies.forEach((g, i) => {
+      g.position.set(t[i * 7], t[i * 7 + 1], t[i * 7 + 2]);
+      g.quaternion.set(t[i * 7 + 3], t[i * 7 + 4], t[i * 7 + 5], t[i * 7 + 6]);
+    });
+  }
+
+  useImperativeHandle(ref, () => ({
+    setScene: (...args) => {
+      lastScene.current = args;
+      build(...args);
     },
     setTransforms(t) {
-      const s = st.current!;
-      s.bodies.forEach((g, i) => {
-        g.position.set(t[i * 7], t[i * 7 + 1], t[i * 7 + 2]);
-        g.quaternion.set(t[i * 7 + 3], t[i * 7 + 4], t[i * 7 + 5], t[i * 7 + 6]);
-      });
+      lastT.current = t;
+      applyT(t);
+      st.current!.dirty = true;
     },
     addTrail(xMm, yMm) {
       const s = st.current!;
@@ -426,16 +607,19 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       s.trailPts.push(p.x, p.y, p.z);
       s.trail.geometry.dispose();
       s.trail.geometry = new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute(s.trailPts, 3));
+      s.dirty = true;
     },
     clearTrail() {
       const s = st.current!;
       s.trailPts = [];
       s.trail.geometry.dispose();
       s.trail.geometry = new THREE.BufferGeometry();
+      s.dirty = true;
     },
     setCamera: setCam,
     setGhosts(list) {
       const s = st.current!;
+      s.dirty = true;
       for (const c of [...s.ghosts.children]) {
         s.ghosts.remove(c);
         c.traverse((o) => {
