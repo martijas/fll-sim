@@ -1,0 +1,71 @@
+0 ADB dozer blade
+0 Name: ADB_dozer_blade.ldr
+0 Author: FLL Sim (scripted from the official building instructions)
+0 !LICENSE Model data for simulation use
+
+0 // dozer blade: magenta 3x3 block
+1 26 -20 0 0 1 0 0 0 1 0 0 0 1 39793.dat
+0 // dozer blade: pin
+1 0 1 0 -20 1 0 0 0 -1 0 0 0 -1 61332.dat
+0 // dozer blade: pin
+1 0 1 0 20 1 0 0 0 1 0 0 0 1 61332.dat
+0 // dozer blade: yellow T-beam
+1 14 20 -40 0 0 1 0 0 0 1 1 0 0 60484.dat
+0 STEP
+0 // dozer blade: black 7x5 frame
+1 0 0 0 0 0 0 1 0 1 0 -1 0 0 64179.dat
+0 STEP
+0 // dozer blade: blue long pin
+1 1 -70 0 -20 1 0 0 0 0 1 0 -1 0 6558.dat
+0 // dozer blade: blue long pin
+1 1 -70 0 20 1 0 0 0 0 1 0 -1 0 6558.dat
+0 // dozer blade: blue long pin
+1 1 50 0 -20 1 0 0 0 0 1 0 -1 0 6558.dat
+0 // dozer blade: blue long pin
+1 1 50 0 20 1 0 0 0 0 1 0 -1 0 6558.dat
+0 STEP
+0 // dozer blade: 3L axle (tool input)
+1 72 -20 0 0 0 1 0 -1 0 0 0 0 1 4519.dat
+0 // dozer blade: 36-tooth gear (driven by the robot)
+1 71 -20 20 0 1 0 0 0 0 1 0 -1 0 32498.dat
+0 // dozer blade: 12-tooth bevel gear
+1 19 -20 -13 0 1 0 0 0 0 -1 0 1 0 6589.dat
+0 STEP
+0 // dozer blade: 12L axle (arm pivot)
+1 72 0 -40 0 -1 0 0 0 0 1 0 1 0 3708.dat
+0 // dozer blade: 20-tooth bevel gear
+1 19 0 -40 0 0 0 -1 0 1 0 1 0 0 18575.dat
+0 // dozer blade: 20-tooth bevel gear
+1 19 40 -40 0 0 0 -1 0 1 0 1 0 0 18575.dat
+0 // dozer blade: red 1x2 cross block
+1 4 60 -40 0 1 0 0 0 1 0 0 0 1 6536.dat
+0 STEP
+0 // dozer blade: curved gear rack
+1 0 120 156.9616 -34.7296 0 -1 0 0.1736 0 -0.9848 0.9848 0 0.1736 24121.dat
+0 // dozer blade: curved gear rack
+1 0 -120 -74.7296 -196.9616 0 1 0 -0.9848 0 0.1736 0.1736 0 0.9848 24121.dat
+0 STEP
+0 // dozer blade: 1x2 cross block
+1 0 100 122.2319 -231.6912 1 0 0 0 1 0 0 0 1 6536.dat
+0 // dozer blade: 2L axle
+1 72 110 122.2319 -231.6912 1 0 0 0 -1 0 0 0 -1 32062.dat
+0 // dozer blade: 1x2 cross block
+1 0 -100 122.2319 -231.6912 -1 0 0 0 1 0 0 0 -1 6536.dat
+0 // dozer blade: 2L axle
+1 72 -110 122.2319 -231.6912 -1 0 0 0 -1 0 0 0 1 32062.dat
+0 // dozer blade: black 15L beam
+1 0 0 142.2319 -251.6912 0 0 -1 -1 0 0 0 1 0 32278.dat
+0 // dozer blade: pin
+1 0 100 142.2319 -241.6912 0 1 0 0 0 1 1 0 0 61332.dat
+0 // dozer blade: pin
+1 0 -100 142.2319 -241.6912 0 -1 0 0 0 1 -1 0 0 61332.dat
+0 // dozer blade: pin
+1 0 -40 142.2319 -261.6912 0 0 1 0 1 0 -1 0 0 61332.dat
+0 // dozer blade: pin
+1 0 40 142.2319 -261.6912 0 0 1 0 1 0 -1 0 0 61332.dat
+0 // dozer blade: azure smooth panel 11x2x3 (blade)
+1 322 0 142.2319 -271.6912 0 0 1 1 0 0 0 1 0 11954.dat
+0 STEP
+0 // rear
+1 16 0 0 0 1 0 0 0 1 0 0 0 1 fllsim-mount.dat
+0 STEP

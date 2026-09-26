@@ -1,0 +1,66 @@
+0 ADB lift arm
+0 Name: ADB_lift_arm.ldr
+0 Author: FLL Sim (scripted from the official building instructions)
+0 !LICENSE Model data for simulation use
+
+0 // lift arm: magenta 3x3 block
+1 26 -20 0 0 1 0 0 0 1 0 0 0 1 39793.dat
+0 // lift arm: pin
+1 0 1 0 -20 1 0 0 0 -1 0 0 0 -1 61332.dat
+0 // lift arm: pin
+1 0 1 0 20 1 0 0 0 1 0 0 0 1 61332.dat
+0 // lift arm: yellow T-beam
+1 14 20 -40 0 0 1 0 0 0 1 1 0 0 60484.dat
+0 STEP
+0 // lift arm: black 7x5 frame
+1 0 0 0 0 0 0 1 0 1 0 -1 0 0 64179.dat
+0 STEP
+0 // lift arm: blue long pin
+1 1 -70 0 -20 1 0 0 0 0 1 0 -1 0 6558.dat
+0 // lift arm: blue long pin
+1 1 -70 0 20 1 0 0 0 0 1 0 -1 0 6558.dat
+0 // lift arm: blue long pin
+1 1 50 0 -20 1 0 0 0 0 1 0 -1 0 6558.dat
+0 // lift arm: blue long pin
+1 1 50 0 20 1 0 0 0 0 1 0 -1 0 6558.dat
+0 STEP
+0 // lift arm: 3L axle (tool input)
+1 72 -20 0 0 0 1 0 -1 0 0 0 0 1 4519.dat
+0 // lift arm: 36-tooth gear (driven by the robot)
+1 71 -20 20 0 1 0 0 0 0 1 0 -1 0 32498.dat
+0 // lift arm: 12-tooth bevel gear
+1 19 -20 -13 0 1 0 0 0 0 -1 0 1 0 6589.dat
+0 STEP
+0 // lift arm: 9L axle (arm pivot)
+1 72 30 -40 0 -1 0 0 0 0 1 0 1 0 60485.dat
+0 // lift arm: 20-tooth bevel gear
+1 19 0 -40 0 0 0 -1 0 1 0 1 0 0 18575.dat
+0 // lift arm: 20-tooth bevel gear
+1 19 40 -40 0 0 0 -1 0 1 0 1 0 0 18575.dat
+0 // lift arm: red 1x2 cross block
+1 4 60 -40 0 1 0 0 0 1 0 0 0 1 6536.dat
+0 STEP
+0 // lift arm: 4x6 bent liftarm
+1 0 80 -40 0 0 1 0 1 0 0 0 0 -1 6629.dat
+0 // lift arm: 4x6 bent liftarm
+1 0 100 -40 0 0 1 0 1 0 0 0 0 -1 6629.dat
+0 // lift arm: blue long pin
+1 1 90 -40 -40 -1 0 0 0 1 0 0 0 -1 6558.dat
+0 // lift arm: blue long pin
+1 1 90 -40 -80 -1 0 0 0 1 0 0 0 -1 6558.dat
+0 // lift arm: 9L beam
+1 0 120 -40 -60 0 1 0 1 0 0 0 0 -1 40490.dat
+0 STEP
+0 // lift arm: bush
+1 71 -50 -40 0 0 0 1 0 1 0 -1 0 0 3713.dat
+0 // lift arm: bush
+1 71 115 -40 0 0 0 1 0 1 0 -1 0 0 3713.dat
+0 STEP
+0 // lift arm: yellow 3L axle
+1 14 110 8 -136 -1 0 0 0 -0.6 -0.8 0 -0.8 0.6 4519.dat
+0 // lift arm: 1x7 gear rack (fork)
+1 0 130 32 -104 0 0 1 -0.6 0.8 0 -0.8 -0.6 0 87761.dat
+0 STEP
+0 // front
+1 16 0 0 0 1 0 0 0 1 0 0 0 1 fllsim-mount.dat
+0 STEP
