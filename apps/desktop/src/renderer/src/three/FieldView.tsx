@@ -5,7 +5,7 @@ import type { SceneBody, SeasonConfig, ShapeSpec, VisualSpec } from "@fll-sim/si
 import type { Library } from "@fll-sim/ldraw";
 import { mat4From3x4, partObject } from "./ldrawMesh";
 
-export type CameraMode = "orbit" | "top" | "follow";
+export type CameraMode = "orbit" | "top" | "follow" | "free";
 
 export interface FieldViewHandle {
   setScene(bodies: SceneBody[], ids: string[], lib?: Library | null, visuals?: Record<string, VisualSpec[]>): void;
@@ -86,7 +86,13 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     ghosts: THREE.Group;
     mode: CameraMode;
     matMesh: THREE.Mesh;
+    /** free camera: the floating orb the camera orbits (and flies with WASD) */
+    orb: THREE.Mesh;
+    /** follow camera distance factor (Ctrl + / −) */
+    followScale: number;
   } | null>(null);
+  /** keys held down while the field view has focus (free camera) */
+  const keys = useRef(new Set<string>());
 
   const W = mm(season.table.interiorMm.w), H = mm(season.table.interiorMm.h);
   const matOffX = mm((season.table.interiorMm.w - season.mat.sizeMm.w) / 2);
@@ -156,7 +162,12 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     const ghosts = new THREE.Group();
     scene.add(ghosts);
 
-    st.current = { renderer, scene, camera, controls, bodies: [], dynamic, trail, trailPts: [], ghosts, mode: "orbit", matMesh };
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), new THREE.MeshBasicMaterial({ color: "#ffcf00", transparent: true, opacity: 0.55, depthTest: false }));
+    orb.renderOrder = 10;
+    orb.visible = false;
+    scene.add(orb);
+
+    st.current = { renderer, scene, camera, controls, bodies: [], dynamic, trail, trailPts: [], ghosts, mode: "orbit", matMesh, orb, followScale: 1 };
     setCam("orbit");
 
     const ro = new ResizeObserver(() => {
@@ -168,15 +179,45 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     ro.observe(el);
 
     let raf = 0;
+    let last = performance.now();
     const loop = () => {
       raf = requestAnimationFrame(loop);
       const s = st.current!;
+      const now = performance.now(), dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (s.mode === "free") {
+        // WASD: fly the orb (and the camera with it) over the table; Q/E: down/up; Shift: faster
+        const k = keys.current;
+        const fwd = new THREE.Vector3().subVectors(controls.target, camera.position).setY(0);
+        if (fwd.lengthSq() < 1e-9) fwd.set(0, 0, -1);
+        fwd.normalize();
+        const right = new THREE.Vector3().crossVectors(fwd, camera.up).normalize();
+        const move = new THREE.Vector3();
+        if (k.has("w")) move.add(fwd);
+        if (k.has("s")) move.sub(fwd);
+        if (k.has("d")) move.add(right);
+        if (k.has("a")) move.sub(right);
+        if (k.has("e")) move.y += 1;
+        if (k.has("q")) move.y -= 1;
+        if (move.lengthSq() > 0) {
+          const dist = camera.position.distanceTo(controls.target);
+          const speed = Math.max(0.25, dist * 0.8) * (k.has("shift") ? 3 : 1);
+          move.normalize().multiplyScalar(speed * dt);
+          if (controls.target.y + move.y < 0) move.y = -controls.target.y; // not below the table
+          controls.target.add(move);
+          camera.position.add(move);
+        }
+        s.orb.position.copy(controls.target);
+        s.orb.scale.setScalar(Math.max(0.004, camera.position.distanceTo(controls.target) * 0.012));
+      }
+      s.orb.visible = s.mode === "free";
       if (s.mode === "follow" && s.bodies.length) {
         const robot = s.bodies.find((b) => b.userData.kind === "robot");
         if (robot) {
           const target = robot.position.clone();
           const back = new THREE.Vector3(0, 0.35, 0.45).applyQuaternion(robot.quaternion);
           back.y = 0.35;
+          back.multiplyScalar(s.followScale);
           camera.position.lerp(target.clone().add(back), 0.1);
           controls.target.lerp(target, 0.2);
         }
@@ -218,8 +259,58 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     } else if (mode === "orbit") {
       s.camera.position.set(c.x, 1.5, c.z + 1.9);
       s.controls.target.copy(c);
+    } else if (mode === "free") {
+      // start flying from where the camera looks now, with the orb a little in front of it
+      const dir = new THREE.Vector3().subVectors(s.controls.target, s.camera.position);
+      if (dir.length() > 1.2) s.controls.target.copy(s.camera.position).add(dir.setLength(1.2));
     }
+    host.current?.focus();
   }
+
+  /** Ctrl + / Ctrl −: move the camera towards / away from what it looks at. */
+  function zoom(dir: number) {
+    const s = st.current;
+    if (!s) return;
+    const f = dir > 0 ? 0.8 : 1.25;
+    if (s.mode === "follow") {
+      s.followScale = Math.min(6, Math.max(0.2, s.followScale * f));
+      return;
+    }
+    const off = new THREE.Vector3().subVectors(s.camera.position, s.controls.target);
+    const len = Math.min(8, Math.max(0.04, off.length() * f));
+    s.camera.position.copy(s.controls.target).add(off.setLength(len));
+  }
+  useEffect(() => window.fllsim.onCameraZoom(zoom), []);
+
+  // keyboard for the free camera: only while the field view has focus (click it), so typing in
+  // the editors is never taken
+  useEffect(() => {
+    const el = host.current!;
+    const name = (e: KeyboardEvent) => (e.key === "Shift" ? "shift" : e.key.toLowerCase());
+    const down = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      const k = name(e);
+      if (!"wasdqe".includes(k) && k !== "shift") return;
+      e.preventDefault();
+      keys.current.add(k);
+      // flying from another camera switches to the free camera
+      const s = st.current;
+      if (s && k !== "shift" && s.mode !== "free") setCam("free");
+    };
+    const up = (e: KeyboardEvent) => keys.current.delete(name(e));
+    const blur = () => keys.current.clear();
+    const focus = () => el.focus();
+    el.addEventListener("keydown", down);
+    el.addEventListener("keyup", up);
+    el.addEventListener("blur", blur);
+    el.addEventListener("pointerdown", focus);
+    return () => {
+      el.removeEventListener("keydown", down);
+      el.removeEventListener("keyup", up);
+      el.removeEventListener("blur", blur);
+      el.removeEventListener("pointerdown", focus);
+    };
+  }, []);
 
   useImperativeHandle(ref, () => ({
     setScene(bodies, ids, lib, visuals) {
@@ -308,5 +399,5 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     },
   }));
 
-  return <div ref={host} className="field-view" />;
+  return <div ref={host} className="field-view" tabIndex={0} />;
 });

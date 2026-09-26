@@ -185,3 +185,4 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 .match-bar { position: absolute; top: 90px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: rgba(21, 23, 28, 0.9); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
 .match-bar.out { border-color: var(--err); }
 .match-bar.home { border-color: var(--ok); }
+.field-view:focus { outline: none; }

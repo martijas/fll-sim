@@ -60,6 +60,14 @@ function createWindow() {
       sandbox: false,
     },
   });
+  // Ctrl + / Ctrl − zoom the 3D field camera (not the whole window)
+  win.webContents.on("before-input-event", (e, input) => {
+    if (input.type !== "keyDown" || !input.control || input.alt || input.meta) return;
+    const dir = input.key === "+" || input.key === "=" ? 1 : input.key === "-" || input.key === "_" ? -1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    win.webContents.send("camera:zoom", dir);
+  });
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: "deny" };

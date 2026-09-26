@@ -889,8 +889,10 @@ export function App() {
           <div className="field-wrap">
             <FieldView ref={field} season={season} matCanvas={mat?.canvas ?? null} />
             <div className="cam-buttons">
-              {(["orbit", "top", "follow"] as CameraMode[]).map((m) => (
-                <button key={m} onClick={() => field.current?.setCamera(m)}>{m === "orbit" ? "3D" : m === "top" ? "Top" : "Follow"}</button>
+              {(["orbit", "top", "follow", "free"] as CameraMode[]).map((m) => (
+                <button key={m} onClick={() => field.current?.setCamera(m)} title={m === "free" ? "Free camera: WASD fly the orb, Q/E down/up, Shift faster, drag to look around it, Ctrl +/− zoom (click the field first)" : "Ctrl +/− zoom"}>
+                  {m === "orbit" ? "3D" : m === "top" ? "Top" : m === "follow" ? "Follow" : "Free"}
+                </button>
               ))}
               <button onClick={() => setFootprints(!footprints)} disabled={running} title="Mission models without a real-part build are shown as blocks at their wireframe positions">
                 {footprints ? "Hide" : "Show"} mission blocks
