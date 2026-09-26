@@ -8,6 +8,16 @@ const isDev = !!process.env.ELECTRON_RENDERER_URL;
 // The simulation worker shares a SharedArrayBuffer with the UI (pause, speed, hub buttons).
 // The app only ever loads its own bundled content, so enabling it globally is safe.
 app.commandLine.appendSwitch("enable-features", "SharedArrayBuffer");
+// 3D view (WebGL2): Chromium refuses GPU drivers on its blocklist (common under WSLg and in VMs,
+// issue #2) — use them anyway, and fall back to software rendering (SwiftShader) when no GPU
+// works at all. Only FLL Sim's own content is ever loaded, so these are safe.
+if (!process.env.FLLSIM_NO_WEBGL) {
+  app.commandLine.appendSwitch("ignore-gpu-blocklist");
+  app.commandLine.appendSwitch("enable-unsafe-swiftshader");
+}
+// (testing machines without a usable GPU, e.g. a blocklisted driver under WSL or in a VM)
+// (FLLSIM_NO_WEBGL: also without the fallbacks above, i.e. no 3D at all)
+if (process.env.FLLSIM_NO_GPU || process.env.FLLSIM_NO_WEBGL) app.disableHardwareAcceleration();
 // Smoke tests keep their own profile (storage, saved mat), never the team's.
 if (process.env.FLLSIM_SMOKE) app.setPath("userData", join(app.getPath("temp"), "fllsim-smoke-profile"));
 const here = import.meta.dirname;

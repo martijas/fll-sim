@@ -186,3 +186,7 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 .match-bar.out { border-color: var(--err); }
 .match-bar.home { border-color: var(--ok); }
 .field-view:focus { outline: none; }
+
+.gl-error { position: absolute; inset: 0; padding: 100px 30px 30px; overflow: auto; background: var(--bg); }
+.gl-error h3 { margin-top: 0; color: var(--err); }
+.gl-error code { background: var(--panel2); padding: 1px 5px; border-radius: 4px; }

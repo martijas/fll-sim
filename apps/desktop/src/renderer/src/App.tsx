@@ -16,6 +16,7 @@ import { HubPanel } from "./components/HubPanel";
 import { Telemetry } from "./components/Telemetry";
 import { RobotPanel } from "./components/RobotPanel";
 import { CalibrationPanel } from "./components/CalibrationPanel";
+import { GlBoundary } from "./components/GlBoundary";
 import { ReplayBar, RunsPanel, RUN_COLORS, type RunRecord } from "./components/Runs";
 import { matPdfToPng } from "./lib/matPdf";
 import { buildLoadout, homeArea, loadBundledTools, loadCustomTools, loadPresetRobots, saveCustomTool, type CatalogEntry } from "./lib/loadout";
@@ -845,6 +846,7 @@ export function App() {
         </div>
       </header>
       {tab === "build" && ldraw && (
+        <GlBoundary what="3D builder">
         <Builder
           lib={ldraw.lib}
           catalog={ldraw.catalog}
@@ -883,11 +885,14 @@ export function App() {
             setTab("sim");
           }}
         />
+        </GlBoundary>
       )}
       <main className={`main${blocks && codeView === "blocks" ? " blocks-mode" : ""}`} style={{ display: tab === "sim" ? undefined : "none" }}>
         <section className="left">
           <div className="field-wrap">
-            <FieldView ref={field} season={season} matCanvas={mat?.canvas ?? null} />
+            <GlBoundary what="3D field">
+              <FieldView ref={field} season={season} matCanvas={mat?.canvas ?? null} />
+            </GlBoundary>
             <div className="cam-buttons">
               {(["orbit", "top", "follow", "free"] as CameraMode[]).map((m) => (
                 <button key={m} onClick={() => field.current?.setCamera(m)} title={m === "free" ? "Free camera (first person): click the field to take the mouse (Esc gives it back), move the mouse to look, WASD move, Space/E up, Q down, Shift faster, Ctrl +/− zoom" : "Ctrl +/− zoom"}>
