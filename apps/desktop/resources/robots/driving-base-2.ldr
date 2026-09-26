@@ -1,0 +1,124 @@
+0 Driving Base 2
+0 Name: Driving_Base_2.ldr
+0 Author: FLL Sim (scripted from the official building instructions)
+0 !LICENSE Model data for simulation use
+
+0 // 11x7 frame
+1 26 0 -30 0 0 0 1 0 1 0 -1 0 0 39794.dat
+0 STEP
+0 // pin
+1 0 100 -40 -60 0 0 1 -1 0 0 0 -1 0 2780.dat
+0 // pin
+1 0 100 -40 -20 0 -1 0 -1 0 0 0 0 -1 2780.dat
+0 // pin
+1 0 60 -40 -60 0 0 1 -1 0 0 0 -1 0 2780.dat
+0 // pin
+1 0 -100 -40 -60 0 0 -1 -1 0 0 0 1 0 2780.dat
+0 // pin
+1 0 -100 -40 -20 0 -1 0 -1 0 0 0 0 -1 2780.dat
+0 // pin
+1 0 -60 -40 -60 0 0 -1 -1 0 0 0 1 0 2780.dat
+0 STEP
+0 // left drive motor
+0 !FLLSIM PORT C
+1 15 80 -70 -40 0 -1 0 1 0 0 0 0 1 54696p01.dat
+0 // right drive motor
+0 !FLLSIM PORT D
+1 15 -80 -70 -40 0 1 0 -1 0 0 0 0 1 54696p01.dat
+0 STEP
+0 // wheel axle
+1 14 140 -70 -40 1 0 0 0 1 0 0 0 1 4519.dat
+0 // wheel axle
+1 14 -140 -70 -40 -1 0 0 0 -1 0 0 0 1 4519.dat
+0 STEP
+0 // pin
+1 0 60 -101 -60 0 1 0 -1 0 0 0 0 1 2780.dat
+0 // pin
+1 0 60 -101 100 0 0 1 -1 0 0 0 -1 0 2780.dat
+0 // pin
+1 0 100 -101 -60 0 1 0 -1 0 0 0 0 1 2780.dat
+0 // pin
+1 0 100 -101 100 0 0 -1 -1 0 0 0 1 0 2780.dat
+0 // pin
+1 0 -60 -101 -60 0 1 0 -1 0 0 0 0 1 2780.dat
+0 // pin
+1 0 -60 -101 100 0 0 -1 -1 0 0 0 1 0 2780.dat
+0 // pin
+1 0 -100 -101 -60 0 1 0 -1 0 0 0 0 1 2780.dat
+0 // pin
+1 0 -100 -101 100 0 0 1 -1 0 0 0 -1 0 2780.dat
+0 STEP
+0 // hub
+1 15 0 -100 0 -1 0 0 0 1 0 0 0 -1 45601c01.dat
+0 // hanger cross block
+1 71 40 -90 -100 0 1 0 0 0 -1 -1 0 0 48989.dat
+0 // hanger 3L beam
+1 14 40 -70 -100 0 0 1 0 -1 0 1 0 0 32523.dat
+0 // hanger cross block
+1 71 -40 -90 -100 0 -1 0 0 0 -1 1 0 0 48989.dat
+0 // hanger 3L beam
+1 14 -40 -70 -100 0 0 -1 0 -1 0 -1 0 0 32523.dat
+0 STEP
+0 // pin
+1 0 20 -99 100 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // pin
+1 0 -20 -99 100 0 1 0 1 0 0 0 0 -1 2780.dat
+0 // ball caster
+1 322 0 -70 100 0 0 1 0 1 0 -1 0 0 39370.dat
+0 // caster ball
+1 15 0 -24 100 1 0 0 0 1 0 0 0 1 52629.dat
+0 STEP
+0 // 15L beam
+1 0 100 -110 -40 1 0 0 0 1 0 0 0 1 32278.dat
+0 // axle pin (cable clip)
+1 19 100 -120 40 0 -1 0 -1 0 0 0 0 -1 3749.dat
+0 // cable clip
+1 322 100 -140 40 0 1 0 0 0 1 1 0 0 49283.dat
+0 // 15L beam
+1 0 -100 -110 -40 1 0 0 0 1 0 0 0 1 32278.dat
+0 // axle pin (cable clip)
+1 19 -100 -120 40 0 -1 0 -1 0 0 0 0 -1 3749.dat
+0 // cable clip
+1 2 -100 -140 40 0 1 0 0 0 1 1 0 0 49283.dat
+0 STEP
+0 // wheel
+1 0 158 -70 -40 0 0 -1 0 -1 0 -1 0 0 39367p01.dat
+0 // white tooth
+1 15 170 -70 -40 0 1 0 0 0 1 1 0 0 48267.dat
+0 // wheel
+1 0 -158 -70 -40 0 0 1 0 1 0 -1 0 0 39367p01.dat
+0 // white tooth
+1 15 -170 -70 -40 0 -1 0 0 0 -1 1 0 0 48267.dat
+0 STEP
+0 // accessory motor
+0 !FLLSIM PORT E
+1 15 -80 -70 -160 0 0 1 0 -1 0 1 0 0 54696p01.dat
+0 // red 2L axle
+1 4 -80 -100 -160 0 0 1 -1 0 0 0 -1 0 32062.dat
+0 // 12T double bevel gear
+1 0 -80 -110 -160 -1 0 0 0 0 1 0 1 0 32270.dat
+0 STEP
+0 // bracket cross block
+1 71 60 -70 -120 1 0 0 0 1 0 0 0 1 48989.dat
+0 // pin
+1 0 70 -90 -120 1 0 0 0 1 0 0 0 1 2780.dat
+0 // pin
+1 0 70 -50 -120 1 0 0 0 1 0 0 0 1 2780.dat
+0 // bracket 3L beam
+1 14 80 -70 -120 0 -1 0 0 0 1 -1 0 0 32523.dat
+0 // bracket cross block
+1 71 -60 -70 -120 1 0 0 0 1 0 0 0 1 48989.dat
+0 // pin
+1 0 -70 -90 -120 1 0 0 0 1 0 0 0 1 2780.dat
+0 // pin
+1 0 -70 -50 -120 1 0 0 0 1 0 0 0 1 2780.dat
+0 // bracket 3L beam
+1 14 -80 -70 -120 0 -1 0 0 0 1 -1 0 0 32523.dat
+0 STEP
+0 // db2-arm
+1 16 40 -110 -110 1 0 0 0 1 0 0 0 1 fllsim-mount.dat
+0 // db2-force
+1 16 -100 -50 -190 1 0 0 0 1 0 0 0 1 fllsim-mount.dat
+0 // db2-distance
+1 16 60 -180 -100 1 0 0 0 1 0 0 0 1 fllsim-mount.dat
+0 STEP
