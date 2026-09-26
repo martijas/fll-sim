@@ -264,9 +264,12 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
 
   /** Ctrl + / Ctrl −: zoom (the free camera's lens; the others move closer / further). */
   function zoom(dir: number) {
+    zoomBy(dir > 0 ? 0.8 : 1.25);
+  }
+  /** Zoom by a factor (< 1 = closer / narrower lens). */
+  function zoomBy(f: number) {
     const s = st.current;
     if (!s) return;
-    const f = dir > 0 ? 0.8 : 1.25;
     if (s.mode === "free") {
       s.camera.fov = Math.min(90, Math.max(5, s.camera.fov * f));
       s.camera.updateProjectionMatrix();
@@ -321,6 +324,33 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       }
     };
     const pup = () => (drag = null);
+    // Trackpad: two-finger pinch zooms (Chromium sends it as a wheel event with Ctrl held), two
+    // fingers moving turn the view. A mouse wheel (whole notches, up/down only) still zooms.
+    const wheel = (e: WheelEvent) => {
+      const s = st.current;
+      if (!s) return;
+      e.preventDefault();
+      e.stopPropagation(); // (not OrbitControls' own wheel zoom)
+      const px = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1;
+      const dx = e.deltaX * px, dy = e.deltaY * px;
+      const mouseWheel = !e.ctrlKey && (e.deltaMode !== 0 || (dx === 0 && Math.abs(dy) >= 50 && Number.isInteger(dy)));
+      if (e.ctrlKey || mouseWheel) {
+        zoomBy(Math.exp(dy * (e.ctrlKey ? 0.01 : 0.002)));
+        return;
+      }
+      if (s.mode === "free") turn(dx, dy);
+      else {
+        // orbit around what the camera looks at
+        if (s.mode === "follow" || s.mode === "top") s.mode = "orbit";
+        const off = new THREE.Vector3().subVectors(s.camera.position, s.controls.target);
+        const sph = new THREE.Spherical().setFromVector3(off);
+        sph.theta += dx * 0.005;
+        sph.phi = Math.max(0.05, Math.min(Math.PI / 2 - 0.02, sph.phi + dy * 0.005));
+        s.camera.position.copy(s.controls.target).add(new THREE.Vector3().setFromSpherical(sph));
+        s.camera.lookAt(s.controls.target);
+      }
+    };
+    el.addEventListener("wheel", wheel, { passive: false, capture: true });
     el.addEventListener("pointerdown", pdown);
     el.addEventListener("pointermove", pmove);
     el.addEventListener("pointerup", pup);
@@ -341,6 +371,7 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       el.removeEventListener("pointerdown", pdown);
       el.removeEventListener("pointermove", pmove);
       el.removeEventListener("pointerup", pup);
+      el.removeEventListener("wheel", wheel, { capture: true });
     };
   }, []);
 
