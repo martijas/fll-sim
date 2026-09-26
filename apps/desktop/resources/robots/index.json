@@ -25,5 +25,12 @@
     "file": "driving-base-3.ldr",
     "note": "FIRST robot guide: drive C (left) + D (right), accessory motor E, colour sensor B",
     "drive": "CD"
+  },
+  {
+    "id": "advanced-driving-base",
+    "name": "Advanced Driving Base",
+    "file": "advanced-driving-base.ldr",
+    "drive": "AE",
+    "note": "FIRST robot guide: drive A (left) + E (right, large motors), tool motors C (rear) and D (front), colour sensors B and F; takes the dozer blade (rear) and lift arm (front)"
   }
 ]

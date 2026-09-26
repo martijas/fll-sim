@@ -1,5 +1,15 @@
 [
   {
+    "id": "lift-arm",
+    "name": "Lift arm (front, motor D)",
+    "file": "lift-arm.ldr"
+  },
+  {
+    "id": "dozer-blade",
+    "name": "Dozer blade (rear, motor C)",
+    "file": "dozer-blade.ldr"
+  },
+  {
     "id": "db2-arm",
     "name": "Driving Base 2: arm (motor E)",
     "file": "db2-arm.ldr"
