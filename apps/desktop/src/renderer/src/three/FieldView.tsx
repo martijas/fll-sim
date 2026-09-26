@@ -86,8 +86,8 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     ghosts: THREE.Group;
     mode: CameraMode;
     matMesh: THREE.Mesh;
-    /** free camera: the floating orb the camera orbits (and flies with WASD) */
-    orb: THREE.Mesh;
+    /** free camera (first-person): where it looks, radians */
+    look: { yaw: number; pitch: number };
     /** follow camera distance factor (Ctrl + / −) */
     followScale: number;
   } | null>(null);
@@ -162,12 +162,7 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     const ghosts = new THREE.Group();
     scene.add(ghosts);
 
-    const orb = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), new THREE.MeshBasicMaterial({ color: "#ffcf00", transparent: true, opacity: 0.55, depthTest: false }));
-    orb.renderOrder = 10;
-    orb.visible = false;
-    scene.add(orb);
-
-    st.current = { renderer, scene, camera, controls, bodies: [], dynamic, trail, trailPts: [], ghosts, mode: "orbit", matMesh, orb, followScale: 1 };
+    st.current = { renderer, scene, camera, controls, bodies: [], dynamic, trail, trailPts: [], ghosts, mode: "orbit", matMesh, look: { yaw: 0, pitch: 0 }, followScale: 1 };
     setCam("orbit");
 
     const ro = new ResizeObserver(() => {
@@ -186,31 +181,24 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       const now = performance.now(), dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       if (s.mode === "free") {
-        // WASD: fly the orb (and the camera with it) over the table; Q/E: down/up; Shift: faster
+        // first person: the camera is the player. WASD moves where it looks, Q/E down/up, Shift faster
         const k = keys.current;
-        const fwd = new THREE.Vector3().subVectors(controls.target, camera.position).setY(0);
-        if (fwd.lengthSq() < 1e-9) fwd.set(0, 0, -1);
-        fwd.normalize();
-        const right = new THREE.Vector3().crossVectors(fwd, camera.up).normalize();
+        camera.rotation.set(s.look.pitch, s.look.yaw, 0, "YXZ");
+        const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion).setY(0).normalize();
         const move = new THREE.Vector3();
         if (k.has("w")) move.add(fwd);
         if (k.has("s")) move.sub(fwd);
         if (k.has("d")) move.add(right);
         if (k.has("a")) move.sub(right);
-        if (k.has("e")) move.y += 1;
+        if (k.has("e") || k.has(" ")) move.y += 1;
         if (k.has("q")) move.y -= 1;
         if (move.lengthSq() > 0) {
-          const dist = camera.position.distanceTo(controls.target);
-          const speed = Math.max(0.25, dist * 0.8) * (k.has("shift") ? 3 : 1);
-          move.normalize().multiplyScalar(speed * dt);
-          if (controls.target.y + move.y < 0) move.y = -controls.target.y; // not below the table
-          controls.target.add(move);
+          move.normalize().multiplyScalar(0.6 * (k.has("shift") ? 3 : 1) * dt);
           camera.position.add(move);
+          camera.position.y = Math.max(0.01, camera.position.y); // not through the table
         }
-        s.orb.position.copy(controls.target);
-        s.orb.scale.setScalar(Math.max(0.004, camera.position.distanceTo(controls.target) * 0.012));
       }
-      s.orb.visible = s.mode === "free";
       if (s.mode === "follow" && s.bodies.length) {
         const robot = s.bodies.find((b) => b.userData.kind === "robot");
         if (robot) {
@@ -222,7 +210,7 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
           controls.target.lerp(target, 0.2);
         }
       }
-      controls.update();
+      if (s.mode !== "free") controls.update();
       renderer.render(scene, camera);
     };
     loop();
@@ -259,19 +247,31 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     } else if (mode === "orbit") {
       s.camera.position.set(c.x, 1.5, c.z + 1.9);
       s.controls.target.copy(c);
-    } else if (mode === "free") {
-      // start flying from where the camera looks now, with the orb a little in front of it
-      const dir = new THREE.Vector3().subVectors(s.controls.target, s.camera.position);
-      if (dir.length() > 1.2) s.controls.target.copy(s.camera.position).add(dir.setLength(1.2));
     }
+    if (mode === "free") {
+      // start from the current view, looking the same way
+      const d = new THREE.Vector3(0, 0, -1).applyQuaternion(s.camera.quaternion);
+      s.look = { yaw: Math.atan2(-d.x, -d.z), pitch: Math.asin(Math.max(-1, Math.min(1, d.y))) };
+    } else {
+      // leaving the free camera: back to the normal lens, mouse released
+      if (document.pointerLockElement) document.exitPointerLock();
+      s.camera.fov = 40;
+      s.camera.updateProjectionMatrix();
+    }
+    s.controls.enabled = mode !== "free";
     host.current?.focus();
   }
 
-  /** Ctrl + / Ctrl −: move the camera towards / away from what it looks at. */
+  /** Ctrl + / Ctrl −: zoom (the free camera's lens; the others move closer / further). */
   function zoom(dir: number) {
     const s = st.current;
     if (!s) return;
     const f = dir > 0 ? 0.8 : 1.25;
+    if (s.mode === "free") {
+      s.camera.fov = Math.min(90, Math.max(5, s.camera.fov * f));
+      s.camera.updateProjectionMatrix();
+      return;
+    }
     if (s.mode === "follow") {
       s.followScale = Math.min(6, Math.max(0.2, s.followScale * f));
       return;
@@ -290,7 +290,7 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     const down = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.altKey || e.metaKey) return;
       const k = name(e);
-      if (!"wasdqe".includes(k) && k !== "shift") return;
+      if (!["w", "a", "s", "d", "q", "e", " ", "shift"].includes(k)) return;
       e.preventDefault();
       keys.current.add(k);
       // flying from another camera switches to the free camera
@@ -298,7 +298,36 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       if (s && k !== "shift" && s.mode !== "free") setCam("free");
     };
     const up = (e: KeyboardEvent) => keys.current.delete(name(e));
-    const blur = () => keys.current.clear();
+    // free camera: drag to look around
+    let drag: { x: number; y: number } | null = null;
+    const turn = (dx: number, dy: number) => {
+      const s = st.current!;
+      const k = 0.0025 * (s.camera.fov / 40); // slower when zoomed in
+      s.look.yaw -= dx * k;
+      s.look.pitch = Math.max(-1.55, Math.min(1.55, s.look.pitch - dy * k));
+    };
+    const pdown = (e: PointerEvent) => {
+      if (st.current?.mode !== "free" || e.button !== 0) return;
+      // like a game: clicking captures the mouse and it turns the view (Esc lets go)
+      if (document.pointerLockElement !== el) el.requestPointerLock?.()?.catch?.(() => {});
+      drag = { x: e.clientX, y: e.clientY };
+    };
+    const pmove = (e: PointerEvent) => {
+      if (st.current?.mode !== "free") return;
+      if (document.pointerLockElement === el) turn(e.movementX, e.movementY);
+      else if (drag && e.buttons & 1) {
+        turn(e.clientX - drag.x, e.clientY - drag.y);
+        drag = { x: e.clientX, y: e.clientY };
+      }
+    };
+    const pup = () => (drag = null);
+    el.addEventListener("pointerdown", pdown);
+    el.addEventListener("pointermove", pmove);
+    el.addEventListener("pointerup", pup);
+    const blur = () => {
+      keys.current.clear();
+      if (document.pointerLockElement === el) document.exitPointerLock();
+    };
     const focus = () => el.focus();
     el.addEventListener("keydown", down);
     el.addEventListener("keyup", up);
@@ -309,6 +338,9 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       el.removeEventListener("keyup", up);
       el.removeEventListener("blur", blur);
       el.removeEventListener("pointerdown", focus);
+      el.removeEventListener("pointerdown", pdown);
+      el.removeEventListener("pointermove", pmove);
+      el.removeEventListener("pointerup", pup);
     };
   }, []);
 

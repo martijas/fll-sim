@@ -890,7 +890,7 @@ export function App() {
             <FieldView ref={field} season={season} matCanvas={mat?.canvas ?? null} />
             <div className="cam-buttons">
               {(["orbit", "top", "follow", "free"] as CameraMode[]).map((m) => (
-                <button key={m} onClick={() => field.current?.setCamera(m)} title={m === "free" ? "Free camera: WASD fly the orb, Q/E down/up, Shift faster, drag to look around it, Ctrl +/− zoom (click the field first)" : "Ctrl +/− zoom"}>
+                <button key={m} onClick={() => field.current?.setCamera(m)} title={m === "free" ? "Free camera (first person): click the field to take the mouse (Esc gives it back), move the mouse to look, WASD move, Space/E up, Q down, Shift faster, Ctrl +/− zoom" : "Ctrl +/− zoom"}>
                   {m === "orbit" ? "3D" : m === "top" ? "Top" : m === "follow" ? "Follow" : "Free"}
                 </button>
               ))}
