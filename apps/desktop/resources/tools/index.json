@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "id": "db2-arm",
+    "name": "Driving Base 2: arm (motor E)",
+    "file": "db2-arm.ldr"
+  },
+  {
+    "id": "db2-force",
+    "name": "Driving Base 2: force sensor bumper (port A)",
+    "file": "db2-force.ldr"
+  },
+  {
+    "id": "db2-distance",
+    "name": "Driving Base 2: distance sensor (port F)",
+    "file": "db2-distance.ldr"
+  }
+]

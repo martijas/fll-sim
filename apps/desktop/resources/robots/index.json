@@ -11,6 +11,12 @@
     "note": "FIRST robot guide: drive C (left) + D (right), accessory motor E"
   },
   {
+    "id": "driving-base-2",
+    "name": "Driving Base 2",
+    "file": "driving-base-2.ldr",
+    "note": "FIRST robot guide: drive C (left) + D (right), accessory motor E; takes its arm, force sensor (A) and distance sensor (F) accessories"
+  },
+  {
     "id": "driving-base-3",
     "name": "Driving Base 3",
     "file": "driving-base-3.ldr",
