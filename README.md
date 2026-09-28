@@ -107,7 +107,7 @@ pnpm dev` (or `export GALLIUM_DRIVER=d3d12` in `~/.profile`). Some Windows drive
 corrupted or black windows: if so, drop it again and stay on Low graphics. Chromium flags don't
 change any of this: `--ignore-gpu-blocklist` (which FLL Sim already passes) is what makes WebGL
 work on llvmpipe at all; `--enable-gpu-rasterization` only relabels rasterization, `--use-gl=angle
---use-angle=default` restate the Linux defaults, and `--enable-gpu` is not a Chromium switch.
+--use-angle=default` restate the Linux defaults, and `--enable-gpu` is only read by Chromium's headless mode, so it does nothing here.
 
 Headless runs (CI, batch testing of programs):
 
