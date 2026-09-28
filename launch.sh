@@ -30,8 +30,10 @@ for a in "$@"; do
     *) ARGS+=("$a") ;;
   esac
 done
+# Ask when a terminal is attached (also under `curl … | bash`, whose stdin is the pipe): the
+# answer is read from /dev/tty. From the app menu there is no terminal, so the last choice is used.
 if [ "$ASK" = auto ]; then
-  if [ -t 0 ] && [ -t 1 ]; then ASK=yes; else ASK=no; fi
+  if [ -t 1 ] && [ -r /dev/tty ] && [ -w /dev/tty ]; then ASK=yes; else ASK=no; fi
 fi
 
 # Every option is a label plus the KEY=VALUE lines (newline-separated) it sets.
@@ -80,7 +82,7 @@ if [ "$ASK" = yes ]; then
     printf ' %s %d) %s\n' "$mark" $((i + 1)) "${LABELS[$i]}"
   done
   while :; do
-    read -r -p "Choose [$DEFI]: " c || c=""
+    read -r -p "Choose [$DEFI]: " c </dev/tty || c=""
     c=${c:-$DEFI}
     [[ "$c" =~ ^[0-9]+$ ]] && [ "$c" -ge 1 ] && [ "$c" -le "${#LABELS[@]}" ] && break
     echo "Please enter a number from 1 to ${#LABELS[@]}."
