@@ -41,7 +41,7 @@ SUDO=""
 
 # ---- 1. system packages ------------------------------------------------------------------------
 step "System packages"
-PKGS=(git curl ca-certificates xz-utils libgtk-3-0 libnss3 libxss1 libgbm1 libxshmfence1 libdrm2 libasound2 libnotify4 xdg-utils)
+PKGS=(git curl ca-certificates xz-utils libgtk-3-0 libnss3 libxss1 libgbm1 libxshmfence1 libdrm2 libasound2 libnotify4 xdg-utils mesa-utils)
 installed() { dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "ok installed"; }
 MISSING=()
 for p in "${PKGS[@]}"; do
@@ -122,9 +122,10 @@ step "App menu launcher"
 mkdir -p "$HOME/.local/bin" "$HOME/.local/share/applications"
 cat > "$HOME/.local/bin/fll-sim" <<EOF
 #!/usr/bin/env bash
-# Start FLL Sim from its source checkout (made by setup.sh)
+# Start FLL Sim from its source checkout (made by setup.sh): launch.sh asks which graphics
+# driver to use when run in a terminal, and remembers it for the app menu.
 export PATH="$NODE_HOME/bin:\$PATH"
-cd "$DIR/apps/desktop" && exec pnpm exec electron-vite preview "\$@"
+exec "$DIR/launch.sh" "\$@"
 EOF
 chmod +x "$HOME/.local/bin/fll-sim"
 ICON="$DIR/apps/desktop/build/icon.png"
@@ -140,6 +141,7 @@ Terminal=false
 EOF
 command -v update-desktop-database >/dev/null && update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
 echo "Start it later from the app menu (FLL Sim) or with: ~/.local/bin/fll-sim"
+echo "(run fll-sim in a terminal to choose the graphics driver / GPU; the app menu reuses that choice)"
 
 # ---- 6. first launch ---------------------------------------------------------------------------
 if grep -qi microsoft /proc/version 2>/dev/null && [ -z "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ]; then
