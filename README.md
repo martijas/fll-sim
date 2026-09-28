@@ -103,8 +103,11 @@ GALLIUM_DRIVER=d3d12 glxinfo -B                # Mesa 25 on WSLg often picks llv
 ```
 
 If only the last command shows `D3D12 (…)`, start FLL Sim the same way: `GALLIUM_DRIVER=d3d12
-pnpm dev` (or `export GALLIUM_DRIVER=d3d12` in `~/.profile`). Some Windows drivers then show
-corrupted or black windows: if so, drop it again and stay on Low graphics. Chromium flags don't
+pnpm dev` (or `export GALLIUM_DRIVER=d3d12` in `~/.profile`). On a PC with two GPUs, Mesa picks
+the integrated one (e.g. `D3D12 (AMD Radeon(TM) Graphics)` on a Ryzen with a GeForce card); add
+`MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA` (any part of the name in Windows' Device Manager) to get
+the other. Some Windows drivers then show corrupted or black windows: if so, drop the variables
+again and stay on Low graphics. Chromium flags don't
 change any of this: `--ignore-gpu-blocklist` (which FLL Sim already passes) is what makes WebGL
 work on llvmpipe at all; `--enable-gpu-rasterization` only relabels rasterization, `--use-gl=angle
 --use-angle=default` restate the Linux defaults, and `--enable-gpu` is only read by Chromium's headless mode, so it does nothing here.
