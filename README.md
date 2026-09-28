@@ -79,6 +79,27 @@ libraries Electron uses: `sudo apt install libnss3 libgtk-3-0 libgbm1 libasound2
 `pnpm dev` ever says *Electron uninstall*, run `pnpm install` again (it downloads Electron) or
 `node -e "require('electron')"` in `apps/desktop`.
 
+**Graphics on WSL and in VMs.** The 3D field needs WebGL2. Chromium (inside Electron) refuses the
+graphics driver it finds on most WSL and VM setups, so FLL Sim tells it to use that driver anyway
+(issue #2). Which driver that is shows in the **Graphics** menu's tooltip (hover it), or run
+`FLLSIM_GPU_INFO=1 pnpm dev` to open Chromium's full `chrome://gpu` report in a second window:
+
+- `D3D12 (NVIDIA …)`, `D3D12 (Intel …)`, `D3D12 (AMD …)`: the real Windows GPU, through WSL's
+  GPU passthrough. All good.
+- `llvmpipe` or `SwiftShader`: the CPU is drawing. `chrome://gpu` still says *Hardware
+  accelerated* for everything, but that only means Chromium's GPU process does the work through
+  OpenGL, not that a GPU is involved; on llvmpipe the "GPU" is Mesa's CPU rasterizer. **Auto**
+  graphics picks Low or Lowest for this, which is usable.
+
+To get the real GPU on WSL2: a Windows graphics driver with WSL support (the current driver from
+NVIDIA, AMD or Intel; Windows 11, or Windows 10 21H2+), then `wsl --update` and `wsl --shutdown`
+from Windows. Inside WSL, `ls -l /dev/dxg` must exist, `ls /usr/lib/wsl/lib` should list
+`libd3d12.so`, and `sudo apt install mesa-utils && glxinfo -B | grep renderer` should say
+`D3D12 (…)`. If `glxinfo` says `llvmpipe`, WSL isn't passing the GPU through yet (driver,
+Windows build, or a Mesa built without its `d3d12` driver). Chromium flags don't change any of this: `--ignore-gpu-blocklist` (which FLL Sim
+already passes) is what makes WebGL work on llvmpipe at all; `--enable-gpu-rasterization`,
+`--use-gl=angle` and `--use-angle=default` only relabel or restate the defaults.
+
 Headless runs (CI, batch testing of programs):
 
 ```sh
