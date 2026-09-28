@@ -11,6 +11,10 @@ app.commandLine.appendSwitch("enable-features", "SharedArrayBuffer");
 // 3D view (WebGL2): Chromium refuses GPU drivers on its blocklist (common under WSLg and in VMs,
 // issue #2) — use them anyway, and fall back to software rendering (SwiftShader) when no GPU
 // works at all. Only FLL Sim's own content is ever loaded, so these are safe.
+// (Under WSLg without a working D3D12 driver the "GPU" Chromium finds is Mesa's llvmpipe, a CPU
+// renderer, which the blocklist rejects outright — so without this flag there is no WebGL at all.
+// With it, WebGL runs on llvmpipe: still the CPU, but usable. FLLSIM_GPU_INFO=1 opens chrome://gpu
+// to see which driver the app got: "D3D12 (…)" is the real GPU, "llvmpipe" / "SwiftShader" is not.)
 if (!process.env.FLLSIM_NO_WEBGL) {
   app.commandLine.appendSwitch("ignore-gpu-blocklist");
   app.commandLine.appendSwitch("enable-unsafe-swiftshader");
@@ -198,6 +202,8 @@ app.whenReady().then(() => {
   });
 
   createWindow();
+  // Chromium's graphics report (driver, what is hardware accelerated, blocklist entries).
+  if (process.env.FLLSIM_GPU_INFO) new BrowserWindow({ width: 1000, height: 800, title: "FLL Sim graphics (chrome://gpu)" }).loadURL("chrome://gpu");
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

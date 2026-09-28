@@ -79,6 +79,36 @@ libraries Electron uses: `sudo apt install libnss3 libgtk-3-0 libgbm1 libasound2
 `pnpm dev` ever says *Electron uninstall*, run `pnpm install` again (it downloads Electron) or
 `node -e "require('electron')"` in `apps/desktop`.
 
+**Graphics on WSL and in VMs.** The 3D field needs WebGL2. Chromium (inside Electron) refuses the
+graphics driver it finds on most WSL and VM setups, so FLL Sim tells it to use that driver anyway
+(issue #2). Which driver that is shows in the **Graphics** menu's tooltip (hover it), or run
+`FLLSIM_GPU_INFO=1 pnpm dev` to open Chromium's full `chrome://gpu` report in a second window:
+
+- `D3D12 (NVIDIA …)`, `D3D12 (Intel …)`, `D3D12 (AMD …)`: the real Windows GPU, through WSL's
+  GPU passthrough. All good (WSLg still copies every frame through system memory, so it is
+  slower than the same GPU on Windows, but far faster than the CPU).
+- `llvmpipe` or `SwiftShader`: the CPU is drawing. `chrome://gpu` still says *Hardware
+  accelerated* for everything, but that label only means "not on Chromium's blocklist": the
+  work goes through OpenGL in Chromium's GPU process, and on llvmpipe that OpenGL is Mesa's CPU
+  rasterizer. **Auto** graphics picks Low or Lowest for this, which is usable.
+
+To get the real GPU on WSL2 (Windows 11, or Windows 10 21H2+, with the current NVIDIA, AMD or
+Intel driver; `wsl --update` and `wsl --shutdown` from Windows), check inside WSL:
+
+```sh
+ls -l /dev/dxg /usr/lib/wsl/lib/libd3d12.so   # both must exist: the GPU passthrough device and driver
+env | grep -E 'LIBGL|GALLIUM|MESA'             # LIBGL_ALWAYS_SOFTWARE=1 or LIBGL_ALWAYS_INDIRECT=1 (old VcXsrv guides) keep the GPU out
+sudo apt install mesa-utils && glxinfo -B      # "OpenGL renderer string: D3D12 (…)" = GPU, "llvmpipe" = CPU (Electron uses this same GLX path)
+GALLIUM_DRIVER=d3d12 glxinfo -B                # Mesa 25 on WSLg often picks llvmpipe although D3D12 works
+```
+
+If only the last command shows `D3D12 (…)`, start FLL Sim the same way: `GALLIUM_DRIVER=d3d12
+pnpm dev` (or `export GALLIUM_DRIVER=d3d12` in `~/.profile`). Some Windows drivers then show
+corrupted or black windows: if so, drop it again and stay on Low graphics. Chromium flags don't
+change any of this: `--ignore-gpu-blocklist` (which FLL Sim already passes) is what makes WebGL
+work on llvmpipe at all; `--enable-gpu-rasterization` only relabels rasterization, `--use-gl=angle
+--use-angle=default` restate the Linux defaults, and `--enable-gpu` is only read by Chromium's headless mode, so it does nothing here.
+
 Headless runs (CI, batch testing of programs):
 
 ```sh
