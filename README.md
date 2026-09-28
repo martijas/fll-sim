@@ -97,8 +97,8 @@ Intel driver; `wsl --update` and `wsl --shutdown` from Windows), check inside WS
 
 ```sh
 ls -l /dev/dxg /usr/lib/wsl/lib/libd3d12.so   # both must exist: the GPU passthrough device and driver
-env | grep -E 'LIBGL|GALLIUM|MESA'             # LIBGL_ALWAYS_SOFTWARE=1 would force the CPU
-sudo apt install mesa-utils && glxinfo -B      # "OpenGL renderer string: D3D12 (…)" = GPU, "llvmpipe" = CPU
+env | grep -E 'LIBGL|GALLIUM|MESA'             # LIBGL_ALWAYS_SOFTWARE=1 or LIBGL_ALWAYS_INDIRECT=1 (old VcXsrv guides) keep the GPU out
+sudo apt install mesa-utils && glxinfo -B      # "OpenGL renderer string: D3D12 (…)" = GPU, "llvmpipe" = CPU (Electron uses this same GLX path)
 GALLIUM_DRIVER=d3d12 glxinfo -B                # Mesa 25 on WSLg often picks llvmpipe although D3D12 works
 ```
 
