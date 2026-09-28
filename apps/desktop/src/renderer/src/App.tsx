@@ -949,7 +949,7 @@ export function App() {
               <select
                 value={graphics}
                 onChange={(e) => setGraphics(e.target.value as GraphicsQuality)}
-                title={`3D detail. Graphics: ${gfxInfo?.renderer || "unknown"}${gfxInfo?.software ? " (software rendering: no usable GPU, so Auto uses Low)" : ""}. Only the drawing changes, never the physics. Medium: no shadows or outlines. Low: also simpler lighting and less-round LEGO shapes. Lowest: mission models drawn as their collision blocks.`}
+                title={`3D detail. Graphics: ${gfxInfo?.renderer || "unknown"}${gfxInfo?.software ? " (software rendering: the CPU is drawing, so Auto uses Low; on WSL see the README section Graphics on WSL)" : ""}. Only the drawing changes, never the physics. Medium: no shadows or outlines. Low: also simpler lighting and less-round LEGO shapes. Lowest: mission models drawn as their collision blocks.`}
               >
                 <option value="auto">Graphics: Auto ({gfxInfo?.quality ?? "…"})</option>
                 <option value="high">Graphics: High</option>

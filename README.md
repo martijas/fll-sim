@@ -85,20 +85,29 @@ graphics driver it finds on most WSL and VM setups, so FLL Sim tells it to use t
 `FLLSIM_GPU_INFO=1 pnpm dev` to open Chromium's full `chrome://gpu` report in a second window:
 
 - `D3D12 (NVIDIA …)`, `D3D12 (Intel …)`, `D3D12 (AMD …)`: the real Windows GPU, through WSL's
-  GPU passthrough. All good.
+  GPU passthrough. All good (WSLg still copies every frame through system memory, so it is
+  slower than the same GPU on Windows, but far faster than the CPU).
 - `llvmpipe` or `SwiftShader`: the CPU is drawing. `chrome://gpu` still says *Hardware
-  accelerated* for everything, but that only means Chromium's GPU process does the work through
-  OpenGL, not that a GPU is involved; on llvmpipe the "GPU" is Mesa's CPU rasterizer. **Auto**
-  graphics picks Low or Lowest for this, which is usable.
+  accelerated* for everything, but that label only means "not on Chromium's blocklist": the
+  work goes through OpenGL in Chromium's GPU process, and on llvmpipe that OpenGL is Mesa's CPU
+  rasterizer. **Auto** graphics picks Low or Lowest for this, which is usable.
 
-To get the real GPU on WSL2: a Windows graphics driver with WSL support (the current driver from
-NVIDIA, AMD or Intel; Windows 11, or Windows 10 21H2+), then `wsl --update` and `wsl --shutdown`
-from Windows. Inside WSL, `ls -l /dev/dxg` must exist, `ls /usr/lib/wsl/lib` should list
-`libd3d12.so`, and `sudo apt install mesa-utils && glxinfo -B | grep renderer` should say
-`D3D12 (…)`. If `glxinfo` says `llvmpipe`, WSL isn't passing the GPU through yet (driver,
-Windows build, or a Mesa built without its `d3d12` driver). Chromium flags don't change any of this: `--ignore-gpu-blocklist` (which FLL Sim
-already passes) is what makes WebGL work on llvmpipe at all; `--enable-gpu-rasterization`,
-`--use-gl=angle` and `--use-angle=default` only relabel or restate the defaults.
+To get the real GPU on WSL2 (Windows 11, or Windows 10 21H2+, with the current NVIDIA, AMD or
+Intel driver; `wsl --update` and `wsl --shutdown` from Windows), check inside WSL:
+
+```sh
+ls -l /dev/dxg /usr/lib/wsl/lib/libd3d12.so   # both must exist: the GPU passthrough device and driver
+env | grep -E 'LIBGL|GALLIUM|MESA'             # LIBGL_ALWAYS_SOFTWARE=1 would force the CPU
+sudo apt install mesa-utils && glxinfo -B      # "OpenGL renderer string: D3D12 (…)" = GPU, "llvmpipe" = CPU
+GALLIUM_DRIVER=d3d12 glxinfo -B                # Mesa 25 on WSLg often picks llvmpipe although D3D12 works
+```
+
+If only the last command shows `D3D12 (…)`, start FLL Sim the same way: `GALLIUM_DRIVER=d3d12
+pnpm dev` (or `export GALLIUM_DRIVER=d3d12` in `~/.profile`). Some Windows drivers then show
+corrupted or black windows: if so, drop it again and stay on Low graphics. Chromium flags don't
+change any of this: `--ignore-gpu-blocklist` (which FLL Sim already passes) is what makes WebGL
+work on llvmpipe at all; `--enable-gpu-rasterization` only relabels rasterization, `--use-gl=angle
+--use-angle=default` restate the Linux defaults, and `--enable-gpu` is not a Chromium switch.
 
 Headless runs (CI, batch testing of programs):
 
