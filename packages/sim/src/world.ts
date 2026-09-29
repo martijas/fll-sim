@@ -594,14 +594,14 @@ export class Simulation {
 
   /**
    * State of every mission model body: pose now and as set up, and what it touches (for
-   * automatic scoring). Contacts come from the physics engine, so they are only known for
-   * bodies that can move; frozen (not yet woken) models are exactly as set up.
+   * automatic scoring). Contacts come from the physics engine: fixed bodies (Dual Lock, frozen
+   * models) report what moving bodies touch them, e.g. the robot pushing a habitat.
    */
   snapshot(): FieldSnapshot {
     const bodies = this.modelBodies.map((m): BodySnapshot => {
       const t = m.body.translation(), q = m.body.rotation();
       const touches = new Set<string>();
-      if (!m.body.isFixed()) {
+      {
         for (let i = 0; i < m.body.numColliders(); i++) {
           const c = m.body.collider(i);
           this.world.contactPairsWith(c, (other) => {
@@ -715,8 +715,16 @@ export class Simulation {
     let best = Infinity;
     for (const [a, b] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const d = normalize(add(dir, add(scale3(side, a * k), scale3(up2, b * k))));
-      const hit = this.castFromRobot(origin, d, 2.0);
-      if (hit && hit.timeOfImpact < best) best = hit.timeOfImpact;
+      if (a === 0 && b === 0) {
+        const hit = this.castFromRobot(origin, d, 2.0);
+        if (hit && hit.timeOfImpact < best) best = hit.timeOfImpact;
+        continue;
+      }
+      // The edge of the cone only hears surfaces it meets fairly square-on: an ultrasonic echo
+      // doesn't come back from a surface at a grazing angle (e.g. the mat, seen from a few cm up,
+      // which would otherwise read as ~9.5 x the sensor's height in front of every robot).
+      const hit = this.world.castRayAndGetNormal(new RAPIER.Ray(origin, d), 2.0, true, undefined, groups(G_QUERY, G_FIELD | G_MODEL));
+      if (hit && hit.timeOfImpact < best && Math.abs(dot(d, hit.normal)) >= 0.5) best = hit.timeOfImpact;
     }
     const mm = mToMm(best);
     return Number.isFinite(mm) && mm >= 40 && mm <= 2000 ? Math.round(mm) : -1;

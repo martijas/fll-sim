@@ -81,6 +81,8 @@ export function App() {
   // calibration runs in the simulator: console lines and "program finished"
   const calTap = useRef<((line: string) => void) | null>(null);
   const calDone = useRef<(() => void) | null>(null);
+  /** Resolved by the first frame of a freshly booted field (calibration). */
+  const freshFrame = useRef<(() => void) | null>(null);
   const lastFrame = useRef<Frame | null>(null);
   /** The Word Blocks program when a blocks project is open (the team's usual way of coding). */
   const [blocksProject, setBlocksProject] = useState<ScratchProject | null>(() => (session ? (session.kind === "blocks" ? session.project ?? null : null) : starterBlocks(loadRobotConfig())));
@@ -146,8 +148,9 @@ export function App() {
   const inspectionRef = useRef(false);
   const applyAutoScore = useCallback((snap: FieldSnapshot) => {
     const a = autoScore(snap);
-    // equipment inspection from the robot's size check (the team still confirms attachments)
-    const next = { ...answersRef.current, ei: inspectionRef.current, ...a.answers };
+    // equipment inspection: the robot's size check can only say No (it can't see spare
+    // attachments or the keystone species); a Yes stays the team's answer
+    const next = { ...answersRef.current, ...(inspectionRef.current ? {} : { ei: false }), ...a.answers };
     setAuto(a);
     setAnswers(next);
     return { total: score(next).total, n: Object.keys(a.answers).length };
@@ -180,6 +183,8 @@ export function App() {
   const [match, setMatch] = useState<{ phase: "running" | "home" | "out" | "over"; usedMs: number; segStart: number; wallAt: number; launches: number } | null>(null);
   const matchRef = useRef(match);
   matchRef.current = match;
+  /** A match is on (not yet over): nothing may reset the field. */
+  const matchOn = !!match && match.phase !== "over";
   const seasonRef = useRef(season);
   seasonRef.current = season;
   const [, setClockTick] = useState(0);
@@ -410,6 +415,7 @@ export function App() {
         scene: (bodies, ids) => field.current?.setScene(bodies, ids, visualsRef.current.lib, visualsRef.current.visuals),
         frame: (f) => {
           lastFrame.current = f;
+          if (freshFrame.current && !f.running && f.timeMs <= 400) freshFrame.current();
           if (f.running) {
             const r = recording.current;
             if (!r.length || f.timeMs - r[r.length - 1].timeMs >= 40) r.push(f);
@@ -424,7 +430,7 @@ export function App() {
           calTap.current?.(l);
         },
         hub: (ev) => playHubEvents(ev, speedRef.current),
-        done: (r, snap) => {
+        done: (r, snap, endMs) => {
           if (!calTap.current) finishRecording.current();
           calDone.current?.();
           setRunning(false);
@@ -432,7 +438,8 @@ export function App() {
           const scored = calTap.current ? null : applyAutoScore(snap); // (not for calibration runs)
           const m = matchRef.current;
           if (m && m.phase === "running") {
-            const usedMs = m.usedMs + (r.simTimeMs - m.segStart);
+            // (the clock ran until the robot came to rest, not just to the program's end)
+            const usedMs = m.usedMs + (endMs - m.segStart);
             const pose = lastFrame.current?.pose;
             const home = pose && seasonRef.current ? homeArea(seasonRef.current, robotModelRef.current, pose) : null;
             if (usedMs >= matchDurMs() - 20) {
@@ -462,16 +469,34 @@ export function App() {
         },
         fatal: (m) => {
           setRunning(false);
+          setPaused(false);
           log(`Simulator error: ${m}`, "err");
+          // (the simulator restarts with a fresh field: a match in progress can't go on)
+          const cur = matchRef.current;
+          if (cur && cur.phase !== "over") setMatch(null);
         },
       },
-      { season, mat: mat?.payload ?? null, robot: bootRobot, start, fieldModels, footprints, colorCalibration: colorCal },
+      // (the robot as it is now: after a match its tools may have changed since bootRobot was set)
+      { season, mat: mat?.payload ?? null, robot: robotModelRef.current, start, fieldModels, footprints, colorCalibration: colorCal },
     );
     ctl.current = c;
     // a new robot or field: recorded frames no longer match its bodies
     sceneVersion.current++;
     setReplay(null);
+    recording.current = [];
     c.boot();
+    c.setSpeed(speedRef.current);
+    // a fresh simulator: nothing is running (whatever ran on the old one is gone)
+    setPaused(false);
+    const m = matchRef.current;
+    if (m && m.phase !== "over") {
+      setMatch(null);
+      log("The field was reset, so the match ended.", "err");
+    }
+    const pending = pendingRun.current;
+    pendingRun.current = null;
+    if (pending) c.run(pending.source, pending.limitMs);
+    else setRunning(false);
     return () => c.dispose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [season, mat, bootRobot, fieldModels, footprints, colorCal]);
@@ -551,9 +576,18 @@ export function App() {
     }
   };
 
+  /** A run asked for while the simulator was being replaced (it starts on the new one). */
+  const pendingRun = useRef<{ source: string; limitMs?: number } | null>(null);
   const run = (match = false) => {
     const c = ctl.current;
     if (!c) return;
+    // during a match, Run (and F5) launches from home again instead of abandoning the match
+    const cur = matchRef.current;
+    if (!match && cur && cur.phase !== "over") {
+      if (cur.phase === "home") launch();
+      else log(cur.phase === "out" ? "The robot is outside home: bring it home or end the match first." : "The robot is already running.", "err");
+      return;
+    }
     if (replay) exitReplay();
     recording.current = [];
     setError(null);
@@ -565,7 +599,11 @@ export function App() {
     setRunning(true);
     // (the field settles for 250 ms before the program starts)
     setMatch(match ? { phase: "running", usedMs: 0, segStart: 250, wallAt: 0, launches: 1 } : null);
-    if (!match && bootRobot !== robotModel) setBootRobot(robotModel);
+    if (match) {
+      // a new match starts with a fresh scoresheet (the equipment inspection answer stays)
+      setAuto(null);
+      setAnswers((a) => ({ ...defaultAnswers(), ei: a.ei, m15d: a.m15d }));
+    }
     c.run(blocks ? blocks.python : source, match ? durationS * 1000 : undefined);
   };
   /** Launch again during a match, from where the robot is in home. */
@@ -652,7 +690,8 @@ export function App() {
   };
   const applyStart = (p: StartPose) => {
     setStart(p);
-    if (!running) {
+    // (during a match the field must stay as it is: "Place at start" puts the robot there)
+    if (!running && !(matchRef.current && matchRef.current.phase !== "over")) {
       field.current?.clearTrail();
       ctl.current?.setStart(p);
     }
@@ -711,8 +750,11 @@ export function App() {
     const c = ctl.current;
     if (!c) return { lines: [], movedMm: 0 };
     field.current?.clearTrail();
+    // the fresh field's first frame (the reboot takes a while: a timer would read the old pose)
+    const fresh = new Promise<void>((r) => (freshFrame.current = r));
     c.setStart(start);
-    await new Promise((r) => setTimeout(r, 600)); // let the fresh field settle and report its pose
+    await Promise.race([fresh, new Promise((r) => setTimeout(r, 20000))]);
+    freshFrame.current = null;
     const p0 = lastFrame.current?.pose;
     const lines: string[] = [];
     calTap.current = (l) => lines.push(l);
@@ -861,7 +903,7 @@ export function App() {
           {match && (
             <span className="match-timer" title="Match time remaining">{fmtClock(matchLeftMs())}</span>
           )}
-          <button onClick={reset} disabled={running} title="Put the robot back at the start pose">↺ Reset</button>
+          <button onClick={reset} disabled={running || matchOn} title="Put the robot back at the start pose (and reset the field)">↺ Reset</button>
           <label>
             Speed
             <select value={speed} onChange={(e) => changeSpeed(Number(e.target.value))}>
@@ -888,8 +930,8 @@ export function App() {
             onDeleteCustom={(t) => { saveCustomTool(t.name, null); setCustomTools(loadCustomTools()); setToolIds(toolIds.filter((x) => x !== t.id)); }}
           />
           <button onClick={() => setShowRobot(true)} disabled={running || robotSource !== "drivebase"} title="Motor and sensor ports, wheels">Ports…</button>
-          <button onClick={() => setShowCal(true)} disabled={running || robotSource !== "drivebase"} title="Measure your real robot with a few test programs and make the simulated one match it">Calibrate…</button>
-          <button onClick={importMat} title="Load the official mat print file (PDF), or a scan/photo of your mat cropped to its edges">Mat…</button>
+          <button onClick={() => setShowCal(true)} disabled={running || matchOn || robotSource !== "drivebase"} title="Measure your real robot with a few test programs and make the simulated one match it">Calibrate…</button>
+          <button onClick={importMat} disabled={running || matchOn} title="Load the official mat print file (PDF), or a scan/photo of your mat cropped to its edges">Mat…</button>
         </div>
       </header>
       {tab === "build" && ldraw && (
@@ -957,11 +999,11 @@ export function App() {
                 <option value="low">Graphics: Low</option>
                 <option value="lowest">Graphics: Lowest (blocks)</option>
               </select>
-              <button onClick={() => setFootprints(!footprints)} disabled={running} title="Mission models without a real-part build are shown as blocks at their wireframe positions">
+              <button onClick={() => setFootprints(!footprints)} disabled={running || matchOn} title="Mission models without a real-part build are shown as blocks at their wireframe positions">
                 {footprints ? "Hide" : "Show"} mission blocks
               </button>
               {Object.keys(bundled).length > 0 && (
-                <button onClick={() => setRealMissions(!realMissions)} disabled={running} title="The season's mission models built from real LEGO parts (off = simple blocks, faster)">
+                <button onClick={() => setRealMissions(!realMissions)} disabled={running || matchOn} title="The season's mission models built from real LEGO parts (off = simple blocks, faster)">
                   Mission models: {realMissions ? "LEGO" : "blocks"}
                 </button>
               )}
@@ -972,7 +1014,7 @@ export function App() {
                       {site[0].toUpperCase() + site.slice(1)}{" "}
                       <select
                         value={docks[site]}
-                        disabled={running}
+                        disabled={running || matchOn}
                         onChange={(e) => {
                           const mid = e.target.value;
                           // (a model can only be on one dock: swap with the dock that had it)

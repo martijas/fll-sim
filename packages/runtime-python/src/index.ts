@@ -69,10 +69,21 @@ export async function runPython(o: RunOptions): Promise<RunResult> {
     }
   };
 
+  // (reading the clock or a status costs time too: a busy-wait on time.ticks_ms() moves the
+  // simulation on like on the hub, and Stop / the time limit can end it)
   const bridge = {
-    now: () => sim.timeMs,
-    st: (id: number) => api.status(id),
-    dk: (port: number) => api.deviceKind(port),
+    now: () => {
+      charge();
+      return sim.timeMs;
+    },
+    st: (id: number) => {
+      charge();
+      return api.status(id);
+    },
+    dk: (port: number) => {
+      charge();
+      return api.deviceKind(port);
+    },
     step: (ms: number) => {
       for (let i = 0; i < ms; i++) tick();
     },

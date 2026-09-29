@@ -8,8 +8,8 @@ export interface SimCallbacks {
   frame(f: Frame): void;
   stdout(line: string): void;
   hub(events: HubEvent[]): void;
-  /** the program ended; `snapshot` = the field then (for automatic scoring) */
-  done(r: RunResult, snapshot: FieldSnapshot): void;
+  /** the program ended; `snapshot` = the field then (for automatic scoring); `endMs` = sim time when the robot came to rest */
+  done(r: RunResult, snapshot: FieldSnapshot, endMs: number): void;
   fatal(msg: string): void;
 }
 
@@ -24,6 +24,9 @@ export class SimController {
   readonly ctrl = new Int32Array(this.ctrlBuf);
   running = false;
   private snapshotWaiters: ((s: FieldSnapshot | null) => void)[] = [];
+  /** When the worker last said anything (the watchdog restarts a worker stuck in a loop). */
+  private lastMsg = 0;
+  private watchdog: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private cb: SimCallbacks,
@@ -44,12 +47,13 @@ export class SimController {
     this.running = false;
     w.onmessage = (ev: MessageEvent<FromWorker>) => {
       const m = ev.data;
+      this.lastMsg = performance.now();
       switch (m.type) {
         case "scene": this.cb.scene(m.bodies, m.bodyIds); break;
         case "frame": this.cb.frame(m); break;
         case "stdout": this.cb.stdout(m.line); break;
         case "hub": this.cb.hub(m.events); break;
-        case "done": this.running = false; this.cb.done(m.result, m.snapshot); break;
+        case "done": this.running = false; this.cb.done(m.result, m.snapshot, m.endMs); break;
         case "snapshot": for (const f of this.snapshotWaiters.splice(0)) f(m.snapshot); break;
         case "fatal": this.running = false; this.cb.fatal(m.message); break;
         case "app": this.cb.stdout(`[app] ${m.kind} ${m.args.join(" ")}`); break;
@@ -69,6 +73,15 @@ export class SimController {
   run(source: string, timeLimitMs?: number) {
     this.setPaused(false);
     this.running = true;
+    this.lastMsg = performance.now();
+    // A Python loop that never waits nor calls the hub (`while True: pass`) can't be interrupted
+    // inside MicroPython: if a running program goes silent (not paused), restart the simulator.
+    this.watchdog ??= setInterval(() => {
+      if (!this.running || this.paused || performance.now() - this.lastMsg < 4000) return;
+      this.running = false;
+      this.boot();
+      this.cb.fatal("The program stopped responding: probably a loop that never waits (add a sleep or an await in it). The simulator was restarted.");
+    }, 1000);
     this.send({ type: "run", source, timeLimitMs });
   }
 
@@ -112,6 +125,7 @@ export class SimController {
     Atomics.store(this.ctrl, which === "left" ? CTRL.BTN_LEFT : CTRL.BTN_RIGHT, down ? 1 : 0);
   }
   dispose() {
+    if (this.watchdog) clearInterval(this.watchdog);
     this.worker?.terminate();
   }
 }

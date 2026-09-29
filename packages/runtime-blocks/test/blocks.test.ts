@@ -69,6 +69,38 @@ describe("Word Blocks compiler + runtime", () => {
     expect(r.res.ok, r.res.error).toBe(true);
   });
 
+  it("loops let the other stacks run; several receivers of one message all run", async () => {
+    // stack 1: forever { change n by 1 }; stack 2: wait 0.2 s, broadcast go; two "when I receive go" add 1 and 10 to r
+    const hat = (id: string, next: string, y: number, opcode = "flipperevents_whenProgramStarts", fields = {}) => ({ [id]: { opcode, next, parent: null, inputs: {}, fields, shadow: false, topLevel: true, x: 0, y } });
+    const blk = (id: string, opcode: string, parent: string, next: string | null, inputs: Record<string, unknown[]> = {}, fields: Record<string, unknown[]> = {}) => ({ [id]: { opcode, next, parent, inputs, fields, shadow: false, topLevel: false } });
+    const blocks = {
+      ...hat("h1", "loop", 0),
+      ...blk("loop", "control_forever", "h1", null, { SUBSTACK: [2, "inc"] }),
+      ...blk("inc", "data_changevariableby", "loop", null, { VALUE: [1, [4, "1"]] }, { VARIABLE: ["n", "vn"] }),
+      ...hat("h2", "w", 100),
+      ...blk("w", "control_wait", "h2", "bc", { DURATION: [1, [5, "0.2"]] }),
+      ...blk("bc", "event_broadcast", "w", "halt", { BROADCAST_INPUT: [1, [11, "go", "bgo"]] }),
+      ...blk("halt", "control_wait", "bc", "stop", { DURATION: [1, [5, "0.1"]] }),
+      ...blk("stop", "flippercontrol_stop", "halt", null, {}, { STOP_OPTION: ["all", null] }),
+      ...hat("r1", "a1", 200, "event_whenbroadcastreceived", { BROADCAST_OPTION: ["go", "bgo"] }),
+      ...blk("a1", "data_changevariableby", "r1", "p1", { VALUE: [1, [4, "1"]] }, { VARIABLE: ["r", "vr"] }),
+      ...blk("p1", "flipperlight_lightDisplayText", "a1", null, { TEXT: [3, [12, "r", "vr"], [10, ""]] }),
+      ...hat("r2", "a2", 300, "event_whenbroadcastreceived", { BROADCAST_OPTION: ["go", "bgo"] }),
+      ...blk("a2", "data_changevariableby", "r2", null, { VALUE: [1, [4, "10"]] }, { VARIABLE: ["r", "vr"] }),
+    };
+    const p: ScratchProject = { targets: [{ isStage: true, name: "Stage", variables: { vn: ["n", 0], vr: ["r", 0] }, lists: {}, broadcasts: { bgo: "go" }, blocks: {} }, { isStage: false, name: "s", variables: {}, lists: {}, broadcasts: {}, blocks: blocks as never }] };
+    const { python } = compileBlocks(p);
+    const src = python.replace("rt.run()", "rt.run()\nprint('n', V['n'], 'r', V['r'])");
+    const sim = await Simulation.create({ season: season as SeasonConfig, robot: makeDriveBase({}), start: { xMm: 300, yMm: 200, headingDeg: 0 }, footprints: false });
+    const out: string[] = [];
+    const res = await runPython({ api: new SpikeApi(sim), files, source: src, wasmUrl: micropythonWasmPath(), timeLimitMs: sim.timeMs + 5000, hooks: { stdout: (l) => out.push(l) } });
+    expect(res.ok, res.error + "\n" + src).toBe(true);
+    expect(res.stopped).toBeFalsy(); // "stop all" ended it (the forever loop didn't hang the program)
+    const [, n, , r] = out[out.length - 1].split(" ");
+    expect(Number(n)).toBeGreaterThan(50); // the loop kept running alongside the other stacks
+    expect(Number(r)).toBe(11); // both receivers ran
+  });
+
   it.skipIf(!existsSync(GUIDED) || !matImage)("runs FIRST's BIOGLOW guided mission", async () => {
     const proj = readLlsp3(new Uint8Array(readFileSync(GUIDED)));
     if (proj.kind !== "word-blocks") throw new Error("expected word blocks");

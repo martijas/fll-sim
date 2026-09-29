@@ -23,8 +23,8 @@ export interface MissionSheet {
 export const SHEET: MissionSheet[] = [
   { id: "ei", number: null, name: "Equipment Inspection", questions: [{ id: "ei", label: "(Prematch) The robot and all equipment fit completely in one launch area and under the height limit", kind: "yesno" }] },
   { id: "m01", number: 1, name: "Drone Survey", questions: [
-    { id: "m01a", label: "The drone is no longer touching the mat", kind: "yesno" },
-    { id: "m01b", label: "Bonus: and the LiDAR map is completely flipped over, with the scan marker at least partly in the survey area", kind: "yesno" },
+    { id: "m01a", label: "The drone is no longer touching the mat", kind: "yesno", noEquipment: true },
+    { id: "m01b", label: "Bonus: and the LiDAR map is completely flipped over, with the scan marker at least partly in the survey area", kind: "yesno", noEquipment: true },
   ] },
   { id: "m02", number: 2, name: "Exploding Seeds", questions: [{ id: "m02", label: "Number of seeds no longer touching the stalk", kind: "count", max: 3 }] },
   { id: "m03", number: 3, name: "Flip the Rock", questions: [
@@ -32,24 +32,24 @@ export const SHEET: MissionSheet[] = [
     { id: "m03b", label: "Bonus: and the rock has been returned to its original starting position", kind: "yesno" },
   ] },
   { id: "m04", number: 4, name: "Lucky Leaves", questions: [
-    { id: "m04a", label: "Number of leaves no longer touching the nest", kind: "count", max: 2 },
-    { id: "m04b", label: "The katydid is at least partly in the leaf habitat", kind: "yesno" },
-    { id: "m04c", label: "Bonus: and the katydid is in its original position and remained at least partly in the leaf habitat throughout the match", kind: "yesno" },
+    { id: "m04a", label: "Number of leaves no longer touching the nest", kind: "count", max: 2, noEquipment: true },
+    { id: "m04b", label: "The katydid is at least partly in the leaf habitat", kind: "yesno", noEquipment: true },
+    { id: "m04c", label: "Bonus: and the katydid is in its original position and remained at least partly in the leaf habitat throughout the match", kind: "yesno", noEquipment: true },
   ] },
-  { id: "m05", number: 5, name: "Reaching Roots", questions: [{ id: "m05", label: "The plant root is extended", kind: "choice", options: ["No", "Partially", "Completely"] }] },
+  { id: "m05", number: 5, name: "Reaching Roots", questions: [{ id: "m05", label: "The plant root is extended", kind: "choice", options: ["No", "Partially", "Completely"], noEquipment: true }] },
   { id: "m06", number: 6, name: "Leafcutter Frenzy", questions: [
     { id: "m06a", label: "The ant is touching the nest", kind: "yesno" },
     { id: "m06b", label: "Number of leaf fragments contained within the nest", kind: "count", max: 4 },
   ] },
   { id: "m07", number: 7, name: "Humongous Fungus", questions: [
-    { id: "m07a", label: "The mycelium is completely extended", kind: "yesno" },
-    { id: "m07b", label: "Bonus: Number of connections formed between one team's extended mycelium and the opposing team's fully extended plant root", kind: "count", max: 2 },
+    { id: "m07a", label: "The mycelium is completely extended", kind: "yesno", noEquipment: true },
+    { id: "m07b", label: "Bonus: Number of connections formed between one team's extended mycelium and the opposing team's fully extended plant root", kind: "count", max: 2, noEquipment: true },
   ] },
   { id: "m08", number: 8, name: "Tangled", questions: [{ id: "m08", label: "The vine is touching the mat", kind: "yesno" }] },
   { id: "m09", number: 9, name: "Research Platform", questions: [
-    { id: "m09a", label: "The research platform is raised", kind: "yesno" },
-    { id: "m09b", label: "The camera trap is deployed", kind: "yesno" },
-    { id: "m09c", label: "The seed is no longer touching the tree", kind: "yesno" },
+    { id: "m09a", label: "The research platform is raised", kind: "yesno", noEquipment: true },
+    { id: "m09b", label: "The camera trap is deployed", kind: "yesno", noEquipment: true },
+    { id: "m09c", label: "The seed is no longer touching the tree", kind: "yesno", noEquipment: true },
   ] },
   { id: "m10", number: 10, name: "Fragile Microhabitats", questions: [
     { id: "m10a", label: "The spider habitat is in its original starting position", kind: "yesno", noEquipment: true },
@@ -57,8 +57,8 @@ export const SHEET: MissionSheet[] = [
   ] },
   { id: "m11", number: 11, name: "Window to the Past", questions: [{ id: "m11", label: "The root cover is down, touching the mat", kind: "yesno" }] },
   { id: "m12", number: 12, name: "Forest Elder", questions: [
-    { id: "m12a", label: "The cane is completely raised, touching the tree", kind: "yesno" },
-    { id: "m12b", label: "The support tie is around the post", kind: "yesno" },
+    { id: "m12a", label: "The cane is completely raised, touching the tree", kind: "yesno", noEquipment: true },
+    { id: "m12b", label: "The support tie is around the post", kind: "yesno", noEquipment: true },
   ] },
   { id: "m13", number: 13, name: "Keystone Species", questions: [{ id: "m13", label: "Your keystone species is on the restoration platform, and the young trees are raised", kind: "yesno" }] },
   { id: "m14", number: 14, name: "Seeds of Renewal", questions: [
@@ -66,9 +66,9 @@ export const SHEET: MissionSheet[] = [
     { id: "m14b", label: "Bonus: and touching the mat", kind: "count", max: 4 },
   ] },
   { id: "m15", number: 15, name: "Biocentric Architecture", questions: [
-    { id: "m15a", label: "The nesting canopy is raised", kind: "yesno" },
-    { id: "m15b", label: "The garden skylight is completely in", kind: "yesno" },
-    { id: "m15c", label: "The compost hatch is completely opened, touching the mat", kind: "yesno" },
+    { id: "m15a", label: "The nesting canopy is raised", kind: "yesno", noEquipment: true },
+    { id: "m15b", label: "The garden skylight is completely in", kind: "yesno", noEquipment: true },
+    { id: "m15c", label: "The compost hatch is completely opened, touching the mat", kind: "yesno", noEquipment: true },
     { id: "m15d", label: "Dock location", kind: "choice", options: ["Mine", "City", "Farm"] },
   ] },
   { id: "pt", number: null, name: "Precision Tokens", questions: [{ id: "pt", label: "Number of precision tokens remaining", kind: "count", max: 6 }] },

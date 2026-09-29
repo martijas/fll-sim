@@ -332,6 +332,7 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       ro.disconnect();
       controls.dispose();
       renderer.dispose();
+      renderer.forceContextLoss();
       el.removeChild(renderer.domElement);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

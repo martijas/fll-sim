@@ -36,6 +36,7 @@ export type FromWorker =
   | { type: "stdout"; line: string }
   | { type: "hub"; events: HubEvent[] }
   | { type: "app"; kind: string; args: string[] }
-  | { type: "done"; result: RunResult; snapshot: FieldSnapshot }
+  /** `endMs`: sim time once the robot has come to rest (after the program's own end) */
+  | { type: "done"; result: RunResult; snapshot: FieldSnapshot; endMs: number }
   | { type: "snapshot"; snapshot: FieldSnapshot }
   | { type: "fatal"; message: string };

@@ -113,6 +113,24 @@ describe("automatic scoring", () => {
     expect(r.notes.m10b).toMatch(/robot/);
   });
 
+  it("No Equipment Constraint: a model touching the robot at the end scores nothing", () => {
+    const s = woken();
+    const drone = find(s, /^drone 2x4 plate/);
+    for (const b of drone) move(b, [0, 60, 0]);
+    expect(autoScore(s).answers.m01a).toBe(true);
+    // the same drone, still held by the robot
+    drone[0].touches.push("robot");
+    const r = autoScore(s);
+    expect([r.answers.m01a, r.answers.m01b]).toEqual([false, false]);
+    expect(r.notes.m01a).toMatch(/touching the robot/);
+    // Reaching Roots touched by the robot: "No" instead of left to the team
+    const roots = find(s, /\(root arm/);
+    roots[0].touches.push("robot");
+    expect(autoScore(s).answers.m05).toBe("No");
+    // (M02 has no such constraint)
+    expect(autoScore(s).notes.m02).not.toMatch(/equipment/);
+  });
+
   it("M11: the root cover down on the mat", () => {
     const s = woken();
     const door = find(s, /^door:/).find((b) => !b.fixed)!;

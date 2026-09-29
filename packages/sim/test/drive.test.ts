@@ -63,4 +63,14 @@ describe("drive base physics", () => {
     console.log("rel pos", api.motorRelativePosition(1), "ms", ms);
     expect(Math.abs(api.motorRelativePosition(1) - 360)).toBeLessThanOrEqual(4);
   });
+
+  it("the distance sensor sees a far wall, not the mat in front of the robot", async () => {
+    // facing north: the wall's inner face is at y = 1143 mm; the sensor is 94 mm ahead of the robot's centre
+    for (const y of [400, 800]) {
+      const sim = await Simulation.create({ season: season as SeasonConfig, robot: makeDriveBase(), start: { xMm: 1000, yMm: y, headingDeg: 0 }, footprints: false });
+      sim.stepMs(300);
+      const want = 1143 - (y + 94);
+      expect(Math.abs(sim.distanceSensor("E") - want), `from y=${y}`).toBeLessThan(25);
+    }
+  });
 });

@@ -116,18 +116,29 @@ async function handle(m: ToWorker) {
       post({ type: "scene", bodies: sim.scene, bodyIds: sim.bodies.map((b) => b.id) });
       emitFrame(true);
     } else if (m.type === "run") {
+      // (an interruption meant for an earlier program must not stop this one)
+      Atomics.store(ctrl, CTRL.STOP, 0);
       running = true;
       reanchor();
       const result = await runPython({ api, files, source: m.source, wasmUrl, timeLimitMs: m.timeLimitMs ? sim.timeMs + m.timeLimitMs : undefined, hooks: { stdout: (line) => post({ type: "stdout", line }), onTick, app: (kind, args) => post({ type: "app", kind, args }) } });
-      if (!result.stopped) settle(api, 10000, onTick);
-      else {
+      let stopped = !!result.stopped;
+      if (!stopped) {
+        // motor commands started without await finish, unless the robot is interrupted meanwhile
+        try {
+          settle(api, 10000, onTick);
+        } catch (e) {
+          if (!(e instanceof SimAbort)) throw e;
+          stopped = true;
+        }
+      }
+      if (stopped) {
         // stopped (interrupted or out of time): the motors brake and the robot comes to rest
         for (const mb of sim.motors.values()) mb.ctl.stop(sim.timeMs / 1000, 1);
         sim.stepMs(300);
       }
       running = false;
       emitFrame(true);
-      post({ type: "done", result, snapshot: sim.snapshot() });
+      post({ type: "done", result: stopped && !result.stopped ? { ...result, stopped: true } : result, snapshot: sim.snapshot(), endMs: sim.timeMs });
     } else if (m.type === "replaceRobot") {
       sim.replaceRobot(m.robot, m.pose ?? sim.robotPose());
       sim.stepMs(150);

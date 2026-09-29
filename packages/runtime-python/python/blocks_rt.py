@@ -237,7 +237,9 @@ def on_condition(cond, fn):
 
 
 def on_broadcast(message, fn):
-    _receivers.setdefault(tostr(message).lower(), []).append((fn, 'b%d_%s' % (len(_receivers), message)))
+    # (every receiver has its own key: several "when I receive" hats for one message all run)
+    n = sum(len(r) for r in _receivers.values())
+    _receivers.setdefault(tostr(message).lower(), []).append((fn, 'b%d_%s' % (n, message)))
 
 
 def _running(key):
@@ -289,8 +291,21 @@ def stop_all():
     raise StopProgram()
 
 
+class _Tick:
+    """The end of a loop pass: let the other stacks run, then go on (next scheduler pass)."""
+    __slots__ = ()
+
+    def __iter__(self):
+        yield self
+
+    __await__ = __iter__
+
+
+_TICK = _Tick()
+
+
 def tick():
-    return Sleep(0)
+    return _TICK
 
 
 def wait_s(s):

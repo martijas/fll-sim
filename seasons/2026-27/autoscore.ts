@@ -289,6 +289,26 @@ export function autoScore(s: Snapshot): AutoScore {
     if (dock) set("m15d", dock === "mine" ? "Mine" : dock === "city" ? "City" : "Farm", `the building is on the ${dock} dock`);
   } else missing(["m15a", "m15b", "m15c"], "Biocentric Architecture");
 
+  // No Equipment Constraint (the rulebook's symbol on M01, M04, M05, M07, M09, M10, M12 and M15):
+  // a model touching equipment at the end of the match scores nothing for that mission.
+  // Equipment is the robot (with its tools) and the team's keystone species.
+  const equipment = new Set(["robot", ...species.map((b) => b.id)]);
+  const noEquipment = (bs: SnapBody[], ids: string[], name: string) => {
+    const hits = new Set(bs.flatMap((b) => b.touches.filter((t) => equipment.has(t))));
+    if (!hits.size) return;
+    const what = hits.has("robot") ? "the robot" : "your keystone species";
+    for (const id of ids) set(id, id === "m05" ? "No" : id === "m04a" || id === "m07b" ? 0 : false, `${name} is touching ${what} (equipment): no points for it while it does (No Equipment Constraint)`);
+  };
+  noEquipment(drone ? s.bodies.filter((b) => b.model === drone.model) : [], ["m01a", "m01b"], "Drone Survey");
+  noEquipment(m04, ["m04a", "m04b", "m04c"], "Lucky Leaves");
+  noEquipment(m05, ["m05"], "Reaching Roots");
+  noEquipment(m06, ["m07a", "m07b"], "Humongous Fungus");
+  noEquipment(m09, ["m09a", "m09b", "m09c"], "Research Platform");
+  noEquipment(modelOf(s, /^spider( web)?:/), ["m10a"], "The spider habitat");
+  noEquipment(modelOf(s, /^snail/), ["m10b"], "The snail habitat");
+  noEquipment([...m12, ...post], ["m12a", "m12b"], "Forest Elder");
+  noEquipment(m15, ["m15a", "m15b", "m15c"], "Biocentric Architecture");
+
   manual("pt", "precision tokens are counted by the referee");
   return { answers, notes };
 }

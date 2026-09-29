@@ -131,6 +131,8 @@ export function Builder({ lib, catalog, parts, onChange, onUseAsRobot, onUseAsTo
       cancelAnimationFrame(raf);
       ro.disconnect();
       renderer.dispose();
+      // (release the WebGL context now: Chromium keeps at most 16, and one is made per visit)
+      renderer.forceContextLoss();
       el.removeChild(renderer.domElement);
     };
   }, []);

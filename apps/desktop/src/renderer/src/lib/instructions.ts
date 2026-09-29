@@ -89,6 +89,7 @@ class Renderer {
 
   dispose() {
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
   }
 }
 

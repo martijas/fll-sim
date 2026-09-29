@@ -173,6 +173,16 @@ runloop.run(main())
     expect(res.stopped).toBe(true);
   });
 
+  it("a busy-wait on time.ticks_ms() moves time on and ends, like on the hub", async () => {
+    const src = `import time\nt = time.ticks_ms()\nwhile time.ticks_diff(time.ticks_ms(), t) < 500:\n    pass\nprint('done', time.ticks_diff(time.ticks_ms(), t))\n`;
+    const { res, out } = await run(src, { timeLimitMs: 3000 });
+    expect(res.ok).toBe(true);
+    expect(res.stopped).toBeFalsy();
+    const ms = Number(out[0]?.split(" ")[1]);
+    expect(ms).toBeGreaterThanOrEqual(500);
+    expect(ms).toBeLessThan(520);
+  });
+
   it("gyro turn then straight move: stays synchronized (no swerve)", async () => {
     const src = `from hub import port, motion_sensor
 import motor_pair, runloop
