@@ -6,7 +6,7 @@
     "pose": {
       "xMm": 882,
       "yMm": 101,
-      "headingDeg": 3.5
+      "headingDeg": 183.5
     },
     "fitMeanMm": 8.25
   },
@@ -28,7 +28,7 @@
     "pose": {
       "xMm": 103,
       "yMm": 1036,
-      "headingDeg": 225.5
+      "headingDeg": 45.5
     },
     "fitMeanMm": 2.43
   },
@@ -72,7 +72,7 @@
     "pose": {
       "xMm": 82,
       "yMm": 660,
-      "headingDeg": 176.5
+      "headingDeg": 356.5
     },
     "fitMeanMm": 4.04
   },
@@ -105,7 +105,7 @@
     "pose": {
       "xMm": 1427,
       "yMm": 578,
-      "headingDeg": 48
+      "headingDeg": 138
     },
     "fitMeanMm": 4.43
   },
@@ -116,7 +116,7 @@
     "pose": {
       "xMm": 1898,
       "yMm": 790,
-      "headingDeg": 94
+      "headingDeg": 184
     },
     "fitMeanMm": 3.71
   },
@@ -138,7 +138,7 @@
     "pose": {
       "xMm": 537,
       "yMm": 1048,
-      "headingDeg": 332
+      "headingDeg": 152
     },
     "fitMeanMm": 4.36
   },
