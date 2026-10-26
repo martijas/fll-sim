@@ -31,8 +31,12 @@
 0 // dozer blade: 12-tooth bevel gear
 1 19 -20 -13 0 1 0 0 0 0 -1 0 1 0 6589.dat
 0 STEP
-0 // dozer blade: 12L axle (arm pivot)
-1 72 0 -40 0 -1 0 0 0 0 1 0 1 0 3708.dat
+0 // dozer blade: 9L axle (arm pivot)
+1 72 60 -40 0 1 0 0 0 1 0 0 0 1 60485.dat
+0 // dozer blade: white inline axle joiner
+1 15 -30 -40 0 0 0 1 0 1 0 -1 0 0 59443.dat
+0 // dozer blade: red 6L axle (arm pivot)
+1 4 -90 -40 0 1 0 0 0 1 0 0 0 1 3706.dat
 0 // dozer blade: 20-tooth bevel gear
 1 19 0 -40 0 0 0 -1 0 1 0 1 0 0 18575.dat
 0 // dozer blade: 20-tooth bevel gear
@@ -41,30 +45,48 @@
 1 4 60 -40 0 1 0 0 0 1 0 0 0 1 6536.dat
 0 STEP
 0 // dozer blade: curved gear rack
-1 0 120 156.9616 -34.7296 0 -1 0 0.1736 0 -0.9848 0.9848 0 0.1736 24121.dat
+1 0 100 60 173.2051 0 1 0 0.866 0 -0.5 -0.5 0 -0.866 24121.dat
 0 // dozer blade: curved gear rack
-1 0 -120 -74.7296 -196.9616 0 1 0 -0.9848 0 0.1736 0.1736 0 0.9848 24121.dat
+1 0 120 60 173.2051 0 1 0 0.866 0 -0.5 -0.5 0 -0.866 24121.dat
+0 // dozer blade: curved gear rack
+1 0 -100 60 173.2051 0 1 0 0.866 0 -0.5 -0.5 0 -0.866 24121.dat
+0 // dozer blade: curved gear rack
+1 0 -120 60 173.2051 0 1 0 0.866 0 -0.5 -0.5 0 -0.866 24121.dat
+0 // dozer blade: pin (joins the doubled racks)
+1 71 110 -113.2025 73.2095 1 0 0 0 1 0 0 0 1 3673.dat
+0 // dozer blade: pin (joins the doubled racks)
+1 71 110 -139.9956 173.2025 1 0 0 0 1 0 0 0 1 3673.dat
+0 // dozer blade: pin (joins the doubled racks)
+1 71 -110 -113.2025 73.2095 1 0 0 0 1 0 0 0 1 3673.dat
+0 // dozer blade: pin (joins the doubled racks)
+1 71 -110 -139.9956 173.2025 1 0 0 0 1 0 0 0 1 3673.dat
+0 // dozer blade: bush
+1 71 140 -40 0 0 0 1 0 1 0 -1 0 0 3713.dat
+0 // dozer blade: bush
+1 71 -140 -40 0 0 0 1 0 1 0 -1 0 0 3713.dat
 0 STEP
-0 // dozer blade: 1x2 cross block
-1 0 100 122.2319 -231.6912 1 0 0 0 1 0 0 0 1 6536.dat
-0 // dozer blade: 2L axle
-1 72 110 122.2319 -231.6912 1 0 0 0 -1 0 0 0 -1 32062.dat
-0 // dozer blade: 1x2 cross block
-1 0 -100 122.2319 -231.6912 -1 0 0 0 1 0 0 0 -1 6536.dat
-0 // dozer blade: 2L axle
-1 72 -110 122.2319 -231.6912 -1 0 0 0 -1 0 0 0 1 32062.dat
-0 // dozer blade: black 15L beam
-1 0 0 142.2319 -251.6912 0 0 -1 -1 0 0 0 1 0 32278.dat
+0 // dozer blade: red 3L axle
+1 4 120 -113.2051 273.2051 1 0 0 0 1 0 0 0 1 4519.dat
+0 // dozer blade: cross block (blade holder)
+1 72 140 -103.2051 290.5256 1 0 0 0 0.5 -0.866 0 0.866 0.5 32184.dat
+0 // dozer blade: red 3L axle
+1 4 -120 -113.2051 273.2051 1 0 0 0 1 0 0 0 1 4519.dat
+0 // dozer blade: cross block (blade holder)
+1 72 -140 -103.2051 290.5256 1 0 0 0 0.5 -0.866 0 0.866 0.5 32184.dat
 0 // dozer blade: pin
-1 0 100 142.2319 -241.6912 0 1 0 0 0 1 1 0 0 61332.dat
+1 0 140 -111.8653 295.5256 0 0 1 -0.866 -0.5 0 0.5 -0.866 0 61332.dat
 0 // dozer blade: pin
-1 0 -100 142.2319 -241.6912 0 -1 0 0 0 1 -1 0 0 61332.dat
-0 // dozer blade: pin
-1 0 -40 142.2319 -261.6912 0 0 1 0 1 0 -1 0 0 61332.dat
-0 // dozer blade: pin
-1 0 40 142.2319 -261.6912 0 0 1 0 1 0 -1 0 0 61332.dat
+1 0 -140 -111.8653 295.5256 0 0 1 -0.866 -0.5 0 0.5 -0.866 0 61332.dat
+0 // dozer blade: black 15L beam (blade)
+1 0 0 -120.5256 300.5256 0 0 1 0.5 -0.866 0 0.866 0.5 0 32278.dat
+0 // dozer blade: magenta 11L beam
+1 26 0 -137.8461 310.5256 0 0 1 0.5 -0.866 0 0.866 0.5 0 32525.dat
 0 // dozer blade: azure smooth panel 11x2x3 (blade)
-1 322 0 142.2319 -271.6912 0 0 1 1 0 0 0 1 0 11954.dat
+1 322 0 -103.2051 290.5256 0 0 1 0.5 -0.866 0 0.866 0.5 0 11954.dat
+0 // dozer blade: tan axle pin
+1 19 -80 -120.5256 300.5256 0 0 1 -0.866 -0.5 0 0.5 -0.866 0 3749.dat
+0 // dozer blade: tan axle pin
+1 19 80 -120.5256 300.5256 0 0 1 -0.866 -0.5 0 0.5 -0.866 0 3749.dat
 0 STEP
 0 // rear
 1 16 0 0 0 1 0 0 0 1 0 0 0 1 fllsim-mount.dat
