@@ -19,7 +19,7 @@ extraResources:
   - from: resources/missions
     to: apps/desktop/resources/missions
 linux:
-  target: [deb, AppImage]
+  target: [deb, AppImage, tar.gz]
   category: Education
   icon: build/icon.png
   maintainer: martijas <martijas@users.noreply.github.com>
@@ -29,6 +29,15 @@ linux:
     entry:
       Name: FLL Sim
       Comment: Simulate SPIKE Prime robots on the FIRST LEGO League field
+win:
+  target: [nsis, portable]
+  icon: build/icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: fll-sim-setup-${version}-${arch}.${ext}
+portable:
+  artifactName: fll-sim-portable-${version}-${arch}.${ext}
 deb:
   artifactName: fll-sim_${version}_${arch}.${ext}
   depends: [libgtk-3-0, libnss3, libxss1, "libasound2 | libasound2t64", libgbm1]

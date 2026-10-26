@@ -2,7 +2,11 @@
 
 A desktop simulator for **FIRST LEGO League Challenge** teams using **LEGO Education SPIKE Prime**.
 Write SPIKE Python, run it on a to-scale competition table, and watch the robot drive, turn,
-and read its sensors — away from the physical robot. Runs on Debian/Ubuntu (and other Linux).
+and read its sensors — away from the physical robot. Runs on Windows and Linux (Debian/Ubuntu, Void, and others).
+
+**Downloads:** every push to `main` publishes Windows (installer + portable `.exe`) and Linux
+(`.deb`, AppImage, `.tar.gz`) builds on the [Releases page](https://github.com/martijas/fll-sim/releases).
+On Void Linux, use the AppImage or `.tar.gz`, or run `./setup.sh` (it installs packages with xbps).
 
 Current season pack: **2026-27 BIOGLOW**.
 
@@ -54,7 +58,7 @@ app starts, loads every mission model and runs a program.
 
 ## Running from source
 
-On a fresh Debian/Ubuntu machine (or WSL2), one command installs everything (system libraries,
+On a fresh Debian/Ubuntu or Void Linux machine (or WSL2), one command installs everything (system libraries,
 Node.js 22 and pnpm in `~/.local/node`, the code in `~/fll-sim`), builds the app, adds **FLL Sim**
 to the app menu and starts it:
 

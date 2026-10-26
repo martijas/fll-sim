@@ -4,7 +4,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/martijas/fll-sim/main/setup.sh | bash
 #   or, in a checkout:  ./setup.sh
 #
-# Installs the system libraries Electron needs (apt, asks for your password once), Node.js 22 and
+# Installs the system libraries Electron needs (apt or xbps, asks for your password once), Node.js 22 and
 # pnpm in ~/.local/node (no sudo), gets the code (~/fll-sim unless run inside a checkout),
 # installs the dependencies, builds the app, adds an "FLL Sim" launcher to the app menu and
 # starts it. Safe to run again: it skips what is already there and updates the code.
@@ -33,28 +33,41 @@ done
 step() { printf '\n\033[1;33m==> %s\033[0m\n' "$*"; }
 die() { printf '\033[1;31mError: %s\033[0m\n' "$*" >&2; exit 1; }
 
-[ "$(uname -s)" = Linux ] || die "FLL Sim's setup script is for Linux (Debian/Ubuntu, or WSL2 on Windows)."
-command -v apt-get >/dev/null || die "This script needs a Debian/Ubuntu system (apt-get). On other distributions install git, curl, and Electron's libraries (GTK 3, NSS, ALSA, GBM) yourself, then run it again."
-
+[ "$(uname -s)" = Linux ] || die "FLL Sim's setup script is for Linux (Debian/Ubuntu, Void, or WSL2 on Windows)."
 SUDO=""
 [ "$(id -u)" -eq 0 ] || SUDO="sudo"
 
 # ---- 1. system packages ------------------------------------------------------------------------
 step "System packages"
-PKGS=(git curl ca-certificates xz-utils libgtk-3-0 libnss3 libxss1 libgbm1 libxshmfence1 libdrm2 libasound2 libnotify4 xdg-utils mesa-utils)
-installed() { dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "ok installed"; }
-MISSING=()
-for p in "${PKGS[@]}"; do
-  # (Ubuntu 24.04+ / Debian 13 renamed some libraries with a "t64" suffix)
-  if installed "$p" || installed "${p}t64"; then continue; fi
-  if apt-cache show "${p}t64" >/dev/null 2>&1; then MISSING+=("${p}t64"); else MISSING+=("$p"); fi
-done
-if [ ${#MISSING[@]} -gt 0 ]; then
-  echo "Installing: ${MISSING[*]}"
-  $SUDO apt-get update
-  $SUDO apt-get install -y "${MISSING[@]}"
+if command -v xbps-install >/dev/null; then
+  # Void Linux
+  PKGS=(git curl ca-certificates xz gtk+3 nss libXScrnSaver mesa libxshmfence libdrm alsa-lib libnotify xdg-utils glxinfo)
+  MISSING=()
+  for p in "${PKGS[@]}"; do xbps-query "$p" >/dev/null 2>&1 || MISSING+=("$p"); done
+  if [ ${#MISSING[@]} -gt 0 ]; then
+    echo "Installing: ${MISSING[*]}"
+    $SUDO xbps-install -Sy "${MISSING[@]}"
+  else
+    echo "All present."
+  fi
+elif command -v apt-get >/dev/null; then
+  PKGS=(git curl ca-certificates xz-utils libgtk-3-0 libnss3 libxss1 libgbm1 libxshmfence1 libdrm2 libasound2 libnotify4 xdg-utils mesa-utils)
+  installed() { dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "ok installed"; }
+  MISSING=()
+  for p in "${PKGS[@]}"; do
+    # (Ubuntu 24.04+ / Debian 13 renamed some libraries with a "t64" suffix)
+    if installed "$p" || installed "${p}t64"; then continue; fi
+    if apt-cache show "${p}t64" >/dev/null 2>&1; then MISSING+=("${p}t64"); else MISSING+=("$p"); fi
+  done
+  if [ ${#MISSING[@]} -gt 0 ]; then
+    echo "Installing: ${MISSING[*]}"
+    $SUDO apt-get update
+    $SUDO apt-get install -y "${MISSING[@]}"
+  else
+    echo "All present."
+  fi
 else
-  echo "All present."
+  die "This script supports Debian/Ubuntu (apt-get) and Void Linux (xbps). On other distributions install git, curl, and Electron's libraries (GTK 3, NSS, ALSA, GBM) yourself, then run it again."
 fi
 
 # ---- 2. Node.js + pnpm (in ~/.local/node, no sudo) -------------------------------------------------

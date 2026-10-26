@@ -7,6 +7,7 @@
     "dev": "pnpm --filter @fll-sim/desktop dev",
     "build": "pnpm --filter @fll-sim/desktop build",
     "dist:linux": "pnpm --filter @fll-sim/desktop dist:linux",
+    "dist:win": "pnpm --filter @fll-sim/desktop dist:win",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json",
     "sim": "pnpm --filter @fll-sim/sim-cli exec tsx src/cli.ts"
