@@ -29,26 +29,41 @@ export function pinAt(b: Build, file: string, color: number, to: number | number
 /** Height of the arm axle (a 9L axle along X at z = 0) above the tool frame. */
 export const ARM_AXLE_Y = -40;
 
+/** x of the yellow T-beams that hold the arm axle: on the blue long pins sticking out of the
+ *  frame's two short ends, inside the robot's magenta 11x7 frame. */
+export const TBEAM_X = 80;
+
+/**
+ * Steps 1-7 of both tool guides: a black 7x5 frame (long side across, x) around a magenta 3x3
+ * block (vertical axle with a 12-tooth bevel on top and a 36-tooth gear under the frame) and two
+ * yellow pin joiners; four blue long pins through the frame's short ends, sticking out of them so
+ * that the yellow T-beams (see `tbeam`) can go on at x = -80 and x = +80.
+ */
 export function toolBase(b: Build, name: string) {
   const L = (s: string) => `${name}: ${s}`;
-  // 1-2 magenta 3x3 block, two pins in its right side
-  //     (approximation: the guide puts two yellow pin joiners on these pins; here a yellow T-beam
-  //      stands crossbar-down on them instead, see step 8, so that the arm axle is held rigidly)
+  // 1-2 magenta 3x3 block, two pins in its right side, a yellow pin joiner on each
+  //     (the frame of step 3 is put down first: the blue long pins of step 4 then count as held
+  //      by the frame rather than by the free-spinning joiners, so the T-beams on them are rigid)
   const block = b.place("39793.dat", MAGENTA, O("+x", "+y", "+z", [-20, 0, 0]), L("magenta 3x3 block"));
-  for (const pz of [-20, 20]) b.attach(PIN, BLACK, { to: block, where: onAxis([1, 0, pz], 1.5, 20), accept: (m) => near3(pt(m, [0, 0, 0]), [1, 0, pz]), label: L("pin") });
-  // 8 yellow T-beam, crossbar down on those pins, its stem up (the arm axle goes through its top)
-  const tbeam = b.put("60484.dat", YELLOW, O("+z", "+x", "+y", [20, -40, 0]), 2, L("yellow T-beam"));
-  b.step();
+  const pins = [-20, 20].map((pz) => b.attach(PIN, BLACK, { to: block, where: onAxis([1, 0, pz], 1.5, 20), accept: (m) => near3(pt(m, [0, 0, 0]), [1, 0, pz]), label: L("pin") }));
   // 3 the black 7x5 frame around them (long side across)
   const frame = b.put("64179.dat", BLACK, O("-z", "+y", "+x", [0, 0, 0]), 0, L("black 7x5 frame"));
+  const joiners = [-20, 20].map((pz, i) => b.attach("62462.dat", YELLOW, { to: pins[i], accept: (m) => pt(m, [0, 0, 0])[0] > 15 && Math.abs(pt(m, [0, 0, 0])[2] - pz) < 2, label: L("yellow pin joiner") }));
   b.step();
-  // 4 four blue long pins through the frame's ends into the block and the T-beam
-  for (const px of [-60, 60]) for (const pz of [-20, 20]) pinAt(b, PIN3, BLUE, [frame, px < 0 ? block : tbeam], [px, 0, pz], [px + Math.sign(px) * 10 - (px > 0 ? 20 : 0), 0, pz], L("blue long pin"), 5);
+  // 4 four blue long pins through the frame's ends into the block and the joiners, one stud
+  //   sticking out of each end
+  for (const px of [-60, 60]) for (const [i, pz] of [-20, 20].entries()) pinAt(b, PIN3, BLUE, [frame, px < 0 ? block : joiners[i]], [px, 0, pz], [px < 0 ? -70 : 60, 0, pz], L("blue long pin"), 5);
   b.step();
   // 5-7 3L axle down through the block (a 12-tooth bevel on top), a 36-tooth gear under the frame
   const axle = b.attach("4519.dat", DBG, { to: block, where: onAxis([-20, 0, 0], 1.5, 20), accept: (m) => near3(pt(m, [0, 0, 0]), [-20, 0, 0]), offsets: [0], label: L("3L axle (tool input)") });
   const gear36 = b.put("32498.dat", LBG, O("+x", "-z", "+y", [-20, 20, 0]), 1, L("36-tooth gear (driven by the robot)"));
   const bevel12 = b.attach("6589.dat", TAN, { to: axle, accept: (m) => Math.abs(pt(m, [0, 0, 0])[1] + 15) < 3 && pt(m, [0, 0, 1])[1] < pt(m, [0, 0, 0])[1], label: L("12-tooth bevel gear") });
   b.step();
-  return { frame, block, axle, gear36, bevel12, tbeam };
+  return { frame, block, axle, gear36, bevel12 };
+}
+
+/** A yellow T-beam standing at a short end of the tool frame (x = ±TBEAM_X): crossbar down on the
+ *  two blue long pins, stem up; the arm axle turns in its top hole (y = ARM_AXLE_Y). */
+export function tbeam(b: Build, side: -1 | 1, label: string) {
+  return b.put("60484.dat", YELLOW, O("+z", "+x", "+y", [side * TBEAM_X, ARM_AXLE_Y, 0]), 2, label);
 }
