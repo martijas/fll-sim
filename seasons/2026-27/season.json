@@ -30,7 +30,7 @@
     },
     "placement": "south-centered",
     "image": {
-      "default": "resources/2026-27-bioglow/derived/mat-color.png",
+      "default": "seasons/2026-27/mat.jpg",
       "fallback": "resources/2026-27-bioglow/derived/mat-wireframe.png",
       "pxPerMm": 2
     }
