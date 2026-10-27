@@ -3,7 +3,7 @@
 
 import type { Library } from "@fll-sim/ldraw";
 import { assemble, attachTool, findMounts, parseModel, type ModelPart } from "@fll-sim/assembly";
-import type { RobotModel, SeasonConfig, StartPose } from "@fll-sim/sim";
+import { homeAreaOf, robotOutline, type Pt, type RobotModel, type SeasonConfig, type StartPose } from "@fll-sim/sim";
 
 export interface CatalogEntry { id: string; name: string; text: string; note?: string; /** drive motor ports, left then right (robots) */ drive?: string }
 
@@ -82,10 +82,8 @@ export function buildLoadout(lib: Library, name: string, robotParts: ModelPart[]
 
 /** Whether the robot at `pose` is completely inside one of the home (launch) areas, and which. */
 export function homeArea(season: SeasonConfig, robot: RobotModel, pose: StartPose): string | null {
-  const half = Math.hypot(robot.footprintMm.w, robot.footprintMm.l) / 2;
-  for (const la of season.launchAreas) {
-    const d = Math.hypot(pose.xMm - la.centerMm.x, pose.yMm - la.centerMm.y);
-    if (d + half <= la.radiusMm) return la.id;
-  }
-  return null;
+  let o = outlines.get(robot);
+  if (!o) outlines.set(robot, (o = robotOutline(robot)));
+  return homeAreaOf(season, o, pose);
 }
+const outlines = new WeakMap<RobotModel, Pt[]>();

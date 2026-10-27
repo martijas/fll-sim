@@ -190,3 +190,12 @@ label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted)
 .gl-error { position: absolute; inset: 0; padding: 100px 30px 30px; overflow: auto; background: var(--bg); }
 .gl-error h3 { margin-top: 0; color: var(--err); }
 .gl-error code { background: var(--panel2); padding: 1px 5px; border-radius: 4px; }
+
+/* Start position (align mode) */
+.start-pose { display: inline-flex; align-items: center; gap: 6px; }
+.start-pose button.on { background: var(--accent); border-color: var(--accent); color: #1a1500; font-weight: 600; }
+.field-view.aligning { cursor: crosshair; }
+.align-bar { position: absolute; left: 10px; right: 10px; bottom: 46px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: rgba(21, 23, 28, 0.9); border: 1px solid var(--accent); border-radius: 8px; padding: 6px 10px; font-size: 12px; }
+.align-bar span { flex: 1; min-width: 260px; color: var(--muted); }
+.align-hud { position: absolute; right: 10px; bottom: 10px; background: rgba(21, 23, 28, 0.85); border: 1px solid var(--ok); padding: 4px 10px; border-radius: 6px; font-variant-numeric: tabular-nums; pointer-events: none; }
+.align-hud.bad { border-color: var(--err); color: var(--err); }

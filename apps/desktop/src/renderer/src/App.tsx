@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DEFAULT_CALIBRATION, heightFactor, makeDriveBase, type ColorCalibration, type FieldModel, type FieldSnapshot, type RobotModel, type SeasonConfig, type StartPose, type VisualSpec } from "@fll-sim/sim";
+import { DEFAULT_CALIBRATION, fitInLaunchArea, heightFactor, launchAreaOf, makeDriveBase, mirrorPose, nearestLaunchArea, robotOutline, type ColorCalibration, type FieldModel, type FieldSnapshot, type RobotModel, type SeasonConfig, type StartPose, type VisualSpec } from "@fll-sim/sim";
 import { ScorePanel } from "./components/ScorePanel";
 import { defaultAnswers, score, type Answers } from "../../../../../seasons/2026-27/scoring";
 import { autoScore, type AutoScore } from "../../../../../seasons/2026-27/autoscore";
@@ -65,7 +65,19 @@ export function App() {
   const [running, setRunning] = useState(false);
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const [start, setStart] = useState<StartPose>({ xMm: 230, yMm: 180, headingDeg: 0 });
+  /** Where the robot starts (completely inside a launch area), kept between sessions. */
+  const [start, setStart] = useState<StartPose>(loadStart);
+  const startRef = useRef(start);
+  startRef.current = start;
+  useEffect(() => {
+    try {
+      localStorage.setItem("fllsim.start", JSON.stringify(start));
+    } catch {
+      /* ignore */
+    }
+  }, [start]);
+  /** Align mode: the robot is moved and turned on the field to set where it starts. */
+  const [aligning, setAligning] = useState(false);
   const [error, setError] = useState<{ line?: number; text: string } | null>(null);
   const [robot, setRobot] = useState<RobotConfig>(loadRobotConfig);
   const [showRobot, setShowRobot] = useState(false);
@@ -264,7 +276,22 @@ export function App() {
   const robotModel: RobotModel = useMemo(() => loadout?.robot ?? makeDriveBase(toDriveBaseOptions(robot)), [loadout, robot]);
   const robotModelRef = useRef(robotModel);
   robotModelRef.current = robotModel;
-  /** The robot's drive motor ports (left, right), when known. */
+  /** The robot (with its tools) seen from above: it has to start completely inside a launch area. */
+  const outline = useMemo(() => robotOutline(robotModel), [robotModel]);
+  /** The launch area the robot starts in (null: it doesn't fit in one where it is). */
+  const startArea = useMemo(() => (season ? launchAreaOf(season, outline, start) : null), [season, outline, start]);
+  // Another robot or other tools (or the season just loaded): if the robot no longer fits where it
+  // starts, it moves to the nearest place in the launch area where it does. (Set before the
+  // simulator is (re)created below, which starts it at startRef.)
+  useEffect(() => {
+    if (!season) return;
+    const r = fitInLaunchArea(season, outline, startRef.current);
+    if (!r.moved) return;
+    startRef.current = r.pose;
+    setStart(r.pose);
+    if (r.fits) log(`Start position moved to X ${r.pose.xMm}, Y ${r.pose.yMm} so that the robot with its tools is completely inside the launch area.`, "info");
+    else log("⚠ This robot (with its tools) doesn't fit in a launch area the way it is turned. Turn it (✥ Start position) or take a tool off.", "err");
+  }, [season, outline, log]);  /** The robot's drive motor ports (left, right), when known. */
   const drivePorts = robotSource === "drivebase" ? robot.leftPort + robot.rightPort : preset?.drive ?? null;
   /** What is plugged into each port of the robot, e.g. "A motor, B colour sensor, …". */
   const portsSummary = useMemo(() => {
@@ -421,7 +448,7 @@ export function App() {
             if (!r.length || f.timeMs - r[r.length - 1].timeMs >= 40) r.push(f);
           }
           if (replayRef.current) return; // the field shows the replay
-          field.current?.setTransforms(f.transforms);
+          field.current?.setTransforms(f.transforms, f.pose);
           if (f.running) field.current?.addTrail(f.pose.xMm, f.pose.yMm);
           setFrame(f);
         },
@@ -477,7 +504,7 @@ export function App() {
         },
       },
       // (the robot as it is now: after a match its tools may have changed since bootRobot was set)
-      { season, mat: mat?.payload ?? null, robot: robotModelRef.current, start, fieldModels, footprints, colorCalibration: colorCal },
+      { season, mat: mat?.payload ?? null, robot: robotModelRef.current, start: startRef.current, fieldModels, footprints, colorCalibration: colorCal },
     );
     ctl.current = c;
     // a new robot or field: recorded frames no longer match its bodies
@@ -546,7 +573,7 @@ export function App() {
   useEffect(() => {
     if (!replay || !replayFrames) return;
     const f = replayFrames[Math.min(replay.i, replayFrames.length - 1)];
-    field.current?.setTransforms(f.transforms);
+    field.current?.setTransforms(f.transforms, f.pose);
     setFrame(f);
   }, [replay, replayFrames]);
   // play back in sim time at the chosen speed (by the clock, so slow frames are skipped, not lagged)
@@ -571,7 +598,7 @@ export function App() {
     setReplay(null);
     const f = lastFrame.current;
     if (f) {
-      field.current?.setTransforms(f.transforms);
+      field.current?.setTransforms(f.transforms, f.pose);
       setFrame(f);
     }
   };
@@ -589,6 +616,7 @@ export function App() {
       return;
     }
     if (replay) exitReplay();
+    setAligning(false);
     recording.current = [];
     setError(null);
     field.current?.clearTrail();
@@ -596,6 +624,7 @@ export function App() {
     setLines([]);
     const durationS = season?.match.durationS ?? 150;
     log(match ? `▶ Match started: ${fileName} — ${Math.floor(durationS / 60)}:${String(durationS % 60).padStart(2, "0")} on the clock` : `▶ Running ${fileName}`, "info");
+    if (!startArea) log("⚠ The robot doesn't start completely inside a launch area (✥ Start position).", "err");
     setRunning(true);
     // (the field settles for 250 ms before the program starts)
     setMatch(match ? { phase: "running", usedMs: 0, segStart: 250, wallAt: 0, launches: 1 } : null);
@@ -612,6 +641,7 @@ export function App() {
     if (!c || !m || m.phase !== "home") return;
     const left = matchLeftMs();
     if (replay) exitReplay();
+    setAligning(false);
     recording.current = [];
     setError(null);
     setMatch({ ...m, phase: "running", usedMs: matchDurMs() - left, segStart: lastFrame.current?.timeMs ?? 0, launches: m.launches + 1 });
@@ -695,6 +725,42 @@ export function App() {
       field.current?.clearTrail();
       ctl.current?.setStart(p);
     }
+  };
+  /**
+   * Set where the robot starts, moved if need be so that it is completely inside a launch area
+   * (`area`: that one; otherwise the nearest). In a match, between launches, the robot is picked
+   * up and put there (allowed in home). `say`: tell when it had to be moved.
+   */
+  const commitStart = (p: StartPose, opts: { area?: string; say?: boolean } = {}) => {
+    if (!season) return;
+    const r = fitInLaunchArea(season, outline, p, { area: opts.area });
+    if (!r.fits) log("⚠ The robot (with its tools) doesn't fit in a launch area the way it is turned: turn it.", "err");
+    else if (opts.say && r.moved) log(`The robot has to be completely inside a launch area: it starts at X ${r.pose.xMm}, Y ${r.pose.yMm}, heading ${r.pose.headingDeg}°.`, "info");
+    const cur = startRef.current;
+    if (r.pose.xMm === cur.xMm && r.pose.yMm === cur.yMm && r.pose.headingDeg === cur.headingDeg) return;
+    applyStart(r.pose);
+    if (matchRef.current?.phase === "home") ctl.current?.replaceRobot(robotModelRef.current, r.pose);
+  };
+  /** The same alignment in the other launch area (or in the one chosen). */
+  const switchArea = (to?: string) => {
+    if (!season) return;
+    const cur = startArea ?? nearestLaunchArea(season, { x: start.xMm, y: start.yMm });
+    const area = to ?? season.launchAreas.find((la) => la.id !== cur)?.id;
+    if (!area) return;
+    commitStart(area === cur ? start : mirrorPose(season, start), { area, say: true });
+  };
+  /** The start position may be changed: not while the robot runs or is out of home in a match. */
+  const canAlign = !running && !(match && (match.phase === "running" || match.phase === "out"));
+  const alignOn = aligning && canAlign;
+  const alignSpec = useMemo(() => (alignOn ? { pose: start, outline } : null), [alignOn, start, outline]);
+  const toggleAlign = () => {
+    if (aligning) {
+      setAligning(false);
+      return;
+    }
+    if (replay) exitReplay();
+    setAligning(true);
+    field.current?.setCamera("top");
   };
 
   const openFile = async () => {
@@ -912,9 +978,16 @@ export function App() {
           </label>
         </div>
         <div className="group">
-          <label>X <input type="number" value={start.xMm} step={5} disabled={running} onChange={(e) => applyStart({ ...start, xMm: Number(e.target.value) })} /></label>
-          <label>Y <input type="number" value={start.yMm} step={5} disabled={running} onChange={(e) => applyStart({ ...start, yMm: Number(e.target.value) })} /></label>
-          <label>Heading <input type="number" value={start.headingDeg} step={5} disabled={running} onChange={(e) => applyStart({ ...start, headingDeg: Number(e.target.value) })} /></label>
+          <span className="start-pose">
+            <button className={alignOn ? "on" : ""} onClick={toggleAlign} disabled={!canAlign} title="Set where the robot starts: move and turn it on the field. It always stays completely inside a launch area (with its tools).">✥ Start position</button>
+            <select value={startArea ?? ""} disabled={running || !canAlign} onChange={(e) => switchArea(e.target.value)} title="The launch area the robot starts in (switching mirrors its alignment into the other one)">
+              {!startArea && <option value="">Not in a launch area</option>}
+              {season.launchAreas.map((la) => <option key={la.id} value={la.id}>{la.id[0].toUpperCase() + la.id.slice(1)} launch area</option>)}
+            </select>
+            <PoseField label="X" value={start.xMm} step={5} disabled={running} title="Start position: mm from the mat's left (west) edge" onCommit={(v) => commitStart({ ...start, xMm: v }, { say: true })} />
+            <PoseField label="Y" value={start.yMm} step={5} disabled={running} title="Start position: mm from the mat's bottom (south) edge" onCommit={(v) => commitStart({ ...start, yMm: v }, { say: true })} />
+            <PoseField label="Heading" value={start.headingDeg} step={5} disabled={running} title="Which way the robot faces: 0 = north (away from you), 90 = west (left), -90 = east (right)" onCommit={(v) => commitStart({ ...start, headingDeg: v }, { say: true })} />
+          </span>
           <select value={robotSource} disabled={running || !!(match && match.phase !== "over")} onChange={(e) => setRobotSource(e.target.value)} title={`Which robot to simulate. Ports: ${portsSummary}`}>
             <option value="drivebase">Robot: standard drive base</option>
             {presetRobots.map((p) => <option key={p.id} value={`preset:${p.id}`}>Robot: {p.name}</option>)}
@@ -980,7 +1053,7 @@ export function App() {
         <section className="left">
           <div className="field-wrap">
             <GlBoundary what="3D field">
-              <FieldView ref={field} season={season} matCanvas={mat?.canvas ?? null} quality={graphics} onGraphics={onGraphics} />
+              <FieldView ref={field} season={season} matCanvas={mat?.canvas ?? null} quality={graphics} onGraphics={onGraphics} align={alignSpec} onAlign={(p) => commitStart(p)} />
             </GlBoundary>
             <div className="cam-buttons">
               {(["orbit", "top", "follow", "free"] as CameraMode[]).map((m) => (
@@ -1053,14 +1126,23 @@ export function App() {
                 {match.phase !== "over" ? <button onClick={endMatch}>End match</button> : <button onClick={() => setMatch(null)}>Close</button>}
               </div>
             )}
-            {!running && replayFrames && (
+            {alignOn && (
+              <div className="align-bar">
+                <span>
+                  Drag the robot to move it, and the yellow handle to turn it (Shift: 15° steps). Keys, after clicking the field: arrows move it 1 mm (Shift 10 mm, Ctrl all the way to the edge), Q / E turn it 1° (Shift 15°). It always stays completely inside a launch area.
+                </span>
+                {season.launchAreas.length > 1 && <button onClick={() => switchArea()} title="The same alignment, mirrored, in the other launch area">⇄ Other launch area</button>}
+                <button className="primary" onClick={() => setAligning(false)}>Done</button>
+              </div>
+            )}
+            {!running && !alignOn && replayFrames && (
               replay ? (
                 <ReplayBar frames={replayFrames} index={replay.i} playing={replay.playing} onSeek={(i) => setReplay({ i, playing: false })} onPlay={(p) => setReplay({ i: p && replay.i >= replayFrames.length - 1 ? 0 : replay.i, playing: p })} onExit={exitReplay} />
               ) : (
                 <div className="replay-bar"><button onClick={() => setReplay({ i: 0, playing: true })} title="Watch the last run again, or scrub through it">⟲ Replay last run</button></div>
               )
             )}
-            {!running && <RunsPanel runs={runs} onToggle={(id) => setRuns(runs.map((r) => (r.id === id ? { ...r, visible: !r.visible } : r)))} onClear={() => { exitReplay(); setRuns([]); }} />}
+            {!running && !alignOn && <RunsPanel runs={runs} onToggle={(id) => setRuns(runs.map((r) => (r.id === id ? { ...r, visible: !r.visible } : r)))} onClear={() => { exitReplay(); setRuns([]); }} />}
           </div>
           <div className="bottom">
             <HubPanel pixels={frame?.pixels ?? new Array(25).fill(0)} lights={frame?.lights ?? {}} onButton={(w, d) => ctl.current?.setButton(w, d)} />
@@ -1128,6 +1210,49 @@ export function App() {
       {showRobot && <RobotPanel config={robot} onApply={applyRobot} onClose={() => setShowRobot(false)} />}
       {showCal && <CalibrationPanel config={robot} colorCal={colorCal} colorModel={colorModel} runInSim={runForCalibration} onApply={applyCalibration} onClose={() => setShowCal(false)} />}
     </div>
+  );
+}
+
+/** The start position saved last time (or the default one, in the left launch area). */
+function loadStart(): StartPose {
+  try {
+    const p = JSON.parse(localStorage.getItem("fllsim.start") ?? "null") as StartPose | null;
+    if (p && [p.xMm, p.yMm, p.headingDeg].every((n) => typeof n === "number" && Number.isFinite(n))) return p;
+  } catch {
+    /* ignore */
+  }
+  return { xMm: 230, yMm: 180, headingDeg: 0 };
+}
+
+/** A number field that sets its value when done: Enter, leaving the field, or its arrows. */
+function PoseField({ label, value, step, disabled, title, onCommit }: { label: string; value: number; step: number; disabled?: boolean; title?: string; onCommit(v: number): void }) {
+  /** what is being typed (null: showing the value) */
+  const [text, setText] = useState<string | null>(null);
+  const commit = (t: string) => {
+    setText(null);
+    const n = Number(t);
+    if (t.trim() !== "" && Number.isFinite(n) && n !== value) onCommit(n);
+  };
+  return (
+    <label title={title}>
+      {label}
+      <input
+        type="number"
+        value={text ?? String(Number(value.toFixed(1)))}
+        step={step}
+        disabled={disabled}
+        onChange={(e) => {
+          // (typing: set when done; the field's arrows: at once)
+          if ((e.nativeEvent as InputEvent).inputType) setText(e.target.value);
+          else commit(e.target.value);
+        }}
+        onBlur={(e) => { if (text !== null) commit(e.target.value); }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit(e.currentTarget.value);
+          else if (e.key === "Escape") setText(null);
+        }}
+      />
+    </label>
   );
 }
 

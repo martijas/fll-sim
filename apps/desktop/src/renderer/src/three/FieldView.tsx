@@ -2,7 +2,7 @@ import { useEffect, useImperativeHandle, useMemo, useRef, useState, forwardRef }
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import type { SceneBody, SeasonConfig, ShapeSpec, VisualSpec } from "@fll-sim/sim";
+import { fitInLaunchArea, launchAreaOf, nearestLaunchArea, outlineAt, type FitResult, type Pt, type SceneBody, type SeasonConfig, type ShapeSpec, type StartPose, type VisualSpec } from "@fll-sim/sim";
 import type { Library } from "@fll-sim/ldraw";
 import { mergedParts, mat4From3x4, partObject } from "./ldrawMesh";
 
@@ -10,7 +10,8 @@ export type CameraMode = "orbit" | "top" | "follow" | "free";
 
 export interface FieldViewHandle {
   setScene(bodies: SceneBody[], ids: string[], lib?: Library | null, visuals?: Record<string, VisualSpec[]>): void;
-  setTransforms(t: Float32Array): void;
+  /** Body transforms, and where the robot is then (mat frame). */
+  setTransforms(t: Float32Array, robotPose?: StartPose): void;
   addTrail(xMm: number, yMm: number): void;
   clearTrail(): void;
   setCamera(mode: CameraMode): void;
@@ -26,8 +27,20 @@ export interface FieldViewHandle {
  */
 export type GraphicsQuality = "auto" | "high" | "medium" | "low" | "lowest";
 
+/** Setting the robot's start position on the field (align mode). */
+export interface AlignSpec {
+  /** the start position as set */
+  pose: StartPose;
+  /** the robot's outline seen from above (robot frame, see robotOutline) */
+  outline: Pt[];
+}
+
 interface Props {
   season: SeasonConfig;
+  /** align mode: the robot can be dragged and turned, and stays completely inside a launch area */
+  align?: AlignSpec | null;
+  /** a start position was set in align mode (when a drag ends, or shortly after a key) */
+  onAlign?(pose: StartPose): void;
   matCanvas: HTMLCanvasElement | null;
   quality?: GraphicsQuality;
   /** the graphics driver and the detail used (auto resolved) */
@@ -139,7 +152,7 @@ export function glRenderer(r: THREE.WebGLRenderer): string {
   return String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
 }
 
-export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({ season, matCanvas, quality = "auto", onGraphics }, ref) {
+export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({ season, matCanvas, quality = "auto", onGraphics, align = null, onAlign }, ref) {
   const gpu = useMemo(() => probeGl(), []);
   // Auto: start from a guess (low on software rendering), then measure the real field once and
   // step down while frames are slow; remembered per graphics driver.
@@ -177,12 +190,33 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     /** follow camera distance factor (Ctrl + / −) */
     followScale: number;
     sun: THREE.DirectionalLight;
+    /** align mode: the robot's outline and turning handle at the start position, launch areas */
+    alignG: THREE.Group;
+    areaFills: Map<string, THREE.Mesh>;
     /** something changed: draw a new frame (frames are drawn only when needed) */
     dirty: boolean;
     lastCam: THREE.Matrix4;
   } | null>(null);
   /** keys held down while the field view has focus (free camera) */
   const keys = useRef(new Set<string>());
+  /**
+   * Align mode: the start position being set (shown by moving the robot there, with its outline
+   * and a handle to turn it), and the drag in progress.
+   */
+  const alignRef = useRef<{
+    spec: AlignSpec;
+    pose: StartPose;
+    fit: FitResult | null;
+    drag: { kind: "move"; dx: number; dy: number } | { kind: "turn" } | null;
+    /** (keys: the position is set once they stop for a moment) */
+    timer?: ReturnType<typeof setTimeout>;
+  } | null>(null);
+  const onAlignRef = useRef(onAlign);
+  onAlignRef.current = onAlign;
+  /** where the robot is in the transforms shown (mat frame) */
+  const lastPose = useRef<StartPose | null>(null);
+  /** align mode: the start position and whether it fits (shown under the field) */
+  const [hud, setHud] = useState<FitResult | null>(null);
 
   const W = mm(season.table.interiorMm.w), H = mm(season.table.interiorMm.h);
   const matOffX = mm((season.table.interiorMm.w - season.mat.sizeMm.w) / 2);
@@ -259,6 +293,23 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       scene.add(line);
     }
 
+    // Align mode: a fill on the launch area in use, the robot's outline and its turning handle
+    const alignG = new THREE.Group();
+    alignG.visible = false;
+    alignOutline.current = null; // (its meshes are made for this scene when align mode is on)
+    scene.add(alignG);
+    const areaFills = new Map<string, THREE.Mesh>();
+    for (const la of season.launchAreas) {
+      const start = la.centerMm.x === 0 ? 0 : Math.PI / 2;
+      const g = new THREE.CircleGeometry(mm(la.radiusMm), 48, start, Math.PI / 2).rotateX(-Math.PI / 2);
+      const fill = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: la.color === "red" ? "#e0302a" : "#2a6be0", transparent: true, opacity: 0.16, depthWrite: false }));
+      const c = toWorld(la.centerMm.x, la.centerMm.y);
+      fill.position.set(c.x, 0.0012, c.z);
+      fill.visible = false;
+      scene.add(fill);
+      areaFills.set(la.id, fill);
+    }
+
     const dynamic = new THREE.Group();
     scene.add(dynamic);
     const trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: "#ff8a00" }));
@@ -268,7 +319,7 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     const ghosts = new THREE.Group();
     scene.add(ghosts);
 
-    st.current = { renderer, scene, camera, controls, bodies: [], dynamic, trail, trailPts: [], ghosts, mode: "orbit", matMesh, look: { yaw: 0, pitch: 0 }, followScale: 1, sun, dirty: true, lastCam: new THREE.Matrix4() };
+    st.current = { renderer, scene, camera, controls, bodies: [], dynamic, trail, trailPts: [], ghosts, mode: "orbit", matMesh, look: { yaw: 0, pitch: 0 }, followScale: 1, sun, alignG, areaFills, dirty: true, lastCam: new THREE.Matrix4() };
     setCam("orbit");
 
     const ro = new ResizeObserver(() => {
@@ -374,6 +425,106 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
+  const seasonRef = useRef(season);
+  seasonRef.current = season;
+
+  /** Align mode: the outline and turning handle (robot frame) as meshes, once per outline. */
+  const alignOutline = useRef<Pt[] | null>(null);
+  function buildAlignShapes(outline: Pt[]) {
+    const g = st.current!.alignG;
+    for (const c of [...g.children]) {
+      g.remove(c);
+      const m = c as THREE.Mesh;
+      m.geometry?.dispose();
+      (m.material as THREE.Material | undefined)?.dispose();
+    }
+    alignOutline.current = outline;
+    if (outline.length < 3) return;
+    const v2 = (p: Pt) => new THREE.Vector2(mm(p.x), mm(p.y));
+    // a band around the robot on the mat (outside it, so it shows from above), coloured by
+    // whether the robot fits in the launch area
+    const shape = new THREE.Shape(grow(outline, 7).map(v2));
+    shape.holes.push(new THREE.Path(outline.map(v2)));
+    const band = new THREE.Mesh(new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: OK, depthWrite: false }));
+    band.name = "band";
+    band.position.y = 0.0025;
+    // the outline itself, also drawn over the robot
+    const line = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(outline.map((p) => new THREE.Vector3(mm(p.x), 0, -mm(p.y)))), new THREE.LineBasicMaterial({ color: OK, depthTest: false, transparent: true, opacity: 0.8 }));
+    line.name = "line";
+    line.renderOrder = 10;
+    line.position.y = 0.003;
+    // the turning handle ahead of the robot's front: a stem and a knob
+    const h = handleAt(outline).y, front = h - HANDLE_MM;
+    const yellow = new THREE.MeshBasicMaterial({ color: "#ffcf00", depthWrite: false });
+    const stem = new THREE.Mesh(new THREE.PlaneGeometry(mm(3), mm(HANDLE_MM - 6)).rotateX(-Math.PI / 2), yellow);
+    stem.position.set(0, 0.0025, -mm(front + (HANDLE_MM - 6) / 2));
+    const knob = new THREE.Mesh(new THREE.CircleGeometry(mm(13), 32).rotateX(-Math.PI / 2), yellow);
+    knob.position.set(0, 0.0026, -mm(h));
+    g.add(band, line, stem, knob);
+  }
+  /** Show the start position being set: outline, handle, the launch area, and the robot moved there. */
+  function drawAlign() {
+    const s = st.current;
+    if (!s) return;
+    const a = alignRef.current;
+    s.alignG.visible = !!a;
+    for (const [id, f] of s.areaFills) f.visible = !!a && a.fit?.area === id;
+    if (a) {
+      const w = toWorld(a.pose.xMm, a.pose.yMm);
+      s.alignG.position.set(w.x, 0, w.z);
+      s.alignG.rotation.set(0, (a.pose.headingDeg * Math.PI) / 180, 0);
+      const color = a.fit && !a.fit.fits ? BAD : OK;
+      for (const n of ["band", "line"]) ((s.alignG.getObjectByName(n) as THREE.Mesh | undefined)?.material as THREE.MeshBasicMaterial | undefined)?.color.set(color);
+    }
+    if (lastT.current && lastT.current.length === s.bodies.length * 7) applyT(lastT.current);
+    s.dirty = true;
+  }
+  /** Move the start position towards `want`, keeping the robot completely inside a launch area
+   *  (`area`: that one; otherwise the nearest). */
+  function alignTo(want: StartPose, area: string | null) {
+    const a = alignRef.current;
+    if (!a) return;
+    const fit = fitInLaunchArea(seasonRef.current, a.spec.outline, want, { area });
+    a.pose = fit.pose;
+    a.fit = fit;
+    drawAlign();
+    setHud(fit);
+  }
+
+  // align mode on/off, and the start position set from outside (the X / Y / heading fields)
+  useEffect(() => {
+    const s = st.current;
+    if (!s) return;
+    const a = alignRef.current;
+    if (!align) {
+      if (a?.timer) {
+        // (keys pressed just now: their position counts)
+        clearTimeout(a.timer);
+        onAlignRef.current?.(a.pose);
+      }
+      alignRef.current = null;
+      s.controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+      host.current?.style.removeProperty("cursor");
+      drawAlign();
+      setHud(null);
+      return;
+    }
+    if (alignOutline.current !== align.outline) buildAlignShapes(align.outline);
+    if (a && (a.drag || a.timer)) {
+      // (being moved right now: that position wins)
+      a.spec = align;
+      return;
+    }
+    const inArea = launchAreaOf(season, align.outline, align.pose);
+    const fit: FitResult = { pose: align.pose, area: inArea ?? nearestLaunchArea(season, { x: align.pose.xMm, y: align.pose.yMm }) ?? "", fits: !!inArea, moved: false };
+    alignRef.current = { spec: align, pose: align.pose, fit, drag: null };
+    // (the left mouse button moves the robot; right still pans, the wheel zooms)
+    s.controls.mouseButtons.LEFT = null;
+    drawAlign();
+    setHud(fit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [align]);
+
   function setCam(mode: CameraMode) {
     const s = st.current!;
     s.mode = mode;
@@ -428,6 +579,11 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     const el = host.current!;
     const name = (e: KeyboardEvent) => (e.key === "Shift" ? "shift" : e.key.toLowerCase());
     const down = (e: KeyboardEvent) => {
+      if (alignRef.current) {
+        // align mode: arrows move the robot, Q / E turn it (and the free camera keys do nothing)
+        alignKey(e);
+        return;
+      }
       if (e.ctrlKey || e.altKey || e.metaKey) return;
       const k = name(e);
       if (!["w", "a", "s", "d", "q", "e", " ", "shift"].includes(k)) return;
@@ -461,6 +617,87 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       }
     };
     const pup = () => (drag = null);
+
+    // align mode: drag the robot to move it, drag the handle to turn it
+    const matPoint = (e: PointerEvent): Pt | null => {
+      const s = st.current!;
+      const r = s.renderer.domElement.getBoundingClientRect();
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), s.camera);
+      const hit = new THREE.Vector3();
+      if (!ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit)) return null;
+      const o = toWorld(0, 0);
+      return { x: (hit.x - o.x) * 1000, y: -(hit.z - o.z) * 1000 };
+    };
+    const onHandle = (p: Pt) => {
+      const a = alignRef.current!;
+      const h = outlineAt([handleAt(a.spec.outline)], a.pose)[0];
+      return Math.hypot(p.x - h.x, p.y - h.y) <= 30;
+    };
+    const adown = (e: PointerEvent) => {
+      const a = alignRef.current;
+      if (!a || st.current?.mode === "free" || e.button !== 0) return;
+      const p = matPoint(e);
+      if (!p) return;
+      if (onHandle(p)) a.drag = { kind: "turn" };
+      else {
+        // grabbed the robot: it keeps where it was grabbed; clicked elsewhere: it goes there
+        const inside = insideConvex(outlineAt(a.spec.outline, a.pose), p);
+        a.drag = { kind: "move", dx: inside ? a.pose.xMm - p.x : 0, dy: inside ? a.pose.yMm - p.y : 0 };
+        if (!inside) alignTo({ ...a.pose, xMm: Math.round(p.x), yMm: Math.round(p.y) }, null);
+      }
+      clearTimeout(a.timer);
+      a.timer = undefined;
+      el.style.cursor = "grabbing";
+    };
+    const amove = (e: PointerEvent) => {
+      const a = alignRef.current;
+      if (!a || st.current?.mode === "free") return;
+      const p = matPoint(e);
+      if (!p) return;
+      if (!a.drag) {
+        el.style.cursor = onHandle(p) ? "grab" : insideConvex(outlineAt(a.spec.outline, a.pose), p) ? "move" : "";
+        return;
+      }
+      if (a.drag.kind === "move") alignTo({ xMm: Math.round(p.x + a.drag.dx), yMm: Math.round(p.y + a.drag.dy), headingDeg: a.pose.headingDeg }, null);
+      else {
+        // the robot faces the pointer: whole degrees, Shift: 15 degree steps
+        const step = e.shiftKey ? 15 : 1;
+        const deg = (Math.atan2(-(p.x - a.pose.xMm), p.y - a.pose.yMm) * 180) / Math.PI;
+        alignTo({ ...a.pose, headingDeg: Math.round(deg / step) * step }, a.fit?.area ?? null);
+      }
+    };
+    const aup = () => {
+      const a = alignRef.current;
+      if (!a?.drag) return;
+      a.drag = null;
+      el.style.cursor = "";
+      onAlignRef.current?.(a.pose);
+    };
+    const alignKey = (e: KeyboardEvent) => {
+      const a = alignRef.current!;
+      if (a.drag || e.altKey) return;
+      const k = e.key.toLowerCase();
+      const arrows: Record<string, [number, number]> = { arrowup: [0, 1], arrowdown: [0, -1], arrowleft: [-1, 0], arrowright: [1, 0] };
+      let want: StartPose;
+      if (arrows[k]) {
+        // 1 mm, Shift: 10 mm, Ctrl: all the way to the launch area's edge
+        const d = e.ctrlKey || e.metaKey ? 3000 : e.shiftKey ? 10 : 1;
+        want = { ...a.pose, xMm: a.pose.xMm + arrows[k][0] * d, yMm: a.pose.yMm + arrows[k][1] * d };
+      } else if ((k === "q" || k === "e") && !e.ctrlKey && !e.metaKey) {
+        // Q turns left (counterclockwise), E right: 1 degree, Shift: to the next multiple of 15
+        const dir = k === "q" ? 1 : -1, h = a.pose.headingDeg;
+        want = { ...a.pose, headingDeg: e.shiftKey ? (dir > 0 ? Math.floor(h / 15 + 1e-6) + 1 : Math.ceil(h / 15 - 1e-6) - 1) * 15 : h + dir };
+      } else return;
+      e.preventDefault();
+      // (keys never jump to the other launch area)
+      alignTo(want, a.fit?.area ?? null);
+      clearTimeout(a.timer);
+      a.timer = setTimeout(() => {
+        a.timer = undefined;
+        if (alignRef.current === a) onAlignRef.current?.(a.pose);
+      }, 450);
+    };
     // Trackpad: two-finger pinch zooms (Chromium sends it as a wheel event with Ctrl held), two
     // fingers moving turn the view. A mouse wheel (whole notches, up/down only) still zooms.
     const wheel = (e: WheelEvent) => {
@@ -491,6 +728,10 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     el.addEventListener("pointerdown", pdown);
     el.addEventListener("pointermove", pmove);
     el.addEventListener("pointerup", pup);
+    el.addEventListener("pointerdown", adown);
+    el.addEventListener("pointermove", amove);
+    el.addEventListener("pointerup", aup);
+    el.addEventListener("pointercancel", aup);
     const blur = () => {
       keys.current.clear();
       if (document.pointerLockElement === el) document.exitPointerLock();
@@ -508,6 +749,10 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       el.removeEventListener("pointerdown", pdown);
       el.removeEventListener("pointermove", pmove);
       el.removeEventListener("pointerup", pup);
+      el.removeEventListener("pointerdown", adown);
+      el.removeEventListener("pointermove", amove);
+      el.removeEventListener("pointerup", aup);
+      el.removeEventListener("pointercancel", aup);
       el.removeEventListener("wheel", wheel, { capture: true });
     };
   }, []);
@@ -597,9 +842,25 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
   const lastT = useRef<Float32Array | null>(null);
   function applyT(t: Float32Array) {
     const s = st.current!;
+    // align mode: the robot is shown at the start position being set (turned and moved there
+    // from where it is), until the simulator puts it there
+    const a = alignRef.current, from = lastPose.current;
+    let move: ((g: THREE.Group) => void) | null = null;
+    if (a && from) {
+      const th = ((a.pose.headingDeg - from.headingDeg) * Math.PI) / 180, c = Math.cos(th), sn = Math.sin(th);
+      const F = toWorld(from.xMm, from.yMm), T = toWorld(a.pose.xMm, a.pose.yMm);
+      const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), th);
+      move = (g) => {
+        const x = g.position.x - F.x, z = g.position.z - F.z;
+        g.position.x = T.x + x * c + z * sn;
+        g.position.z = T.z - x * sn + z * c;
+        g.quaternion.premultiply(q);
+      };
+    }
     s.bodies.forEach((g, i) => {
       g.position.set(t[i * 7], t[i * 7 + 1], t[i * 7 + 2]);
       g.quaternion.set(t[i * 7 + 3], t[i * 7 + 4], t[i * 7 + 5], t[i * 7 + 6]);
+      if (move && g.userData.kind === "robot") move(g);
     });
   }
 
@@ -608,8 +869,9 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
       lastScene.current = args;
       build(...args);
     },
-    setTransforms(t) {
+    setTransforms(t, robotPose) {
       lastT.current = t;
+      if (robotPose) lastPose.current = robotPose;
       applyT(t);
       st.current!.dirty = true;
     },
@@ -660,5 +922,44 @@ export const FieldView = forwardRef<FieldViewHandle, Props>(function FieldView({
     },
   }));
 
-  return <div ref={host} className="field-view" tabIndex={0} />;
+  const areaName = (id: string) => {
+    const la = season.launchAreas.find((x) => x.id === id);
+    return la ? `${id[0].toUpperCase()}${id.slice(1)} launch area (${la.color})` : "Launch area";
+  };
+  return (
+    <>
+      <div ref={host} className={`field-view${align ? " aligning" : ""}`} tabIndex={0} />
+      {align && hud && (
+        <div className={`align-hud${hud.fits ? "" : " bad"}`}>
+          {hud.fits ? areaName(hud.area) : "Too big for a launch area like this: turn it"} · X {Math.round(hud.pose.xMm)} mm · Y {Math.round(hud.pose.yMm)} mm · {Number(hud.pose.headingDeg.toFixed(1))}°
+        </div>
+      )}
+    </>
+  );
 });
+
+const OK = "#34c46a", BAD = "#ff5d5d";
+/** How far the turning handle is ahead of the robot's front, mm. */
+const HANDLE_MM = 45;
+/** The turning handle's centre (robot frame): ahead of the robot's front, on its centre line. */
+const handleAt = (outline: Pt[]): Pt => ({ x: 0, y: Math.max(...outline.map((p) => p.y)) + HANDLE_MM });
+/** Whether a point is inside a convex polygon (counterclockwise). */
+function insideConvex(poly: Pt[], p: Pt): boolean {
+  return poly.length >= 3 && poly.every((a, i) => {
+    const b = poly[(i + 1) % poly.length];
+    return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x) >= 0;
+  });
+}
+/** A convex polygon (counterclockwise) grown outwards by d. */
+function grow(poly: Pt[], d: number): Pt[] {
+  const n = poly.length;
+  const normal = (i: number) => {
+    const a = poly[i], b = poly[(i + 1) % n], l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    return { x: (b.y - a.y) / l, y: -(b.x - a.x) / l };
+  };
+  return poly.map((p, i) => {
+    const n0 = normal((i - 1 + n) % n), n1 = normal(i);
+    const k = d / Math.max(0.3, 1 + n0.x * n1.x + n0.y * n1.y);
+    return { x: p.x + (n0.x + n1.x) * k, y: p.y + (n0.y + n1.y) * k };
+  });
+}

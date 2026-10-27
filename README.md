@@ -281,8 +281,18 @@ the most realistic line-following.
 Default drive base: drive motors **A** (left) and **B** (right, both medium motors, 56 mm wheels,
 120 mm track), colour sensors **C** and **D** pointing down at the front, distance sensor **E**
 facing forward, attachment motor **F**. Use **Robot…** to rewire ports to match your robot
-(presets include the SPIKE guided-mission robot: drive C+D, colour B, arm E). Start pose is set with X / Y (mm on the mat, origin at the south-west corner)
-and heading (degrees, 0 = facing north/away from the south wall).
+(presets include the SPIKE guided-mission robot: drive C+D, colour B, arm E).
+
+**Start position.** Like at a real match, the robot starts completely inside a launch area (the
+red one on the left or the blue one on the right), with its tools. Press **✥ Start position**:
+drag the robot to move it and the yellow handle in front of it to turn it (Shift: 15° steps), or,
+after clicking the field, use the arrow keys (1 mm; Shift 10 mm; Ctrl slides it to the edge) and
+Q / E (turn 1°; Shift 15°). It can't be put anywhere it would stick out of the launch area: it
+stops at the edge. **⇄ Other launch area** mirrors the alignment into the other one. You can also
+type X / Y (mm on the mat, origin at the south-west corner) and heading (degrees, 0 = facing
+north, away from the south wall; 90 = west). The start position is remembered, and if you put on
+a tool that makes the robot stick out, it moves just enough to fit again. During a match, while
+the robot is in home, moving it this way puts it straight there.
 
 ## Known differences from a real hub (to be calibrated — see plan M8)
 

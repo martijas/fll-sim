@@ -8,3 +8,4 @@ export * from "./pair";
 export * from "./world";
 export * from "./spike";
 export * from "./shapes";
+export * from "./launch";
